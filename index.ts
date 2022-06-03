@@ -10,8 +10,8 @@ function main() {
         createContainersButton.disabled = !numberOfContainerInput.value
     }
 
-    createContainersButton.onclick = () => {
-        createContainers(parseFloat(numberOfContainerInput.value));
+    createContainersButton.onclick = async () => {
+        await createContainers(parseFloat(numberOfContainerInput.value));
     }
 }
 
