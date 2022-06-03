@@ -29,7 +29,9 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: website
-          path: .
+          path: |
+            index.html
+            out.js
 
   Publish:
     runs-on: ubuntu-latest
