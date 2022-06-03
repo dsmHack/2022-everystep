@@ -52,7 +52,7 @@ async function renderAndDownload(containers: string[]): Promise<void> {
     const cellWidth = width / columns;
     const cellHeight = cellWidth + textHeight;
 
-    const rows = height / cellHeight;
+    const rows = Math.floor(height / cellHeight);
 
     const containersPerPage = rows * columns;
 
