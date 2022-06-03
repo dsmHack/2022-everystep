@@ -66,10 +66,10 @@ async function renderAndDownload(googleFormURL: string, codeUuids: string[]): Pr
     const rows = Math.floor(pageHeight / cellHeight);
     const codesPerPage = rows * columns;
 
-    for (let codeIndex = 0; codeIndex < codeUuids.length; codeIndex++) {
-        let pageIndex = codeIndex % codesPerPage;
+    for (let i = 0; i < codeUuids.length; i++) {
+        let pageIndex = i % codesPerPage;
 
-        const shouldPaginate = codeIndex !== 0 && pageIndex % codesPerPage === 0;
+        const shouldPaginate = i !== 0 && pageIndex % codesPerPage === 0;
         if (shouldPaginate) {
             doc.addPage();
         }
