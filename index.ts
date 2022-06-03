@@ -1,4 +1,4 @@
-import { v4 as uuid } from 'uuid';
+import * as uuid from 'short-uuid';
 import { jsPDF } from 'jspdf';
 import * as qrcode from 'qr.js';
 
@@ -37,7 +37,7 @@ function main() {
 async function createContainers(googleFormURL: string, numContainers: number): Promise<void> {
     const containers: string[] = [];
     for (let i = 0; i < numContainers; i++) {
-        containers.push(uuid().toUpperCase());
+        containers.push(uuid.generate().toUpperCase());
     }
 
     await renderAndDownload(googleFormURL, containers);
@@ -60,7 +60,7 @@ function downloadCSV(containers: string[]): void {
 
 async function renderAndDownload(googleFormURL: string, codeUuids: string[]): Promise<void> {
     const doc = new jsPDF();
-    doc.setFontSize(7);
+    doc.setFontSize(9);
 
     const pageWidth = 210;
     const pageHeight = 297;
