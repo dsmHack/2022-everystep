@@ -17,17 +17,17 @@ function main() {
 }
 
 async function createContainers(numContainers: number): Promise<void> {
-    const uuids: string[] = [];
+    const containers: string[] = [];
     for (let i = 0; i < numContainers; i++) {
-        uuids.push(uuid().toUpperCase());
+        containers.push(uuid().toUpperCase());
     }
 
-    await renderAndDownload(uuids);
-    downloadCSV(uuids);
+    await renderAndDownload(containers);
+    downloadCSV(containers);
 }
 
-function downloadCSV(uuids: string[]): void {
-    const csvData = ['id', ...uuids].join('\n');
+function downloadCSV(containers: string[]): void {
+    const csvData = ['id', ...containers].join('\n');
     const blob = new Blob([csvData], {type: 'text/csv'});
     const url = URL.createObjectURL(blob);
 
