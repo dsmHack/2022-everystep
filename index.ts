@@ -44,7 +44,7 @@ async function renderAndDownload(containers: string[]): Promise<void> {
 
     // TODO: these are random; the fit could be much better. determine the unit, and convert A4 to it. add padding.
     const width = 210;
-    const height = 200;
+    const height = 280;
 
     const columns = 3;
 
