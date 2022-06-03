@@ -1,17 +1,13 @@
 import * as uuid from 'short-uuid';
 import { jsPDF } from 'jspdf';
 import * as qrcode from 'qr.js';
-// import { read } from 'xlsx';
+import { read } from 'xlsx';
 
 window.onload = main;
 function main() {
     const labelExportFileInput = document.getElementById('labelExportFile') as HTMLInputElement;
     const googleFormURLInput = document.getElementById('googleFormURL') as HTMLInputElement;
     const createContainersButton = document.getElementById('createContainers') as HTMLInputElement;
-
-    labelExportFileInput.onchange = (event) => {
-        console.log('Upload: ', event);
-    }
 
     const googleFormURLKey = 'google-form-url';
     googleFormURLInput.value = localStorage.getItem(googleFormURLKey);
@@ -26,6 +22,7 @@ function main() {
 
         await createContainers(
             googleFormURLInput.value,
+            labelExportFileInput.files[0],
         );
 
         labelExportFileInput.disabled = false;
@@ -34,20 +31,63 @@ function main() {
     }
 }
 
-async function createContainers(googleFormURL: string): Promise<void> {
-    const numContainers = 5; // TODO: replace with file import
-
-    const containers: string[] = [];
-    for (let i = 0; i < numContainers; i++) {
-        containers.push(uuid.generate().toUpperCase());
-    }
-
-    await renderAndDownload(googleFormURL, containers);
-    downloadCSV(containers);
+interface BoxInfo {
+    code: string,
+    name: string,
+    address: string,
+    phase: string,
 }
 
-function downloadCSV(containers: string[]): void {
-    const csvData = ['id', ...containers].join('\n');
+async function createContainers(googleFormURL: string, exportFile: File): Promise<void> {
+    const contents = await exportFile.arrayBuffer();
+    const workbook = read(contents);
+    const worksheet = workbook.Sheets['export_format'];
+
+    const boxInfos = new Map<string, BoxInfo>();
+    for (const cell in worksheet) {
+        const col = cell.substring(0, 1);
+        const row = cell.substring(1);
+
+        if (row === 'ref' || row == '1' || row == 'margins') {
+            continue;
+        }
+
+        if (!boxInfos.has(row)) {
+            boxInfos.set(row, {
+                code: 'N/A',
+                name: 'N/A',
+                address: 'N/A',
+                phase: 'N/A',
+            });
+        }
+
+        const boxInfo = boxInfos.get(row);
+        const cellValue = worksheet[cell].v.toString();
+
+        switch (col) {
+            case 'A':
+                boxInfo.code = cellValue;
+                break;
+            case 'B':
+                boxInfo.name = cellValue;
+                break;
+            case 'C':
+                boxInfo.address = cellValue;
+                break;
+            case 'D':
+                boxInfo.phase = cellValue;
+                break;
+        }
+    }
+
+    const boxInfosFlattened = Array.from(boxInfos.values());
+
+    await createShippingPDF(6, 4, googleFormURL, boxInfosFlattened);
+    downloadCSV(boxInfosFlattened);
+}
+
+function downloadCSV(boxInfos: BoxInfo[]): void {
+    const csvData = ['id', ...boxInfos.map(b => b.code)].join('\n');
     const blob = new Blob([csvData], {type: 'text/csv'});
     const url = URL.createObjectURL(blob);
 
@@ -60,7 +100,7 @@ function downloadCSV(containers: string[]): void {
     URL.revokeObjectURL(url);
 }
 
-async function renderAndDownload(googleFormURL: string, codeUuids: string[]): Promise<void> {
+async function createA4PDF(googleFormURL: string, boxInfos: BoxInfo[]) {
     const doc = new jsPDF();
     doc.setFontSize(9);
 
@@ -76,7 +116,7 @@ async function renderAndDownload(googleFormURL: string, codeUuids: string[]): Pr
     const rows = Math.floor(pageHeight / cellHeight);
     const codesPerPage = rows * columns;
 
-    for (let i = 0; i < codeUuids.length; i++) {
+    for (let i = 0; i < boxInfos.length; i++) {
         let pageIndex = i % codesPerPage;
 
         const shouldPaginate = i !== 0 && pageIndex % codesPerPage === 0;
@@ -90,7 +130,7 @@ async function renderAndDownload(googleFormURL: string, codeUuids: string[]): Pr
         const posX = x * cellWidth;
         const posY = y * cellHeight;
 
-        const uuid = codeUuids[i];
+        const uuid = boxInfos[i].code;
         const qrCode = await createQRCode(googleFormURL + uuid);
 
         doc.addImage({
@@ -101,7 +141,46 @@ async function renderAndDownload(googleFormURL: string, codeUuids: string[]): Pr
             height: cellHeight - (codePadding * 2),
         });
 
-        doc.text(uuid, posX + (cellWidth / 2), posY + cellHeight - textOffset, { align: 'center' });
+        doc.text(`${boxInfos[i].name} - ${boxInfos[i].phase}`, posX + (cellWidth / 2), posY + cellHeight - textOffset, { align: 'center' });
+        doc.text(boxInfos[i].address, posX + (cellWidth / 2), posY + cellHeight - textOffset + 4, { align: 'center' });
+        doc.text(boxInfos[i].code, posX + (cellWidth / 2), posY + cellHeight - textOffset + 8, { align: 'center' });
+    }
+
+    doc.save("qrcodes.pdf");
+}
+
+// length should be >= width; the longer dimension
+async function createShippingPDF(lengthInches: number, widthInches: number, googleFormURL: string, boxInfos: BoxInfo[]) {
+    const format = [widthInches, lengthInches];
+    const doc = new jsPDF({ unit: 'in', format });
+
+    const useLongFormat = lengthInches / widthInches > 1.2;
+    doc.setFontSize(useLongFormat ? 15 : 11);
+
+    for (const boxInfo of boxInfos) {
+        doc.addPage(format);
+
+        const uuid = boxInfo.code;
+        const qrCode = await createQRCode(googleFormURL + uuid);
+
+        doc.addImage({
+            imageData: qrCode,
+            x: widthInches * 0.15,
+            y: widthInches * 0.15,
+            width: widthInches * 0.7,
+            height: widthInches * 0.7,
+        });
+
+        if (useLongFormat) {
+            doc.text(boxInfo.code, widthInches / 2, widthInches, { align: 'center' });
+            doc.text(`${boxInfo.name} - ${boxInfo.phase}`, widthInches / 2, widthInches * 1.1, { align: 'center' });
+            doc.text(boxInfo.address, widthInches / 2, widthInches * 1.2, { align: 'center' });
+        } else {
+            doc.text(boxInfo.code, widthInches / 2, widthInches * 0.12, { align: 'center' });
+            doc.text(`${boxInfo.name} - ${boxInfo.phase}`, widthInches / 2, widthInches * 0.9, { align: 'center' });
+            doc.text(boxInfo.address, widthInches / 2, widthInches * 0.95, { align: 'center' });
+        }
+
     }
 
     doc.save("qrcodes.pdf");
