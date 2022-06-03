@@ -23,8 +23,6 @@ async function createContainers(numContainers: number): Promise<void> {
 
     downloadCSV(uuids);
     await renderAndDownload(uuids);
-
-    return;
 }
 
 function downloadCSV(uuids: string[]): void {
