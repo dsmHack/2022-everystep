@@ -7,26 +7,37 @@ function main() {
     const labelExportFileInput = document.getElementById('labelExportFile') as HTMLInputElement;
     const googleFormURLInput = document.getElementById('googleFormURL') as HTMLInputElement;
     const createContainersButton = document.getElementById('createContainers') as HTMLInputElement;
+    const labelWidthInput = document.getElementById('labelWidth') as HTMLInputElement;
+    const labelHeightInput = document.getElementById('labelHeight') as HTMLInputElement;
 
-    const googleFormURLKey = 'google-form-url';
-    googleFormURLInput.value = localStorage.getItem(googleFormURLKey);
-    googleFormURLInput.oninput = () => {
-        localStorage.setItem(googleFormURLKey, googleFormURLInput.value);
-    }
+    const setFormEnabled = (enabled: boolean) => {
+        labelExportFileInput.disabled = !enabled;
+        createContainersButton.disabled = !enabled;
+        googleFormURLInput.disabled = !enabled;
+        labelWidthInput.disabled = !enabled;
+        labelHeightInput.disabled = !enabled;
+    };
+
+    const setupInputLocalStorage = (input: HTMLInputElement, key: string) => {
+        input.value = localStorage.getItem(key);
+        input.oninput = () => localStorage.setItem(key, input.value);
+    };
+
+    setupInputLocalStorage(googleFormURLInput, 'google-form-url');
+    setupInputLocalStorage(labelWidthInput, 'label-width');
+    setupInputLocalStorage(labelHeightInput, 'label-height');
 
     createContainersButton.onclick = async () => {
-        labelExportFileInput.disabled = true;
-        createContainersButton.disabled = true;
-        googleFormURLInput.disabled = true;
+        setFormEnabled(false);
 
         await createContainers(
+            parseFloat(labelWidthInput.value),
+            parseFloat(labelHeightInput.value),
             googleFormURLInput.value,
             labelExportFileInput.files[0],
         );
 
-        labelExportFileInput.disabled = false;
-        createContainersButton.disabled = false;
-        googleFormURLInput.disabled = false;
+        setFormEnabled(true);
     }
 }
 
@@ -41,7 +52,7 @@ interface BoxInfo {
     phase: string,
 }
 
-async function createContainers(googleFormURL: string, exportFile: File): Promise<void> {
+async function createContainers(width: number, height: number, googleFormURL: string, exportFile: File): Promise<void> {
     const contents = await exportFile.arrayBuffer();
     const workbook = read(contents);
     const worksheet = workbook.Sheets['qr_export'];
@@ -106,7 +117,7 @@ async function createContainers(googleFormURL: string, exportFile: File): Promis
 
     const boxInfosFlattened = Array.from(boxInfos.values());
 
-    await createShippingPDF(6, 4, googleFormURL, boxInfosFlattened);
+    await createShippingPDF(height, width, googleFormURL, boxInfosFlattened);
     downloadCSV(boxInfosFlattened);
 }
 
@@ -125,8 +136,8 @@ function downloadCSV(boxInfos: BoxInfo[]): void {
 }
 
 // The length should be >= the width * 1.5;
-async function createShippingPDF(lengthInches: number, widthInches: number, googleFormURL: string, boxInfos: BoxInfo[]) {
-    const format = [widthInches, lengthInches];
+async function createShippingPDF(heightInches: number, widthInches: number, googleFormURL: string, boxInfos: BoxInfo[]) {
+    const format = [widthInches, heightInches];
     const doc = new jsPDF({ unit: 'in', format });
 
     for (let i = 0; i < boxInfos.length; i++) {
