@@ -1,0 +1,14 @@
+{
+  "name": "qr-codes",
+  "version": "1.0.0",
+  "description": "A QR code generator for Every Step's Amanda the Panda program",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild app.jsx --bundle --outfile=out.j"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "esbuild": "^0.14.42"
+  }
+}

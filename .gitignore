@@ -1,0 +1,4 @@
+node_modules
+.idea
+out.js
+qr-codes.iml
