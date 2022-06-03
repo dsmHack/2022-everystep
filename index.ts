@@ -1,15 +1,16 @@
 import * as uuid from 'short-uuid';
 import { jsPDF } from 'jspdf';
 import * as qrcode from 'qr.js';
+// import { read } from 'xlsx';
 
 window.onload = main;
 function main() {
+    const labelExportFileInput = document.getElementById('labelExportFile') as HTMLInputElement;
     const googleFormURLInput = document.getElementById('googleFormURL') as HTMLInputElement;
-    const numberOfContainerInput = document.getElementById('numberOfContainers') as HTMLInputElement;
     const createContainersButton = document.getElementById('createContainers') as HTMLInputElement;
 
-    numberOfContainerInput.oninput = () => {
-        createContainersButton.disabled = !numberOfContainerInput.value
+    labelExportFileInput.onchange = (event) => {
+        console.log('Upload: ', event);
     }
 
     const googleFormURLKey = 'google-form-url';
@@ -19,22 +20,23 @@ function main() {
     }
 
     createContainersButton.onclick = async () => {
-        numberOfContainerInput.disabled = true;
+        labelExportFileInput.disabled = true;
         createContainersButton.disabled = true;
         googleFormURLInput.disabled = true;
 
         await createContainers(
             googleFormURLInput.value,
-            parseFloat(numberOfContainerInput.value),
         );
 
-        numberOfContainerInput.disabled = false;
+        labelExportFileInput.disabled = false;
         createContainersButton.disabled = false;
         googleFormURLInput.disabled = false;
     }
 }
 
-async function createContainers(googleFormURL: string, numContainers: number): Promise<void> {
+async function createContainers(googleFormURL: string): Promise<void> {
+    const numContainers = 5; // TODO: replace with file import
+
     const containers: string[] = [];
     for (let i = 0; i < numContainers; i++) {
         containers.push(uuid.generate().toUpperCase());
