@@ -1,4 +1,3 @@
-import * as uuid from 'short-uuid';
 import { jsPDF } from 'jspdf';
 import * as qrcode from 'qr.js';
 import { read } from 'xlsx';
@@ -33,51 +32,76 @@ function main() {
 
 interface BoxInfo {
     code: string,
-    name: string,
+    lastName: string,
+    firstName: string,
     address: string,
+    city: string,
+    state: string,
+    zipcode: string,
     phase: string,
 }
 
 async function createContainers(googleFormURL: string, exportFile: File): Promise<void> {
     const contents = await exportFile.arrayBuffer();
     const workbook = read(contents);
-    const worksheet = workbook.Sheets['export_format'];
+    const worksheet = workbook.Sheets['qr_export'];
+
+    let updateMap = new Map<string, (BoxInfo, string) => void>;
 
     const boxInfos = new Map<string, BoxInfo>();
     for (const cell in worksheet) {
         const col = cell.substring(0, 1);
         const row = cell.substring(1);
 
-        if (row === 'ref' || row == '1' || row == 'margins') {
+        if (row === 'ref' || row == 'margins') {
+            continue;
+        }
+
+        const cellValue = worksheet[cell].v.toString();
+
+        if (row === '1') {
+            switch (cellValue.toLowerCase().trim()) {
+                case 'cheerboxid':
+                    updateMap[col] = (info, val) => info.code = val;
+                    break;
+                case 'recipient first name':
+                    updateMap[col] = (info, val) => info.firstName = val;
+                    break;
+                case 'recipient last name':
+                    updateMap[col] = (info, val) => info.lastName = val;
+                    break;
+                case 'recipient street address':
+                    updateMap[col] = (info, val) => info.address = val;
+                    break;
+                case 'recipient city':
+                    updateMap[col] = (info, val) => info.city = val;
+                    break;
+                case 'recipient state':
+                    updateMap[col] = (info, val) => info.state = val;
+                    break;
+                case 'recipient zip code':
+                    updateMap[col] = (info, val) => info.zipcode = val;
+                    break;
+                // TODO: phase?
+            }
             continue;
         }
 
         if (!boxInfos.has(row)) {
             boxInfos.set(row, {
                 code: 'N/A',
-                name: 'N/A',
+                firstName: 'N/A',
+                lastName: 'N/A',
                 address: 'N/A',
+                city: 'N/A',
+                state: 'N/A',
+                zipcode: 'N/A',
                 phase: 'N/A',
             });
         }
 
         const boxInfo = boxInfos.get(row);
-        const cellValue = worksheet[cell].v.toString();
-
-        switch (col) {
-            case 'A':
-                boxInfo.code = cellValue;
-                break;
-            case 'B':
-                boxInfo.name = cellValue;
-                break;
-            case 'C':
-                boxInfo.address = cellValue;
-                break;
-            case 'D':
-                boxInfo.phase = cellValue;
-                break;
-        }
+        updateMap[col](boxInfo, cellValue);
     }
 
     const boxInfosFlattened = Array.from(boxInfos.values());
@@ -100,62 +124,10 @@ function downloadCSV(boxInfos: BoxInfo[]): void {
     URL.revokeObjectURL(url);
 }
 
-async function createA4PDF(googleFormURL: string, boxInfos: BoxInfo[]) {
-    const doc = new jsPDF();
-    doc.setFontSize(9);
-
-    const pageWidth = 210;
-    const pageHeight = 297;
-
-    const codePadding = 10;
-    const textOffset = 5;
-
-    const columns = 3;
-    const cellWidth = pageWidth / columns;
-    const cellHeight = cellWidth + textOffset;
-    const rows = Math.floor(pageHeight / cellHeight);
-    const codesPerPage = rows * columns;
-
-    for (let i = 0; i < boxInfos.length; i++) {
-        let pageIndex = i % codesPerPage;
-
-        const shouldPaginate = i !== 0 && pageIndex % codesPerPage === 0;
-        if (shouldPaginate) {
-            doc.addPage();
-        }
-
-        const x = pageIndex % 3;
-        const y = Math.floor(pageIndex / 3);
-
-        const posX = x * cellWidth;
-        const posY = y * cellHeight;
-
-        const uuid = boxInfos[i].code;
-        const qrCode = await createQRCode(googleFormURL + uuid);
-
-        doc.addImage({
-            imageData: qrCode,
-            x: posX + codePadding,
-            y: posY + codePadding,
-            width: cellWidth - (codePadding * 2),
-            height: cellHeight - (codePadding * 2),
-        });
-
-        doc.text(`${boxInfos[i].name} - ${boxInfos[i].phase}`, posX + (cellWidth / 2), posY + cellHeight - textOffset, { align: 'center' });
-        doc.text(boxInfos[i].address, posX + (cellWidth / 2), posY + cellHeight - textOffset + 4, { align: 'center' });
-        doc.text(boxInfos[i].code, posX + (cellWidth / 2), posY + cellHeight - textOffset + 8, { align: 'center' });
-    }
-
-    doc.save("qrcodes.pdf");
-}
-
-// length should be >= width; the longer dimension
+// The length should be >= the width * 1.5;
 async function createShippingPDF(lengthInches: number, widthInches: number, googleFormURL: string, boxInfos: BoxInfo[]) {
     const format = [widthInches, lengthInches];
     const doc = new jsPDF({ unit: 'in', format });
-
-    const useLongFormat = lengthInches / widthInches > 1.2;
-    doc.setFontSize(useLongFormat ? 15 : 11);
 
     for (const boxInfo of boxInfos) {
         doc.addPage(format);
@@ -166,21 +138,20 @@ async function createShippingPDF(lengthInches: number, widthInches: number, goog
         doc.addImage({
             imageData: qrCode,
             x: widthInches * 0.15,
-            y: widthInches * 0.15,
+            y: widthInches * 0.2,
             width: widthInches * 0.7,
             height: widthInches * 0.7,
         });
 
-        if (useLongFormat) {
-            doc.text(boxInfo.code, widthInches / 2, widthInches, { align: 'center' });
-            doc.text(`${boxInfo.name} - ${boxInfo.phase}`, widthInches / 2, widthInches * 1.1, { align: 'center' });
-            doc.text(boxInfo.address, widthInches / 2, widthInches * 1.2, { align: 'center' });
-        } else {
-            doc.text(boxInfo.code, widthInches / 2, widthInches * 0.12, { align: 'center' });
-            doc.text(`${boxInfo.name} - ${boxInfo.phase}`, widthInches / 2, widthInches * 0.9, { align: 'center' });
-            doc.text(boxInfo.address, widthInches / 2, widthInches * 0.95, { align: 'center' });
-        }
+        doc.setFontSize(26);
+        doc.text(boxInfo.code, widthInches / 2, widthInches * 0.15, { align: 'center' });
 
+        doc.setFontSize(18);
+        doc.text(`${boxInfo.lastName}, ${boxInfo.firstName} - ${boxInfo.phase}`, widthInches / 2, widthInches, { align: 'center' });
+
+        doc.setFontSize(16);
+        doc.text(boxInfo.address, widthInches / 2, widthInches * 1.1, { align: 'center' });
+        doc.text(`${boxInfo.city}, ${boxInfo.state} ${boxInfo.zipcode}`, widthInches / 2, widthInches * 1.15, { align: 'center' });
     }
 
     doc.save("qrcodes.pdf");

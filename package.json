@@ -22,8 +22,6 @@
   "dependencies": {
     "jspdf": "^2.5.1",
     "qr.js": "^0.0.0",
-    "qrcode": "^1.5.0",
-    "short-uuid": "^4.2.0",
     "xlsx": "^0.18.5"
   }
 }
