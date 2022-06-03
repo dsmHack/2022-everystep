@@ -6,23 +6,33 @@ window.onload = main;
 function main() {
     const numberOfContainerInput = document.getElementById('numberOfContainers') as HTMLInputElement;
     const createContainersButton = document.getElementById('createContainers') as HTMLInputElement;
+    const googleFormURLInput = document.getElementById('googleFormURL') as HTMLInputElement;
 
     numberOfContainerInput.oninput = () => {
         createContainersButton.disabled = !numberOfContainerInput.value
     }
 
+    const googleFormURLKey = 'google-form-url';
+    googleFormURLInput.value = localStorage.getItem(googleFormURLKey);
+    googleFormURLInput.oninput = () => {
+        localStorage.setItem(googleFormURLKey, googleFormURLInput.value);
+    }
+
     createContainersButton.onclick = async () => {
-        await createContainers(parseFloat(numberOfContainerInput.value));
+        await createContainers(
+            googleFormURLInput.value,
+            parseFloat(numberOfContainerInput.value),
+        );
     }
 }
 
-async function createContainers(numContainers: number): Promise<void> {
+async function createContainers(googleFormURL: string, numContainers: number): Promise<void> {
     const containers: string[] = [];
     for (let i = 0; i < numContainers; i++) {
         containers.push(uuid().toUpperCase());
     }
 
-    await renderAndDownload(containers);
+    await renderAndDownload(googleFormURL, containers);
     downloadCSV(containers);
 }
 
@@ -40,7 +50,7 @@ function downloadCSV(containers: string[]): void {
     URL.revokeObjectURL(url);
 }
 
-async function renderAndDownload(containers: string[]): Promise<void> {
+async function renderAndDownload(googleFormURL: string, containers: string[]): Promise<void> {
     const doc = new jsPDF();
 
     // TODO: these are random; the fit could be much better. determine the unit, and convert A4 to it. add padding.
@@ -76,7 +86,7 @@ async function renderAndDownload(containers: string[]): Promise<void> {
         const posY = y * cellHeight;
 
         const uuid = containers[i];
-        const qrCode = await createQRCode(uuid);
+        const qrCode = await createQRCode(googleFormURL + uuid);
 
         doc.addImage({
             imageData: qrCode,
