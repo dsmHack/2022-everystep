@@ -4,9 +4,9 @@ import * as qrcode from 'qr.js';
 
 window.onload = main;
 function main() {
+    const googleFormURLInput = document.getElementById('googleFormURL') as HTMLInputElement;
     const numberOfContainerInput = document.getElementById('numberOfContainers') as HTMLInputElement;
     const createContainersButton = document.getElementById('createContainers') as HTMLInputElement;
-    const googleFormURLInput = document.getElementById('googleFormURL') as HTMLInputElement;
 
     numberOfContainerInput.oninput = () => {
         createContainersButton.disabled = !numberOfContainerInput.value
@@ -19,10 +19,18 @@ function main() {
     }
 
     createContainersButton.onclick = async () => {
+        numberOfContainerInput.disabled = true;
+        createContainersButton.disabled = true;
+        googleFormURLInput.disabled = true;
+
         await createContainers(
             googleFormURLInput.value,
             parseFloat(numberOfContainerInput.value),
         );
+
+        numberOfContainerInput.disabled = false;
+        createContainersButton.disabled = false;
+        googleFormURLInput.disabled = false;
     }
 }
 
