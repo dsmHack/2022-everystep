@@ -1,5 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { jsPDF } from 'jspdf';
+import * as qrcode from 'qr.js';
 
 window.onload = main;
 function main() {
@@ -21,8 +22,8 @@ async function createContainers(numContainers: number): Promise<void> {
         uuids.push(uuid().toUpperCase());
     }
 
-    downloadCSV(uuids);
     await renderAndDownload(uuids);
+    downloadCSV(uuids);
 }
 
 function downloadCSV(uuids: string[]): void {
@@ -64,12 +65,10 @@ async function renderAndDownload(containers: string[]): Promise<void> {
         const posY = y * cellHeight;
 
         const uuid = containers[i];
-
-        const response = await fetch('https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=' + uuid);
-        const buffer = await response.arrayBuffer();
+        const qrCode = await createQRCode(uuid);
 
         doc.addImage({
-            imageData: new Uint8Array(buffer),
+            imageData: qrCode,
             x: posX,
             y: posY,
             width: cellWidth,
@@ -81,4 +80,39 @@ async function renderAndDownload(containers: string[]): Promise<void> {
     }
 
     doc.save("qrcodes.pdf");
+}
+
+async function createQRCode(data: string): Promise<Uint8Array> {
+    const canvasContainer = document.getElementById('renderOutputContainer');
+    const canvas = document.createElement('canvas') as HTMLCanvasElement;
+    canvasContainer.appendChild(canvas);
+
+    const qrCode = qrcode.default(data);
+    const cells: boolean[][] = qrCode.modules;
+
+    const rows = cells.length;
+    const cols = cells[0].length;
+
+    const squareSize = 10;
+    canvas.width = squareSize * cols;
+    canvas.height = squareSize * rows;
+
+    const g = canvas.getContext('2d');
+    g.fillStyle = 'black';
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            if (cells[row][col]) {
+                g.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
+            }
+        }
+    }
+
+    return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+            canvasContainer.removeChild(canvas);
+            blob.arrayBuffer().then((data) => {
+                resolve(new Uint8Array(data));
+            });
+        }, 'image/png');
+    });
 }
