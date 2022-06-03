@@ -44,9 +44,8 @@ async function renderAndDownload(codeUuids: string[]): Promise<void> {
     const doc = new jsPDF();
     doc.setFontSize(7);
 
-    // TODO: these are random; the fit could be much better. determine the unit, and convert A4 to it. add padding.
     const pageWidth = 210;
-    const pageHeight = 280;
+    const pageHeight = 297;
 
     const codePadding = 10;
     const textOffset = 5;
