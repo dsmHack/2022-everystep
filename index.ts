@@ -61,7 +61,7 @@ async function renderAndDownload(containers: string[]): Promise<void> {
     for (let i = 0; i < containers.length; i++) {
         let z = i % containersPerPage;
 
-        const shouldPaginate = z % containersPerPage === 0;
+        const shouldPaginate = i !== 0 && z % containersPerPage === 0;
         if (shouldPaginate) {
             doc.addPage();
         }
