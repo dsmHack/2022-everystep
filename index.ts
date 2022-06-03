@@ -129,8 +129,12 @@ async function createShippingPDF(lengthInches: number, widthInches: number, goog
     const format = [widthInches, lengthInches];
     const doc = new jsPDF({ unit: 'in', format });
 
-    for (const boxInfo of boxInfos) {
-        doc.addPage(format);
+    for (let i = 0; i < boxInfos.length; i++) {
+        const boxInfo = boxInfos[i];
+
+        if (i > 0) {
+            doc.addPage(format);
+        }
 
         const uuid = boxInfo.code;
         const qrCode = await createQRCode(googleFormURL + uuid);
