@@ -50473,8 +50473,11 @@
     return __async(this, null, function* () {
       const format = [widthInches, lengthInches];
       const doc = new E({ unit: "in", format });
-      for (const boxInfo of boxInfos) {
-        doc.addPage(format);
+      for (let i3 = 0; i3 < boxInfos.length; i3++) {
+        const boxInfo = boxInfos[i3];
+        if (i3 > 0) {
+          doc.addPage(format);
+        }
         const uuid = boxInfo.code;
         const qrCode = yield createQRCode(googleFormURL + uuid);
         doc.addImage({
