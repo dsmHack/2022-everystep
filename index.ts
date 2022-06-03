@@ -51,15 +51,15 @@ async function renderAndDownload(containers: string[]): Promise<void> {
 
     const columns = 3;
 
-    const textHeight = 5;
+    const textOffset = 5;
     const cellWidth = width / columns;
-    const cellHeight = cellWidth + textHeight;
+    const cellHeight = cellWidth + textOffset;
 
     const rows = Math.floor(height / cellHeight);
 
     const containersPerPage = rows * columns;
 
-    doc.setFontSize(8);
+    doc.setFontSize(7);
 
     for (let i = 0; i < containers.length; i++) {
         let z = i % containersPerPage;
@@ -83,10 +83,10 @@ async function renderAndDownload(containers: string[]): Promise<void> {
             x: posX + padding,
             y: posY + padding,
             width: cellWidth - (padding * 2),
-            height: cellHeight - textHeight - (padding * 2),
+            height: cellHeight - (padding * 2),
         });
 
-        doc.text(uuid, posX + padding, posY + cellHeight - textHeight);
+        doc.text(uuid, posX + (cellWidth / 2), posY + cellHeight - textOffset, { align: 'center' });
     }
 
     doc.save("qrcodes.pdf");
