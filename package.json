@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A QR code generator for Every Step's Amanda the Panda program",
   "main": "index.js",
+  "type": "module",
   "watch": {
     "build": "*.ts"
   },

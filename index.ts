@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { jsPDF } from "jspdf";
+import { jsPDF } from 'jspdf';
 
 window.onload = main;
 function main() {
@@ -15,7 +15,6 @@ function main() {
     }
 }
 
-// @ts-ignore
 async function createContainers(numContainers: number): Promise<void> {
     const uuids: string[] = [];
     for (let i = 0; i < numContainers; i++) {
@@ -24,6 +23,8 @@ async function createContainers(numContainers: number): Promise<void> {
 
     downloadCSV(uuids);
     await renderAndDownload(uuids);
+
+    return;
 }
 
 function downloadCSV(uuids: string[]): void {
@@ -40,7 +41,6 @@ function downloadCSV(uuids: string[]): void {
     URL.revokeObjectURL(url);
 }
 
-// @ts-ignore
 async function renderAndDownload(containers: string[]): Promise<void> {
     const doc = new jsPDF();
 
