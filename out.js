@@ -24,6 +24,7 @@
     return to;
   };
   var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target, mod));
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
   var __async = (__this, __arguments, generator) => {
     return new Promise((resolve, reject) => {
       var fulfilled = (value) => {
@@ -44,6 +45,671 @@
       step((generator = generator.apply(__this, __arguments)).next());
     });
   };
+
+  // node_modules/uuid/dist/esm-browser/rng.js
+  function rng() {
+    if (!getRandomValues) {
+      getRandomValues = typeof crypto !== "undefined" && crypto.getRandomValues && crypto.getRandomValues.bind(crypto) || typeof msCrypto !== "undefined" && typeof msCrypto.getRandomValues === "function" && msCrypto.getRandomValues.bind(msCrypto);
+      if (!getRandomValues) {
+        throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
+      }
+    }
+    return getRandomValues(rnds8);
+  }
+  var getRandomValues, rnds8;
+  var init_rng = __esm({
+    "node_modules/uuid/dist/esm-browser/rng.js"() {
+      rnds8 = new Uint8Array(16);
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/regex.js
+  var regex_default;
+  var init_regex = __esm({
+    "node_modules/uuid/dist/esm-browser/regex.js"() {
+      regex_default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/validate.js
+  function validate(uuid2) {
+    return typeof uuid2 === "string" && regex_default.test(uuid2);
+  }
+  var validate_default;
+  var init_validate = __esm({
+    "node_modules/uuid/dist/esm-browser/validate.js"() {
+      init_regex();
+      validate_default = validate;
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/stringify.js
+  function stringify(arr) {
+    var offset = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : 0;
+    var uuid2 = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+    if (!validate_default(uuid2)) {
+      throw TypeError("Stringified UUID is invalid");
+    }
+    return uuid2;
+  }
+  var byteToHex, i3, stringify_default;
+  var init_stringify = __esm({
+    "node_modules/uuid/dist/esm-browser/stringify.js"() {
+      init_validate();
+      byteToHex = [];
+      for (i3 = 0; i3 < 256; ++i3) {
+        byteToHex.push((i3 + 256).toString(16).substr(1));
+      }
+      stringify_default = stringify;
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/v1.js
+  function v1(options, buf, offset) {
+    var i3 = buf && offset || 0;
+    var b2 = buf || new Array(16);
+    options = options || {};
+    var node2 = options.node || _nodeId;
+    var clockseq = options.clockseq !== void 0 ? options.clockseq : _clockseq;
+    if (node2 == null || clockseq == null) {
+      var seedBytes = options.random || (options.rng || rng)();
+      if (node2 == null) {
+        node2 = _nodeId = [seedBytes[0] | 1, seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]];
+      }
+      if (clockseq == null) {
+        clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 16383;
+      }
+    }
+    var msecs = options.msecs !== void 0 ? options.msecs : Date.now();
+    var nsecs = options.nsecs !== void 0 ? options.nsecs : _lastNSecs + 1;
+    var dt2 = msecs - _lastMSecs + (nsecs - _lastNSecs) / 1e4;
+    if (dt2 < 0 && options.clockseq === void 0) {
+      clockseq = clockseq + 1 & 16383;
+    }
+    if ((dt2 < 0 || msecs > _lastMSecs) && options.nsecs === void 0) {
+      nsecs = 0;
+    }
+    if (nsecs >= 1e4) {
+      throw new Error("uuid.v1(): Can't create more than 10M uuids/sec");
+    }
+    _lastMSecs = msecs;
+    _lastNSecs = nsecs;
+    _clockseq = clockseq;
+    msecs += 122192928e5;
+    var tl = ((msecs & 268435455) * 1e4 + nsecs) % 4294967296;
+    b2[i3++] = tl >>> 24 & 255;
+    b2[i3++] = tl >>> 16 & 255;
+    b2[i3++] = tl >>> 8 & 255;
+    b2[i3++] = tl & 255;
+    var tmh = msecs / 4294967296 * 1e4 & 268435455;
+    b2[i3++] = tmh >>> 8 & 255;
+    b2[i3++] = tmh & 255;
+    b2[i3++] = tmh >>> 24 & 15 | 16;
+    b2[i3++] = tmh >>> 16 & 255;
+    b2[i3++] = clockseq >>> 8 | 128;
+    b2[i3++] = clockseq & 255;
+    for (var n3 = 0; n3 < 6; ++n3) {
+      b2[i3 + n3] = node2[n3];
+    }
+    return buf || stringify_default(b2);
+  }
+  var _nodeId, _clockseq, _lastMSecs, _lastNSecs, v1_default;
+  var init_v1 = __esm({
+    "node_modules/uuid/dist/esm-browser/v1.js"() {
+      init_rng();
+      init_stringify();
+      _lastMSecs = 0;
+      _lastNSecs = 0;
+      v1_default = v1;
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/parse.js
+  function parse(uuid2) {
+    if (!validate_default(uuid2)) {
+      throw TypeError("Invalid UUID");
+    }
+    var v6;
+    var arr = new Uint8Array(16);
+    arr[0] = (v6 = parseInt(uuid2.slice(0, 8), 16)) >>> 24;
+    arr[1] = v6 >>> 16 & 255;
+    arr[2] = v6 >>> 8 & 255;
+    arr[3] = v6 & 255;
+    arr[4] = (v6 = parseInt(uuid2.slice(9, 13), 16)) >>> 8;
+    arr[5] = v6 & 255;
+    arr[6] = (v6 = parseInt(uuid2.slice(14, 18), 16)) >>> 8;
+    arr[7] = v6 & 255;
+    arr[8] = (v6 = parseInt(uuid2.slice(19, 23), 16)) >>> 8;
+    arr[9] = v6 & 255;
+    arr[10] = (v6 = parseInt(uuid2.slice(24, 36), 16)) / 1099511627776 & 255;
+    arr[11] = v6 / 4294967296 & 255;
+    arr[12] = v6 >>> 24 & 255;
+    arr[13] = v6 >>> 16 & 255;
+    arr[14] = v6 >>> 8 & 255;
+    arr[15] = v6 & 255;
+    return arr;
+  }
+  var parse_default;
+  var init_parse = __esm({
+    "node_modules/uuid/dist/esm-browser/parse.js"() {
+      init_validate();
+      parse_default = parse;
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/v35.js
+  function stringToBytes(str) {
+    str = unescape(encodeURIComponent(str));
+    var bytes = [];
+    for (var i3 = 0; i3 < str.length; ++i3) {
+      bytes.push(str.charCodeAt(i3));
+    }
+    return bytes;
+  }
+  function v35_default(name, version2, hashfunc) {
+    function generateUUID(value, namespace, buf, offset) {
+      if (typeof value === "string") {
+        value = stringToBytes(value);
+      }
+      if (typeof namespace === "string") {
+        namespace = parse_default(namespace);
+      }
+      if (namespace.length !== 16) {
+        throw TypeError("Namespace must be array-like (16 iterable integer values, 0-255)");
+      }
+      var bytes = new Uint8Array(16 + value.length);
+      bytes.set(namespace);
+      bytes.set(value, namespace.length);
+      bytes = hashfunc(bytes);
+      bytes[6] = bytes[6] & 15 | version2;
+      bytes[8] = bytes[8] & 63 | 128;
+      if (buf) {
+        offset = offset || 0;
+        for (var i3 = 0; i3 < 16; ++i3) {
+          buf[offset + i3] = bytes[i3];
+        }
+        return buf;
+      }
+      return stringify_default(bytes);
+    }
+    try {
+      generateUUID.name = name;
+    } catch (err) {
+    }
+    generateUUID.DNS = DNS;
+    generateUUID.URL = URL2;
+    return generateUUID;
+  }
+  var DNS, URL2;
+  var init_v35 = __esm({
+    "node_modules/uuid/dist/esm-browser/v35.js"() {
+      init_stringify();
+      init_parse();
+      DNS = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
+      URL2 = "6ba7b811-9dad-11d1-80b4-00c04fd430c8";
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/md5.js
+  function md5(bytes) {
+    if (typeof bytes === "string") {
+      var msg = unescape(encodeURIComponent(bytes));
+      bytes = new Uint8Array(msg.length);
+      for (var i3 = 0; i3 < msg.length; ++i3) {
+        bytes[i3] = msg.charCodeAt(i3);
+      }
+    }
+    return md5ToHexEncodedArray(wordsToMd5(bytesToWords(bytes), bytes.length * 8));
+  }
+  function md5ToHexEncodedArray(input) {
+    var output = [];
+    var length32 = input.length * 32;
+    var hexTab = "0123456789abcdef";
+    for (var i3 = 0; i3 < length32; i3 += 8) {
+      var x2 = input[i3 >> 5] >>> i3 % 32 & 255;
+      var hex = parseInt(hexTab.charAt(x2 >>> 4 & 15) + hexTab.charAt(x2 & 15), 16);
+      output.push(hex);
+    }
+    return output;
+  }
+  function getOutputLength(inputLength8) {
+    return (inputLength8 + 64 >>> 9 << 4) + 14 + 1;
+  }
+  function wordsToMd5(x2, len) {
+    x2[len >> 5] |= 128 << len % 32;
+    x2[getOutputLength(len) - 1] = len;
+    var a3 = 1732584193;
+    var b2 = -271733879;
+    var c4 = -1732584194;
+    var d2 = 271733878;
+    for (var i3 = 0; i3 < x2.length; i3 += 16) {
+      var olda = a3;
+      var oldb = b2;
+      var oldc = c4;
+      var oldd = d2;
+      a3 = md5ff(a3, b2, c4, d2, x2[i3], 7, -680876936);
+      d2 = md5ff(d2, a3, b2, c4, x2[i3 + 1], 12, -389564586);
+      c4 = md5ff(c4, d2, a3, b2, x2[i3 + 2], 17, 606105819);
+      b2 = md5ff(b2, c4, d2, a3, x2[i3 + 3], 22, -1044525330);
+      a3 = md5ff(a3, b2, c4, d2, x2[i3 + 4], 7, -176418897);
+      d2 = md5ff(d2, a3, b2, c4, x2[i3 + 5], 12, 1200080426);
+      c4 = md5ff(c4, d2, a3, b2, x2[i3 + 6], 17, -1473231341);
+      b2 = md5ff(b2, c4, d2, a3, x2[i3 + 7], 22, -45705983);
+      a3 = md5ff(a3, b2, c4, d2, x2[i3 + 8], 7, 1770035416);
+      d2 = md5ff(d2, a3, b2, c4, x2[i3 + 9], 12, -1958414417);
+      c4 = md5ff(c4, d2, a3, b2, x2[i3 + 10], 17, -42063);
+      b2 = md5ff(b2, c4, d2, a3, x2[i3 + 11], 22, -1990404162);
+      a3 = md5ff(a3, b2, c4, d2, x2[i3 + 12], 7, 1804603682);
+      d2 = md5ff(d2, a3, b2, c4, x2[i3 + 13], 12, -40341101);
+      c4 = md5ff(c4, d2, a3, b2, x2[i3 + 14], 17, -1502002290);
+      b2 = md5ff(b2, c4, d2, a3, x2[i3 + 15], 22, 1236535329);
+      a3 = md5gg(a3, b2, c4, d2, x2[i3 + 1], 5, -165796510);
+      d2 = md5gg(d2, a3, b2, c4, x2[i3 + 6], 9, -1069501632);
+      c4 = md5gg(c4, d2, a3, b2, x2[i3 + 11], 14, 643717713);
+      b2 = md5gg(b2, c4, d2, a3, x2[i3], 20, -373897302);
+      a3 = md5gg(a3, b2, c4, d2, x2[i3 + 5], 5, -701558691);
+      d2 = md5gg(d2, a3, b2, c4, x2[i3 + 10], 9, 38016083);
+      c4 = md5gg(c4, d2, a3, b2, x2[i3 + 15], 14, -660478335);
+      b2 = md5gg(b2, c4, d2, a3, x2[i3 + 4], 20, -405537848);
+      a3 = md5gg(a3, b2, c4, d2, x2[i3 + 9], 5, 568446438);
+      d2 = md5gg(d2, a3, b2, c4, x2[i3 + 14], 9, -1019803690);
+      c4 = md5gg(c4, d2, a3, b2, x2[i3 + 3], 14, -187363961);
+      b2 = md5gg(b2, c4, d2, a3, x2[i3 + 8], 20, 1163531501);
+      a3 = md5gg(a3, b2, c4, d2, x2[i3 + 13], 5, -1444681467);
+      d2 = md5gg(d2, a3, b2, c4, x2[i3 + 2], 9, -51403784);
+      c4 = md5gg(c4, d2, a3, b2, x2[i3 + 7], 14, 1735328473);
+      b2 = md5gg(b2, c4, d2, a3, x2[i3 + 12], 20, -1926607734);
+      a3 = md5hh(a3, b2, c4, d2, x2[i3 + 5], 4, -378558);
+      d2 = md5hh(d2, a3, b2, c4, x2[i3 + 8], 11, -2022574463);
+      c4 = md5hh(c4, d2, a3, b2, x2[i3 + 11], 16, 1839030562);
+      b2 = md5hh(b2, c4, d2, a3, x2[i3 + 14], 23, -35309556);
+      a3 = md5hh(a3, b2, c4, d2, x2[i3 + 1], 4, -1530992060);
+      d2 = md5hh(d2, a3, b2, c4, x2[i3 + 4], 11, 1272893353);
+      c4 = md5hh(c4, d2, a3, b2, x2[i3 + 7], 16, -155497632);
+      b2 = md5hh(b2, c4, d2, a3, x2[i3 + 10], 23, -1094730640);
+      a3 = md5hh(a3, b2, c4, d2, x2[i3 + 13], 4, 681279174);
+      d2 = md5hh(d2, a3, b2, c4, x2[i3], 11, -358537222);
+      c4 = md5hh(c4, d2, a3, b2, x2[i3 + 3], 16, -722521979);
+      b2 = md5hh(b2, c4, d2, a3, x2[i3 + 6], 23, 76029189);
+      a3 = md5hh(a3, b2, c4, d2, x2[i3 + 9], 4, -640364487);
+      d2 = md5hh(d2, a3, b2, c4, x2[i3 + 12], 11, -421815835);
+      c4 = md5hh(c4, d2, a3, b2, x2[i3 + 15], 16, 530742520);
+      b2 = md5hh(b2, c4, d2, a3, x2[i3 + 2], 23, -995338651);
+      a3 = md5ii(a3, b2, c4, d2, x2[i3], 6, -198630844);
+      d2 = md5ii(d2, a3, b2, c4, x2[i3 + 7], 10, 1126891415);
+      c4 = md5ii(c4, d2, a3, b2, x2[i3 + 14], 15, -1416354905);
+      b2 = md5ii(b2, c4, d2, a3, x2[i3 + 5], 21, -57434055);
+      a3 = md5ii(a3, b2, c4, d2, x2[i3 + 12], 6, 1700485571);
+      d2 = md5ii(d2, a3, b2, c4, x2[i3 + 3], 10, -1894986606);
+      c4 = md5ii(c4, d2, a3, b2, x2[i3 + 10], 15, -1051523);
+      b2 = md5ii(b2, c4, d2, a3, x2[i3 + 1], 21, -2054922799);
+      a3 = md5ii(a3, b2, c4, d2, x2[i3 + 8], 6, 1873313359);
+      d2 = md5ii(d2, a3, b2, c4, x2[i3 + 15], 10, -30611744);
+      c4 = md5ii(c4, d2, a3, b2, x2[i3 + 6], 15, -1560198380);
+      b2 = md5ii(b2, c4, d2, a3, x2[i3 + 13], 21, 1309151649);
+      a3 = md5ii(a3, b2, c4, d2, x2[i3 + 4], 6, -145523070);
+      d2 = md5ii(d2, a3, b2, c4, x2[i3 + 11], 10, -1120210379);
+      c4 = md5ii(c4, d2, a3, b2, x2[i3 + 2], 15, 718787259);
+      b2 = md5ii(b2, c4, d2, a3, x2[i3 + 9], 21, -343485551);
+      a3 = safeAdd(a3, olda);
+      b2 = safeAdd(b2, oldb);
+      c4 = safeAdd(c4, oldc);
+      d2 = safeAdd(d2, oldd);
+    }
+    return [a3, b2, c4, d2];
+  }
+  function bytesToWords(input) {
+    if (input.length === 0) {
+      return [];
+    }
+    var length8 = input.length * 8;
+    var output = new Uint32Array(getOutputLength(length8));
+    for (var i3 = 0; i3 < length8; i3 += 8) {
+      output[i3 >> 5] |= (input[i3 / 8] & 255) << i3 % 32;
+    }
+    return output;
+  }
+  function safeAdd(x2, y3) {
+    var lsw = (x2 & 65535) + (y3 & 65535);
+    var msw = (x2 >> 16) + (y3 >> 16) + (lsw >> 16);
+    return msw << 16 | lsw & 65535;
+  }
+  function bitRotateLeft(num, cnt) {
+    return num << cnt | num >>> 32 - cnt;
+  }
+  function md5cmn(q2, a3, b2, x2, s3, t3) {
+    return safeAdd(bitRotateLeft(safeAdd(safeAdd(a3, q2), safeAdd(x2, t3)), s3), b2);
+  }
+  function md5ff(a3, b2, c4, d2, x2, s3, t3) {
+    return md5cmn(b2 & c4 | ~b2 & d2, a3, b2, x2, s3, t3);
+  }
+  function md5gg(a3, b2, c4, d2, x2, s3, t3) {
+    return md5cmn(b2 & d2 | c4 & ~d2, a3, b2, x2, s3, t3);
+  }
+  function md5hh(a3, b2, c4, d2, x2, s3, t3) {
+    return md5cmn(b2 ^ c4 ^ d2, a3, b2, x2, s3, t3);
+  }
+  function md5ii(a3, b2, c4, d2, x2, s3, t3) {
+    return md5cmn(c4 ^ (b2 | ~d2), a3, b2, x2, s3, t3);
+  }
+  var md5_default;
+  var init_md5 = __esm({
+    "node_modules/uuid/dist/esm-browser/md5.js"() {
+      md5_default = md5;
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/v3.js
+  var v3, v3_default;
+  var init_v3 = __esm({
+    "node_modules/uuid/dist/esm-browser/v3.js"() {
+      init_v35();
+      init_md5();
+      v3 = v35_default("v3", 48, md5_default);
+      v3_default = v3;
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/v4.js
+  function v4(options, buf, offset) {
+    options = options || {};
+    var rnds = options.random || (options.rng || rng)();
+    rnds[6] = rnds[6] & 15 | 64;
+    rnds[8] = rnds[8] & 63 | 128;
+    if (buf) {
+      offset = offset || 0;
+      for (var i3 = 0; i3 < 16; ++i3) {
+        buf[offset + i3] = rnds[i3];
+      }
+      return buf;
+    }
+    return stringify_default(rnds);
+  }
+  var v4_default;
+  var init_v4 = __esm({
+    "node_modules/uuid/dist/esm-browser/v4.js"() {
+      init_rng();
+      init_stringify();
+      v4_default = v4;
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/sha1.js
+  function f(s3, x2, y3, z2) {
+    switch (s3) {
+      case 0:
+        return x2 & y3 ^ ~x2 & z2;
+      case 1:
+        return x2 ^ y3 ^ z2;
+      case 2:
+        return x2 & y3 ^ x2 & z2 ^ y3 & z2;
+      case 3:
+        return x2 ^ y3 ^ z2;
+    }
+  }
+  function ROTL(x2, n3) {
+    return x2 << n3 | x2 >>> 32 - n3;
+  }
+  function sha1(bytes) {
+    var K2 = [1518500249, 1859775393, 2400959708, 3395469782];
+    var H2 = [1732584193, 4023233417, 2562383102, 271733878, 3285377520];
+    if (typeof bytes === "string") {
+      var msg = unescape(encodeURIComponent(bytes));
+      bytes = [];
+      for (var i3 = 0; i3 < msg.length; ++i3) {
+        bytes.push(msg.charCodeAt(i3));
+      }
+    } else if (!Array.isArray(bytes)) {
+      bytes = Array.prototype.slice.call(bytes);
+    }
+    bytes.push(128);
+    var l3 = bytes.length / 4 + 2;
+    var N3 = Math.ceil(l3 / 16);
+    var M2 = new Array(N3);
+    for (var _i = 0; _i < N3; ++_i) {
+      var arr = new Uint32Array(16);
+      for (var j2 = 0; j2 < 16; ++j2) {
+        arr[j2] = bytes[_i * 64 + j2 * 4] << 24 | bytes[_i * 64 + j2 * 4 + 1] << 16 | bytes[_i * 64 + j2 * 4 + 2] << 8 | bytes[_i * 64 + j2 * 4 + 3];
+      }
+      M2[_i] = arr;
+    }
+    M2[N3 - 1][14] = (bytes.length - 1) * 8 / Math.pow(2, 32);
+    M2[N3 - 1][14] = Math.floor(M2[N3 - 1][14]);
+    M2[N3 - 1][15] = (bytes.length - 1) * 8 & 4294967295;
+    for (var _i2 = 0; _i2 < N3; ++_i2) {
+      var W2 = new Uint32Array(80);
+      for (var t3 = 0; t3 < 16; ++t3) {
+        W2[t3] = M2[_i2][t3];
+      }
+      for (var _t2 = 16; _t2 < 80; ++_t2) {
+        W2[_t2] = ROTL(W2[_t2 - 3] ^ W2[_t2 - 8] ^ W2[_t2 - 14] ^ W2[_t2 - 16], 1);
+      }
+      var a3 = H2[0];
+      var b2 = H2[1];
+      var c4 = H2[2];
+      var d2 = H2[3];
+      var e2 = H2[4];
+      for (var _t22 = 0; _t22 < 80; ++_t22) {
+        var s3 = Math.floor(_t22 / 20);
+        var T3 = ROTL(a3, 5) + f(s3, b2, c4, d2) + e2 + K2[s3] + W2[_t22] >>> 0;
+        e2 = d2;
+        d2 = c4;
+        c4 = ROTL(b2, 30) >>> 0;
+        b2 = a3;
+        a3 = T3;
+      }
+      H2[0] = H2[0] + a3 >>> 0;
+      H2[1] = H2[1] + b2 >>> 0;
+      H2[2] = H2[2] + c4 >>> 0;
+      H2[3] = H2[3] + d2 >>> 0;
+      H2[4] = H2[4] + e2 >>> 0;
+    }
+    return [H2[0] >> 24 & 255, H2[0] >> 16 & 255, H2[0] >> 8 & 255, H2[0] & 255, H2[1] >> 24 & 255, H2[1] >> 16 & 255, H2[1] >> 8 & 255, H2[1] & 255, H2[2] >> 24 & 255, H2[2] >> 16 & 255, H2[2] >> 8 & 255, H2[2] & 255, H2[3] >> 24 & 255, H2[3] >> 16 & 255, H2[3] >> 8 & 255, H2[3] & 255, H2[4] >> 24 & 255, H2[4] >> 16 & 255, H2[4] >> 8 & 255, H2[4] & 255];
+  }
+  var sha1_default;
+  var init_sha1 = __esm({
+    "node_modules/uuid/dist/esm-browser/sha1.js"() {
+      sha1_default = sha1;
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/v5.js
+  var v5, v5_default;
+  var init_v5 = __esm({
+    "node_modules/uuid/dist/esm-browser/v5.js"() {
+      init_v35();
+      init_sha1();
+      v5 = v35_default("v5", 80, sha1_default);
+      v5_default = v5;
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/nil.js
+  var nil_default;
+  var init_nil = __esm({
+    "node_modules/uuid/dist/esm-browser/nil.js"() {
+      nil_default = "00000000-0000-0000-0000-000000000000";
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/version.js
+  function version(uuid2) {
+    if (!validate_default(uuid2)) {
+      throw TypeError("Invalid UUID");
+    }
+    return parseInt(uuid2.substr(14, 1), 16);
+  }
+  var version_default;
+  var init_version = __esm({
+    "node_modules/uuid/dist/esm-browser/version.js"() {
+      init_validate();
+      version_default = version;
+    }
+  });
+
+  // node_modules/uuid/dist/esm-browser/index.js
+  var esm_browser_exports = {};
+  __export(esm_browser_exports, {
+    NIL: () => nil_default,
+    parse: () => parse_default,
+    stringify: () => stringify_default,
+    v1: () => v1_default,
+    v3: () => v3_default,
+    v4: () => v4_default,
+    v5: () => v5_default,
+    validate: () => validate_default,
+    version: () => version_default
+  });
+  var init_esm_browser = __esm({
+    "node_modules/uuid/dist/esm-browser/index.js"() {
+      init_v1();
+      init_v3();
+      init_v4();
+      init_v5();
+      init_nil();
+      init_version();
+      init_validate();
+      init_stringify();
+      init_parse();
+    }
+  });
+
+  // node_modules/any-base/src/converter.js
+  var require_converter = __commonJS({
+    "node_modules/any-base/src/converter.js"(exports, module) {
+      "use strict";
+      function Converter(srcAlphabet, dstAlphabet) {
+        if (!srcAlphabet || !dstAlphabet || !srcAlphabet.length || !dstAlphabet.length) {
+          throw new Error("Bad alphabet");
+        }
+        this.srcAlphabet = srcAlphabet;
+        this.dstAlphabet = dstAlphabet;
+      }
+      Converter.prototype.convert = function(number) {
+        var i3, divide, newlen, numberMap = {}, fromBase = this.srcAlphabet.length, toBase = this.dstAlphabet.length, length = number.length, result = typeof number === "string" ? "" : [];
+        if (!this.isValid(number)) {
+          throw new Error('Number "' + number + '" contains of non-alphabetic digits (' + this.srcAlphabet + ")");
+        }
+        if (this.srcAlphabet === this.dstAlphabet) {
+          return number;
+        }
+        for (i3 = 0; i3 < length; i3++) {
+          numberMap[i3] = this.srcAlphabet.indexOf(number[i3]);
+        }
+        do {
+          divide = 0;
+          newlen = 0;
+          for (i3 = 0; i3 < length; i3++) {
+            divide = divide * fromBase + numberMap[i3];
+            if (divide >= toBase) {
+              numberMap[newlen++] = parseInt(divide / toBase, 10);
+              divide = divide % toBase;
+            } else if (newlen > 0) {
+              numberMap[newlen++] = 0;
+            }
+          }
+          length = newlen;
+          result = this.dstAlphabet.slice(divide, divide + 1).concat(result);
+        } while (newlen !== 0);
+        return result;
+      };
+      Converter.prototype.isValid = function(number) {
+        var i3 = 0;
+        for (; i3 < number.length; ++i3) {
+          if (this.srcAlphabet.indexOf(number[i3]) === -1) {
+            return false;
+          }
+        }
+        return true;
+      };
+      module.exports = Converter;
+    }
+  });
+
+  // node_modules/any-base/index.js
+  var require_any_base = __commonJS({
+    "node_modules/any-base/index.js"(exports, module) {
+      var Converter = require_converter();
+      function anyBase(srcAlphabet, dstAlphabet) {
+        var converter = new Converter(srcAlphabet, dstAlphabet);
+        return function(number) {
+          return converter.convert(number);
+        };
+      }
+      anyBase.BIN = "01";
+      anyBase.OCT = "01234567";
+      anyBase.DEC = "0123456789";
+      anyBase.HEX = "0123456789abcdef";
+      module.exports = anyBase;
+    }
+  });
+
+  // node_modules/short-uuid/index.js
+  var require_short_uuid = __commonJS({
+    "node_modules/short-uuid/index.js"(exports, module) {
+      var { v4: uuidv4 } = (init_esm_browser(), __toCommonJS(esm_browser_exports));
+      var anyBase = require_any_base();
+      var flickrBase58 = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+      var cookieBase90 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%&'()*+-./:<=>?@[]^_`{|}~";
+      var baseOptions = {
+        consistentLength: true
+      };
+      var toFlickr;
+      var shortenUUID = (longId, translator, paddingParams) => {
+        const translated = translator(longId.toLowerCase().replace(/-/g, ""));
+        if (!paddingParams || !paddingParams.consistentLength)
+          return translated;
+        return translated.padStart(paddingParams.shortIdLength, paddingParams.paddingChar);
+      };
+      var enlargeUUID = (shortId, translator) => {
+        const uu1 = translator(shortId).padStart(32, "0");
+        const m4 = uu1.match(/(\w{8})(\w{4})(\w{4})(\w{4})(\w{12})/);
+        return [m4[1], m4[2], m4[3], m4[4], m4[5]].join("-");
+      };
+      var getShortIdLength = (alphabetLength) => Math.ceil(Math.log(2 ** 128) / Math.log(alphabetLength));
+      module.exports = (() => {
+        const makeConvertor = (toAlphabet, options) => {
+          const useAlphabet = toAlphabet || flickrBase58;
+          const selectedOptions = { ...baseOptions, ...options };
+          if ([...new Set(Array.from(useAlphabet))].length !== useAlphabet.length) {
+            throw new Error("The provided Alphabet has duplicate characters resulting in unreliable results");
+          }
+          const shortIdLength = getShortIdLength(useAlphabet.length);
+          const paddingParams = {
+            shortIdLength,
+            consistentLength: selectedOptions.consistentLength,
+            paddingChar: useAlphabet[0]
+          };
+          const fromHex = anyBase(anyBase.HEX, useAlphabet);
+          const toHex = anyBase(useAlphabet, anyBase.HEX);
+          const generate2 = () => shortenUUID(uuidv4(), fromHex, paddingParams);
+          const translator = {
+            new: generate2,
+            generate: generate2,
+            uuid: uuidv4,
+            fromUUID: (uuid2) => shortenUUID(uuid2, fromHex, paddingParams),
+            toUUID: (shortUuid) => enlargeUUID(shortUuid, toHex),
+            alphabet: useAlphabet,
+            maxLength: shortIdLength
+          };
+          Object.freeze(translator);
+          return translator;
+        };
+        makeConvertor.constants = {
+          flickrBase58,
+          cookieBase90
+        };
+        makeConvertor.uuid = uuidv4;
+        makeConvertor.generate = () => {
+          if (!toFlickr) {
+            toFlickr = makeConvertor(flickrBase58).generate;
+          }
+          return toFlickr();
+        };
+        return makeConvertor;
+      })();
+    }
+  });
 
   // node_modules/html2canvas/dist/html2canvas.js
   var require_html2canvas = __commonJS({
@@ -115,21 +781,21 @@
             if (t3[0] & 1)
               throw t3[1];
             return t3[1];
-          }, trys: [], ops: [] }, f4, y3, t3, g2;
+          }, trys: [], ops: [] }, f5, y3, t3, g2;
           return g2 = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g2[Symbol.iterator] = function() {
             return this;
           }), g2;
           function verb(n3) {
-            return function(v3) {
-              return step([n3, v3]);
+            return function(v6) {
+              return step([n3, v6]);
             };
           }
           function step(op) {
-            if (f4)
+            if (f5)
               throw new TypeError("Generator is already executing.");
             while (_3)
               try {
-                if (f4 = 1, y3 && (t3 = op[0] & 2 ? y3["return"] : op[0] ? y3["throw"] || ((t3 = y3["return"]) && t3.call(y3), 0) : y3.next) && !(t3 = t3.call(y3, op[1])).done)
+                if (f5 = 1, y3 && (t3 = op[0] & 2 ? y3["return"] : op[0] ? y3["throw"] || ((t3 = y3["return"]) && t3.call(y3), 0) : y3.next) && !(t3 = t3.call(y3, op[1])).done)
                   return t3;
                 if (y3 = 0, t3)
                   op = [op[0] & 2, t3.value];
@@ -179,7 +845,7 @@
                 op = [6, e3];
                 y3 = 0;
               } finally {
-                f4 = t3 = 0;
+                f5 = t3 = 0;
               }
             if (op[0] & 5)
               throw op[1];
@@ -822,7 +1488,7 @@
         var ZERO = 48;
         var a3 = 97;
         var e2 = 101;
-        var f3 = 102;
+        var f4 = 102;
         var u3 = 117;
         var z2 = 122;
         var A2 = 65;
@@ -837,7 +1503,7 @@
           return codePoint >= 55296 && codePoint <= 57343;
         };
         var isHex = function(codePoint) {
-          return isDigit(codePoint) || codePoint >= A2 && codePoint <= F2 || codePoint >= a3 && codePoint <= f3;
+          return isDigit(codePoint) || codePoint >= A2 && codePoint <= F2 || codePoint >= a3 && codePoint <= f4;
         };
         var isLowerCaseLetter = function(codePoint) {
           return codePoint >= a3 && codePoint <= z2;
@@ -3489,73 +4155,73 @@
         var CSSParsedDeclaration = function() {
           function CSSParsedDeclaration2(context, declaration) {
             var _a2, _b2;
-            this.animationDuration = parse(context, duration, declaration.animationDuration);
-            this.backgroundClip = parse(context, backgroundClip, declaration.backgroundClip);
-            this.backgroundColor = parse(context, backgroundColor, declaration.backgroundColor);
-            this.backgroundImage = parse(context, backgroundImage, declaration.backgroundImage);
-            this.backgroundOrigin = parse(context, backgroundOrigin, declaration.backgroundOrigin);
-            this.backgroundPosition = parse(context, backgroundPosition, declaration.backgroundPosition);
-            this.backgroundRepeat = parse(context, backgroundRepeat, declaration.backgroundRepeat);
-            this.backgroundSize = parse(context, backgroundSize, declaration.backgroundSize);
-            this.borderTopColor = parse(context, borderTopColor, declaration.borderTopColor);
-            this.borderRightColor = parse(context, borderRightColor, declaration.borderRightColor);
-            this.borderBottomColor = parse(context, borderBottomColor, declaration.borderBottomColor);
-            this.borderLeftColor = parse(context, borderLeftColor, declaration.borderLeftColor);
-            this.borderTopLeftRadius = parse(context, borderTopLeftRadius, declaration.borderTopLeftRadius);
-            this.borderTopRightRadius = parse(context, borderTopRightRadius, declaration.borderTopRightRadius);
-            this.borderBottomRightRadius = parse(context, borderBottomRightRadius, declaration.borderBottomRightRadius);
-            this.borderBottomLeftRadius = parse(context, borderBottomLeftRadius, declaration.borderBottomLeftRadius);
-            this.borderTopStyle = parse(context, borderTopStyle, declaration.borderTopStyle);
-            this.borderRightStyle = parse(context, borderRightStyle, declaration.borderRightStyle);
-            this.borderBottomStyle = parse(context, borderBottomStyle, declaration.borderBottomStyle);
-            this.borderLeftStyle = parse(context, borderLeftStyle, declaration.borderLeftStyle);
-            this.borderTopWidth = parse(context, borderTopWidth, declaration.borderTopWidth);
-            this.borderRightWidth = parse(context, borderRightWidth, declaration.borderRightWidth);
-            this.borderBottomWidth = parse(context, borderBottomWidth, declaration.borderBottomWidth);
-            this.borderLeftWidth = parse(context, borderLeftWidth, declaration.borderLeftWidth);
-            this.boxShadow = parse(context, boxShadow, declaration.boxShadow);
-            this.color = parse(context, color, declaration.color);
-            this.direction = parse(context, direction, declaration.direction);
-            this.display = parse(context, display, declaration.display);
-            this.float = parse(context, float, declaration.cssFloat);
-            this.fontFamily = parse(context, fontFamily, declaration.fontFamily);
-            this.fontSize = parse(context, fontSize, declaration.fontSize);
-            this.fontStyle = parse(context, fontStyle, declaration.fontStyle);
-            this.fontVariant = parse(context, fontVariant, declaration.fontVariant);
-            this.fontWeight = parse(context, fontWeight, declaration.fontWeight);
-            this.letterSpacing = parse(context, letterSpacing, declaration.letterSpacing);
-            this.lineBreak = parse(context, lineBreak, declaration.lineBreak);
-            this.lineHeight = parse(context, lineHeight, declaration.lineHeight);
-            this.listStyleImage = parse(context, listStyleImage, declaration.listStyleImage);
-            this.listStylePosition = parse(context, listStylePosition, declaration.listStylePosition);
-            this.listStyleType = parse(context, listStyleType, declaration.listStyleType);
-            this.marginTop = parse(context, marginTop, declaration.marginTop);
-            this.marginRight = parse(context, marginRight, declaration.marginRight);
-            this.marginBottom = parse(context, marginBottom, declaration.marginBottom);
-            this.marginLeft = parse(context, marginLeft, declaration.marginLeft);
-            this.opacity = parse(context, opacity, declaration.opacity);
-            var overflowTuple = parse(context, overflow, declaration.overflow);
+            this.animationDuration = parse2(context, duration, declaration.animationDuration);
+            this.backgroundClip = parse2(context, backgroundClip, declaration.backgroundClip);
+            this.backgroundColor = parse2(context, backgroundColor, declaration.backgroundColor);
+            this.backgroundImage = parse2(context, backgroundImage, declaration.backgroundImage);
+            this.backgroundOrigin = parse2(context, backgroundOrigin, declaration.backgroundOrigin);
+            this.backgroundPosition = parse2(context, backgroundPosition, declaration.backgroundPosition);
+            this.backgroundRepeat = parse2(context, backgroundRepeat, declaration.backgroundRepeat);
+            this.backgroundSize = parse2(context, backgroundSize, declaration.backgroundSize);
+            this.borderTopColor = parse2(context, borderTopColor, declaration.borderTopColor);
+            this.borderRightColor = parse2(context, borderRightColor, declaration.borderRightColor);
+            this.borderBottomColor = parse2(context, borderBottomColor, declaration.borderBottomColor);
+            this.borderLeftColor = parse2(context, borderLeftColor, declaration.borderLeftColor);
+            this.borderTopLeftRadius = parse2(context, borderTopLeftRadius, declaration.borderTopLeftRadius);
+            this.borderTopRightRadius = parse2(context, borderTopRightRadius, declaration.borderTopRightRadius);
+            this.borderBottomRightRadius = parse2(context, borderBottomRightRadius, declaration.borderBottomRightRadius);
+            this.borderBottomLeftRadius = parse2(context, borderBottomLeftRadius, declaration.borderBottomLeftRadius);
+            this.borderTopStyle = parse2(context, borderTopStyle, declaration.borderTopStyle);
+            this.borderRightStyle = parse2(context, borderRightStyle, declaration.borderRightStyle);
+            this.borderBottomStyle = parse2(context, borderBottomStyle, declaration.borderBottomStyle);
+            this.borderLeftStyle = parse2(context, borderLeftStyle, declaration.borderLeftStyle);
+            this.borderTopWidth = parse2(context, borderTopWidth, declaration.borderTopWidth);
+            this.borderRightWidth = parse2(context, borderRightWidth, declaration.borderRightWidth);
+            this.borderBottomWidth = parse2(context, borderBottomWidth, declaration.borderBottomWidth);
+            this.borderLeftWidth = parse2(context, borderLeftWidth, declaration.borderLeftWidth);
+            this.boxShadow = parse2(context, boxShadow, declaration.boxShadow);
+            this.color = parse2(context, color, declaration.color);
+            this.direction = parse2(context, direction, declaration.direction);
+            this.display = parse2(context, display, declaration.display);
+            this.float = parse2(context, float, declaration.cssFloat);
+            this.fontFamily = parse2(context, fontFamily, declaration.fontFamily);
+            this.fontSize = parse2(context, fontSize, declaration.fontSize);
+            this.fontStyle = parse2(context, fontStyle, declaration.fontStyle);
+            this.fontVariant = parse2(context, fontVariant, declaration.fontVariant);
+            this.fontWeight = parse2(context, fontWeight, declaration.fontWeight);
+            this.letterSpacing = parse2(context, letterSpacing, declaration.letterSpacing);
+            this.lineBreak = parse2(context, lineBreak, declaration.lineBreak);
+            this.lineHeight = parse2(context, lineHeight, declaration.lineHeight);
+            this.listStyleImage = parse2(context, listStyleImage, declaration.listStyleImage);
+            this.listStylePosition = parse2(context, listStylePosition, declaration.listStylePosition);
+            this.listStyleType = parse2(context, listStyleType, declaration.listStyleType);
+            this.marginTop = parse2(context, marginTop, declaration.marginTop);
+            this.marginRight = parse2(context, marginRight, declaration.marginRight);
+            this.marginBottom = parse2(context, marginBottom, declaration.marginBottom);
+            this.marginLeft = parse2(context, marginLeft, declaration.marginLeft);
+            this.opacity = parse2(context, opacity, declaration.opacity);
+            var overflowTuple = parse2(context, overflow, declaration.overflow);
             this.overflowX = overflowTuple[0];
             this.overflowY = overflowTuple[overflowTuple.length > 1 ? 1 : 0];
-            this.overflowWrap = parse(context, overflowWrap, declaration.overflowWrap);
-            this.paddingTop = parse(context, paddingTop, declaration.paddingTop);
-            this.paddingRight = parse(context, paddingRight, declaration.paddingRight);
-            this.paddingBottom = parse(context, paddingBottom, declaration.paddingBottom);
-            this.paddingLeft = parse(context, paddingLeft, declaration.paddingLeft);
-            this.paintOrder = parse(context, paintOrder, declaration.paintOrder);
-            this.position = parse(context, position, declaration.position);
-            this.textAlign = parse(context, textAlign, declaration.textAlign);
-            this.textDecorationColor = parse(context, textDecorationColor, (_a2 = declaration.textDecorationColor) !== null && _a2 !== void 0 ? _a2 : declaration.color);
-            this.textDecorationLine = parse(context, textDecorationLine, (_b2 = declaration.textDecorationLine) !== null && _b2 !== void 0 ? _b2 : declaration.textDecoration);
-            this.textShadow = parse(context, textShadow, declaration.textShadow);
-            this.textTransform = parse(context, textTransform, declaration.textTransform);
-            this.transform = parse(context, transform$1, declaration.transform);
-            this.transformOrigin = parse(context, transformOrigin, declaration.transformOrigin);
-            this.visibility = parse(context, visibility, declaration.visibility);
-            this.webkitTextStrokeColor = parse(context, webkitTextStrokeColor, declaration.webkitTextStrokeColor);
-            this.webkitTextStrokeWidth = parse(context, webkitTextStrokeWidth, declaration.webkitTextStrokeWidth);
-            this.wordBreak = parse(context, wordBreak, declaration.wordBreak);
-            this.zIndex = parse(context, zIndex, declaration.zIndex);
+            this.overflowWrap = parse2(context, overflowWrap, declaration.overflowWrap);
+            this.paddingTop = parse2(context, paddingTop, declaration.paddingTop);
+            this.paddingRight = parse2(context, paddingRight, declaration.paddingRight);
+            this.paddingBottom = parse2(context, paddingBottom, declaration.paddingBottom);
+            this.paddingLeft = parse2(context, paddingLeft, declaration.paddingLeft);
+            this.paintOrder = parse2(context, paintOrder, declaration.paintOrder);
+            this.position = parse2(context, position, declaration.position);
+            this.textAlign = parse2(context, textAlign, declaration.textAlign);
+            this.textDecorationColor = parse2(context, textDecorationColor, (_a2 = declaration.textDecorationColor) !== null && _a2 !== void 0 ? _a2 : declaration.color);
+            this.textDecorationLine = parse2(context, textDecorationLine, (_b2 = declaration.textDecorationLine) !== null && _b2 !== void 0 ? _b2 : declaration.textDecoration);
+            this.textShadow = parse2(context, textShadow, declaration.textShadow);
+            this.textTransform = parse2(context, textTransform, declaration.textTransform);
+            this.transform = parse2(context, transform$1, declaration.transform);
+            this.transformOrigin = parse2(context, transformOrigin, declaration.transformOrigin);
+            this.visibility = parse2(context, visibility, declaration.visibility);
+            this.webkitTextStrokeColor = parse2(context, webkitTextStrokeColor, declaration.webkitTextStrokeColor);
+            this.webkitTextStrokeWidth = parse2(context, webkitTextStrokeWidth, declaration.webkitTextStrokeWidth);
+            this.wordBreak = parse2(context, wordBreak, declaration.wordBreak);
+            this.zIndex = parse2(context, zIndex, declaration.zIndex);
           }
           CSSParsedDeclaration2.prototype.isVisible = function() {
             return this.display > 0 && this.opacity > 0 && this.visibility === 0;
@@ -3582,19 +4248,19 @@
         }();
         var CSSParsedPseudoDeclaration = function() {
           function CSSParsedPseudoDeclaration2(context, declaration) {
-            this.content = parse(context, content, declaration.content);
-            this.quotes = parse(context, quotes, declaration.quotes);
+            this.content = parse2(context, content, declaration.content);
+            this.quotes = parse2(context, quotes, declaration.quotes);
           }
           return CSSParsedPseudoDeclaration2;
         }();
         var CSSParsedCounterDeclaration = function() {
           function CSSParsedCounterDeclaration2(context, declaration) {
-            this.counterIncrement = parse(context, counterIncrement, declaration.counterIncrement);
-            this.counterReset = parse(context, counterReset, declaration.counterReset);
+            this.counterIncrement = parse2(context, counterIncrement, declaration.counterIncrement);
+            this.counterReset = parse2(context, counterReset, declaration.counterReset);
           }
           return CSSParsedCounterDeclaration2;
         }();
-        var parse = function(context, descriptor, style) {
+        var parse2 = function(context, descriptor, style) {
           var tokenizer = new Tokenizer();
           var value = style !== null && typeof style !== "undefined" ? style.toString() : descriptor.initialValue;
           tokenizer.write(value);
@@ -5840,8 +6506,8 @@
         };
         var equalPath = function(a4, b2) {
           if (a4.length === b2.length) {
-            return a4.some(function(v3, i4) {
-              return v3 === b2[i4];
+            return a4.some(function(v6, i4) {
+              return v6 === b2[i4];
             });
           }
           return false;
@@ -6864,7 +7530,7 @@
                   case 0:
                     index2 = container.styles.backgroundImage.length - 1;
                     _loop_1 = function(backgroundImage3) {
-                      var image2, url, _c, path, x2, y3, width, height, pattern, _d, path, x2, y3, width, height, _e, lineLength, x0, x1, y0, y1, canvas, ctx, gradient_1, pattern, _f, path, left, top_1, width, height, position2, x2, y3, _g, rx, ry, radialGradient_1, midX, midY, f4, invF;
+                      var image2, url, _c, path, x2, y3, width, height, pattern, _d, path, x2, y3, width, height, _e, lineLength, x0, x1, y0, y1, canvas, ctx, gradient_1, pattern, _f, path, left, top_1, width, height, position2, x2, y3, _g, rx, ry, radialGradient_1, midX, midY, f5, invF;
                       return __generator(this, function(_h) {
                         switch (_h.label) {
                           case 0:
@@ -6932,11 +7598,11 @@
                                 if (rx !== ry) {
                                   midX = container.bounds.left + 0.5 * container.bounds.width;
                                   midY = container.bounds.top + 0.5 * container.bounds.height;
-                                  f4 = ry / rx;
-                                  invF = 1 / f4;
+                                  f5 = ry / rx;
+                                  invF = 1 / f5;
                                   this_1.ctx.save();
                                   this_1.ctx.translate(midX, midY);
-                                  this_1.ctx.transform(1, 0, 0, f4, 0, 0);
+                                  this_1.ctx.transform(1, 0, 0, f5, 0, 0);
                                   this_1.ctx.translate(-midX, -midY);
                                   this_1.ctx.fillRect(left, invF * (top_1 - midY) + midY, width, height * invF);
                                   this_1.ctx.restore();
@@ -8612,20 +9278,20 @@
       var versions = process2 && process2.versions || Deno2 && Deno2.version;
       var v8 = versions && versions.v8;
       var match;
-      var version;
+      var version2;
       if (v8) {
         match = v8.split(".");
-        version = match[0] > 0 && match[0] < 4 ? 1 : +(match[0] + match[1]);
+        version2 = match[0] > 0 && match[0] < 4 ? 1 : +(match[0] + match[1]);
       }
-      if (!version && userAgent) {
+      if (!version2 && userAgent) {
         match = userAgent.match(/Edge\/(\d+)/);
         if (!match || match[1] >= 74) {
           match = userAgent.match(/Chrome\/(\d+)/);
           if (match)
-            version = +match[1];
+            version2 = +match[1];
         }
       }
-      module.exports = version;
+      module.exports = version2;
     }
   });
 
@@ -11362,11 +12028,11 @@
               if (n3 === 0)
                 return match;
               if (n3 > m4) {
-                var f3 = floor(n3 / 10);
-                if (f3 === 0)
+                var f4 = floor(n3 / 10);
+                if (f4 === 0)
                   return match;
-                if (f3 <= m4)
-                  return captures[f3 - 1] === void 0 ? charAt(ch, 1) : captures[f3 - 1] + charAt(ch, 1);
+                if (f4 <= m4)
+                  return captures[f4 - 1] === void 0 ? charAt(ch, 1) : captures[f4 - 1] + charAt(ch, 1);
                 return match;
               }
               capture = captures[n3 - 1];
@@ -12834,8 +13500,8 @@
     a3 = Math.abs(t3.rX), o3 = Math.abs(t3.rY);
     var h3 = i([(r2 - s3) / 2, (e2 - u3) / 2], -t3.xRot / 180 * n), c4 = h3[0], y3 = h3[1], p3 = Math.pow(c4, 2) / Math.pow(a3, 2) + Math.pow(y3, 2) / Math.pow(o3, 2);
     1 < p3 && (a3 *= Math.sqrt(p3), o3 *= Math.sqrt(p3)), t3.rX = a3, t3.rY = o3;
-    var m4 = Math.pow(a3, 2) * Math.pow(y3, 2) + Math.pow(o3, 2) * Math.pow(c4, 2), O3 = (t3.lArcFlag !== t3.sweepFlag ? 1 : -1) * Math.sqrt(Math.max(0, (Math.pow(a3, 2) * Math.pow(o3, 2) - m4) / m4)), l3 = a3 * y3 / o3 * O3, T3 = -o3 * c4 / a3 * O3, v3 = i([l3, T3], t3.xRot / 180 * n);
-    t3.cX = v3[0] + (r2 + s3) / 2, t3.cY = v3[1] + (e2 + u3) / 2, t3.phi1 = Math.atan2((y3 - T3) / o3, (c4 - l3) / a3), t3.phi2 = Math.atan2((-y3 - T3) / o3, (-c4 - l3) / a3), t3.sweepFlag === 0 && t3.phi2 > t3.phi1 && (t3.phi2 -= 2 * n), t3.sweepFlag === 1 && t3.phi2 < t3.phi1 && (t3.phi2 += 2 * n), t3.phi1 *= 180 / n, t3.phi2 *= 180 / n;
+    var m4 = Math.pow(a3, 2) * Math.pow(y3, 2) + Math.pow(o3, 2) * Math.pow(c4, 2), O3 = (t3.lArcFlag !== t3.sweepFlag ? 1 : -1) * Math.sqrt(Math.max(0, (Math.pow(a3, 2) * Math.pow(o3, 2) - m4) / m4)), l3 = a3 * y3 / o3 * O3, T3 = -o3 * c4 / a3 * O3, v6 = i([l3, T3], t3.xRot / 180 * n);
+    t3.cX = v6[0] + (r2 + s3) / 2, t3.cY = v6[1] + (e2 + u3) / 2, t3.phi1 = Math.atan2((y3 - T3) / o3, (c4 - l3) / a3), t3.phi2 = Math.atan2((-y3 - T3) / o3, (-c4 - l3) / a3), t3.sweepFlag === 0 && t3.phi2 > t3.phi1 && (t3.phi2 -= 2 * n), t3.sweepFlag === 1 && t3.phi2 < t3.phi1 && (t3.phi2 += 2 * n), t3.phi1 *= 180 / n, t3.phi2 *= 180 / n;
   }
   function s(t3, r2, e2) {
     a(t3, r2, e2);
@@ -12870,7 +13536,7 @@
     var n3 = 1 - a3;
     return t3 * (n3 * n3 * n3) + r2 * (3 * n3 * n3 * a3) + e2 * (3 * n3 * a3 * a3) + i3 * (a3 * a3 * a3);
   }
-  var t, n, u, h, O, l, T, v, f, _, N;
+  var t, n, u, h, O, l, T, v, f2, _, N;
   var init_SVGPathData_module = __esm({
     "node_modules/svg-pathdata/lib/SVGPathData.module.js"() {
       t = function(r2, e2) {
@@ -12928,7 +13594,7 @@
               if (T3 === 0)
                 delete a3.rX, delete a3.rY, delete a3.xRot, delete a3.lArcFlag, delete a3.sweepFlag, a3.type = _.LINE_TO;
               else {
-                var v3 = a3.xRot * Math.PI / 180, f3 = Math.sin(v3), N3 = Math.cos(v3), x2 = 1 / l4(a3.rX), d2 = 1 / l4(a3.rY), E2 = l4(N3) * x2 + l4(f3) * d2, A2 = 2 * f3 * N3 * (x2 - d2), C2 = l4(f3) * x2 + l4(N3) * d2, M2 = E2 * i3 * i3 - A2 * r3 * i3 + C2 * r3 * r3, R2 = A2 * (t4 * i3 + r3 * e3) - 2 * (E2 * e3 * i3 + C2 * t4 * r3), g2 = E2 * e3 * e3 - A2 * t4 * e3 + C2 * t4 * t4, I2 = (Math.atan2(R2, M2 - g2) + Math.PI) % Math.PI / 2, S2 = Math.sin(I2), L2 = Math.cos(I2);
+                var v6 = a3.xRot * Math.PI / 180, f4 = Math.sin(v6), N3 = Math.cos(v6), x2 = 1 / l4(a3.rX), d2 = 1 / l4(a3.rY), E2 = l4(N3) * x2 + l4(f4) * d2, A2 = 2 * f4 * N3 * (x2 - d2), C2 = l4(f4) * x2 + l4(N3) * d2, M2 = E2 * i3 * i3 - A2 * r3 * i3 + C2 * r3 * r3, R2 = A2 * (t4 * i3 + r3 * e3) - 2 * (E2 * e3 * i3 + C2 * t4 * r3), g2 = E2 * e3 * e3 - A2 * t4 * e3 + C2 * t4 * t4, I2 = (Math.atan2(R2, M2 - g2) + Math.PI) % Math.PI / 2, S2 = Math.sin(I2), L2 = Math.cos(I2);
                 a3.rX = Math.abs(T3) / Math.sqrt(M2 * l4(L2) + R2 * S2 * L2 + g2 * l4(S2)), a3.rY = Math.abs(T3) / Math.sqrt(M2 * l4(S2) - R2 * S2 * L2 + g2 * l4(L2)), a3.xRot = 180 * I2 / Math.PI;
               }
             return a3.sweepFlag !== void 0 && 0 > T3 && (a3.sweepFlag = +!a3.sweepFlag), a3;
@@ -12967,8 +13633,8 @@
             if (a3.type & _.SMOOTH_CURVE_TO && (p3 = isNaN(r3) ? 0 : o3 - r3, m4 = isNaN(e3) ? 0 : s3 - e3), a3.type & (_.CURVE_TO | _.SMOOTH_CURVE_TO) ? (r3 = a3.relative ? o3 + a3.x2 : a3.x2, e3 = a3.relative ? s3 + a3.y2 : a3.y2) : (r3 = NaN, e3 = NaN), a3.type & _.SMOOTH_QUAD_TO ? (i3 = isNaN(i3) ? o3 : 2 * o3 - i3, n4 = isNaN(n4) ? s3 : 2 * s3 - n4) : a3.type & _.QUAD_TO ? (i3 = a3.relative ? o3 + a3.x1 : a3.x1, n4 = a3.relative ? s3 + a3.y1 : a3.y2) : (i3 = NaN, n4 = NaN), a3.type & _.LINE_COMMANDS || a3.type & _.ARC && (a3.rX === 0 || a3.rY === 0 || !a3.lArcFlag) || a3.type & _.CURVE_TO || a3.type & _.SMOOTH_CURVE_TO || a3.type & _.QUAD_TO || a3.type & _.SMOOTH_QUAD_TO) {
               var O4 = a3.x === void 0 ? 0 : a3.relative ? a3.x : a3.x - o3, l4 = a3.y === void 0 ? 0 : a3.relative ? a3.y : a3.y - s3;
               p3 = isNaN(i3) ? a3.x1 === void 0 ? p3 : a3.relative ? a3.x : a3.x1 - o3 : i3 - o3, m4 = isNaN(n4) ? a3.y1 === void 0 ? m4 : a3.relative ? a3.y : a3.y1 - s3 : n4 - s3;
-              var T3 = a3.x2 === void 0 ? 0 : a3.relative ? a3.x : a3.x2 - o3, v3 = a3.y2 === void 0 ? 0 : a3.relative ? a3.y : a3.y2 - s3;
-              c4(O4) <= t4 && c4(l4) <= t4 && c4(p3) <= t4 && c4(m4) <= t4 && c4(T3) <= t4 && c4(v3) <= t4 && (y3 = true);
+              var T3 = a3.x2 === void 0 ? 0 : a3.relative ? a3.x : a3.x2 - o3, v6 = a3.y2 === void 0 ? 0 : a3.relative ? a3.y : a3.y2 - s3;
+              c4(O4) <= t4 && c4(l4) <= t4 && c4(p3) <= t4 && c4(m4) <= t4 && c4(T3) <= t4 && c4(v6) <= t4 && (y3 = true);
             }
             return a3.type & _.CLOSE_PATH && c4(o3 - u4) <= t4 && c4(s3 - h3) <= t4 && (y3 = true), y3 ? [] : a3;
           });
@@ -12993,14 +13659,14 @@
             return _.ARC === t4.type ? function(t5, r4, e4) {
               var a3, n4, s3, u4;
               t5.cX || o(t5, r4, e4);
-              for (var y3 = Math.min(t5.phi1, t5.phi2), p3 = Math.max(t5.phi1, t5.phi2) - y3, m4 = Math.ceil(p3 / 90), O4 = new Array(m4), l4 = r4, T3 = e4, v3 = 0; v3 < m4; v3++) {
-                var f3 = c(t5.phi1, t5.phi2, v3 / m4), N3 = c(t5.phi1, t5.phi2, (v3 + 1) / m4), x2 = N3 - f3, d2 = 4 / 3 * Math.tan(x2 * h / 4), E2 = [Math.cos(f3 * h) - d2 * Math.sin(f3 * h), Math.sin(f3 * h) + d2 * Math.cos(f3 * h)], A2 = E2[0], C2 = E2[1], M2 = [Math.cos(N3 * h), Math.sin(N3 * h)], R2 = M2[0], g2 = M2[1], I2 = [R2 + d2 * Math.sin(N3 * h), g2 - d2 * Math.cos(N3 * h)], S2 = I2[0], L2 = I2[1];
-                O4[v3] = { relative: t5.relative, type: _.CURVE_TO };
+              for (var y3 = Math.min(t5.phi1, t5.phi2), p3 = Math.max(t5.phi1, t5.phi2) - y3, m4 = Math.ceil(p3 / 90), O4 = new Array(m4), l4 = r4, T3 = e4, v6 = 0; v6 < m4; v6++) {
+                var f4 = c(t5.phi1, t5.phi2, v6 / m4), N3 = c(t5.phi1, t5.phi2, (v6 + 1) / m4), x2 = N3 - f4, d2 = 4 / 3 * Math.tan(x2 * h / 4), E2 = [Math.cos(f4 * h) - d2 * Math.sin(f4 * h), Math.sin(f4 * h) + d2 * Math.cos(f4 * h)], A2 = E2[0], C2 = E2[1], M2 = [Math.cos(N3 * h), Math.sin(N3 * h)], R2 = M2[0], g2 = M2[1], I2 = [R2 + d2 * Math.sin(N3 * h), g2 - d2 * Math.cos(N3 * h)], S2 = I2[0], L2 = I2[1];
+                O4[v6] = { relative: t5.relative, type: _.CURVE_TO };
                 var H2 = function(r5, e5) {
                   var a4 = i([r5 * t5.rX, e5 * t5.rY], t5.xRot), n5 = a4[0], o3 = a4[1];
                   return [t5.cX + n5, t5.cY + o3];
                 };
-                a3 = H2(A2, C2), O4[v3].x1 = a3[0], O4[v3].y1 = a3[1], n4 = H2(S2, L2), O4[v3].x2 = n4[0], O4[v3].y2 = n4[1], s3 = H2(R2, g2), O4[v3].x = s3[0], O4[v3].y = s3[1], t5.relative && (O4[v3].x1 -= l4, O4[v3].y1 -= T3, O4[v3].x2 -= l4, O4[v3].y2 -= T3, O4[v3].x -= l4, O4[v3].y -= T3), l4 = (u4 = [O4[v3].x, O4[v3].y])[0], T3 = u4[1];
+                a3 = H2(A2, C2), O4[v6].x1 = a3[0], O4[v6].y1 = a3[1], n4 = H2(S2, L2), O4[v6].x2 = n4[0], O4[v6].y2 = n4[1], s3 = H2(R2, g2), O4[v6].x = s3[0], O4[v6].y = s3[1], t5.relative && (O4[v6].x1 -= l4, O4[v6].y1 -= T3, O4[v6].x2 -= l4, O4[v6].y2 -= T3, O4[v6].x -= l4, O4[v6].y -= T3), l4 = (u4 = [O4[v6].x, O4[v6].y])[0], T3 = u4[1];
               }
               return O4;
             }(t4, t4.relative ? 0 : r3, t4.relative ? 0 : e3) : t4;
@@ -13025,11 +13691,11 @@
             }
             if (u4.type & _.DRAWING_COMMANDS && (O4(e3), l4(n4)), u4.type & _.HORIZ_LINE_TO && O4(u4.x), u4.type & _.VERT_LINE_TO && l4(u4.y), u4.type & _.LINE_TO && (O4(u4.x), l4(u4.y)), u4.type & _.CURVE_TO) {
               O4(u4.x), l4(u4.y);
-              for (var T3 = 0, v3 = p(e3, u4.x1, u4.x2, u4.x); T3 < v3.length; T3++) {
-                0 < (w2 = v3[T3]) && 1 > w2 && O4(m(e3, u4.x1, u4.x2, u4.x, w2));
+              for (var T3 = 0, v6 = p(e3, u4.x1, u4.x2, u4.x); T3 < v6.length; T3++) {
+                0 < (w2 = v6[T3]) && 1 > w2 && O4(m(e3, u4.x1, u4.x2, u4.x, w2));
               }
-              for (var f3 = 0, N3 = p(n4, u4.y1, u4.y2, u4.y); f3 < N3.length; f3++) {
-                0 < (w2 = N3[f3]) && 1 > w2 && l4(m(n4, u4.y1, u4.y2, u4.y, w2));
+              for (var f4 = 0, N3 = p(n4, u4.y1, u4.y2, u4.y); f4 < N3.length; f4++) {
+                0 < (w2 = N3[f4]) && 1 > w2 && l4(m(n4, u4.y1, u4.y2, u4.y, w2));
               }
             }
             if (u4.type & _.ARC) {
@@ -13095,7 +13761,7 @@
       v = function(t3) {
         return "0".charCodeAt(0) <= t3.charCodeAt(0) && t3.charCodeAt(0) <= "9".charCodeAt(0);
       };
-      f = function(t3) {
+      f2 = function(t3) {
         function e2() {
           var r2 = t3.call(this) || this;
           return r2.curNumber = "", r2.curCommandType = -1, r2.curCommandRelative = false, r2.canParseCommandOrComma = true, r2.curNumberHasExp = false, r2.curNumberHasExpDigits = false, r2.curNumberHasDecimal = false, r2.curArgs = [], r2;
@@ -13206,7 +13872,7 @@
         }, i3.encode = function(t4) {
           return e(t4);
         }, i3.parse = function(t4) {
-          var r2 = new f(), e2 = [];
+          var r2 = new f2(), e2 = [];
           return r2.parse(t4, e2), r2.finish(e2), e2;
         }, i3.CLOSE_PATH = 1, i3.MOVE_TO = 2, i3.HORIZ_LINE_TO = 4, i3.VERT_LINE_TO = 8, i3.LINE_TO = 16, i3.CURVE_TO = 32, i3.SMOOTH_CURVE_TO = 64, i3.QUAD_TO = 128, i3.SMOOTH_QUAD_TO = 256, i3.ARC = 512, i3.LINE_COMMANDS = i3.LINE_TO | i3.HORIZ_LINE_TO | i3.VERT_LINE_TO, i3.DRAWING_COMMANDS = i3.HORIZ_LINE_TO | i3.VERT_LINE_TO | i3.LINE_TO | i3.CURVE_TO | i3.SMOOTH_CURVE_TO | i3.QUAD_TO | i3.SMOOTH_QUAD_TO | i3.ARC, i3;
       }(l);
@@ -13669,14 +14335,14 @@
     specificity[2] += delta;
     return specificity.join("");
   }
-  function vectorMagnitude(v3) {
-    return Math.sqrt(Math.pow(v3[0], 2) + Math.pow(v3[1], 2));
+  function vectorMagnitude(v6) {
+    return Math.sqrt(Math.pow(v6[0], 2) + Math.pow(v6[1], 2));
   }
-  function vectorsRatio(u3, v3) {
-    return (u3[0] * v3[0] + u3[1] * v3[1]) / (vectorMagnitude(u3) * vectorMagnitude(v3));
+  function vectorsRatio(u3, v6) {
+    return (u3[0] * v6[0] + u3[1] * v6[1]) / (vectorMagnitude(u3) * vectorMagnitude(v6));
   }
-  function vectorsAngle(u3, v3) {
-    return (u3[0] * v3[1] < u3[1] * v3[0] ? -1 : 1) * Math.acos(vectorsRatio(u3, v3));
+  function vectorsAngle(u3, v6) {
+    return (u3[0] * v6[1] < u3[1] * v6[0] ? -1 : 1) * Math.acos(vectorsRatio(u3, v6));
   }
   function CB1(t3) {
     return t3 * t3 * t3;
@@ -13790,9 +14456,9 @@
   function imSet(img, x2, y3, width, _height, rgba, val) {
     img[y3 * width * 4 + x2 * 4 + rgba] = val;
   }
-  function m2(matrix, i3, v3) {
+  function m2(matrix, i3, v6) {
     var mi = matrix[i3];
-    return mi * v3;
+    return mi * v6;
   }
   function c2(a3, m1, m22, m32) {
     return m1 + Math.cos(a3) * m22 + Math.sin(a3) * m32;
@@ -14932,15 +15598,15 @@
           var c4 = matrix[4];
           var d2 = matrix[1];
           var e2 = matrix[3];
-          var f3 = matrix[5];
+          var f4 = matrix[5];
           var g2 = 0;
           var h3 = 0;
           var i3 = 1;
-          var det = 1 / (a3 * (e2 * i3 - f3 * h3) - b2 * (d2 * i3 - f3 * g2) + c4 * (d2 * h3 - e2 * g2));
+          var det = 1 / (a3 * (e2 * i3 - f4 * h3) - b2 * (d2 * i3 - f4 * g2) + c4 * (d2 * h3 - e2 * g2));
           var tx = originX.getPixels("x");
           var ty = originY.getPixels("y");
           ctx.translate(tx, ty);
-          ctx.transform(det * (e2 * i3 - f3 * h3), det * (f3 * g2 - d2 * i3), det * (c4 * h3 - b2 * i3), det * (a3 * i3 - c4 * g2), det * (b2 * f3 - c4 * e2), det * (c4 * d2 - a3 * f3));
+          ctx.transform(det * (e2 * i3 - f4 * h3), det * (f4 * g2 - d2 * i3), det * (c4 * h3 - b2 * i3), det * (a3 * i3 - c4 * g2), det * (b2 * f4 - c4 * e2), det * (c4 * d2 - a3 * f4));
           ctx.translate(-tx, -ty);
         }
         applyToPoint(point) {
@@ -16072,12 +16738,12 @@
           var centp = new Point((current.x + currentPoint.x) / 2 + Math.cos(xAxisRotation) * cpp.x - Math.sin(xAxisRotation) * cpp.y, (current.y + currentPoint.y) / 2 + Math.sin(xAxisRotation) * cpp.x + Math.cos(xAxisRotation) * cpp.y);
           var a1 = vectorsAngle([1, 0], [(currp.x - cpp.x) / rX, (currp.y - cpp.y) / rY]);
           var u3 = [(currp.x - cpp.x) / rX, (currp.y - cpp.y) / rY];
-          var v3 = [(-currp.x - cpp.x) / rX, (-currp.y - cpp.y) / rY];
-          var ad = vectorsAngle(u3, v3);
-          if (vectorsRatio(u3, v3) <= -1) {
+          var v6 = [(-currp.x - cpp.x) / rX, (-currp.y - cpp.y) / rY];
+          var ad = vectorsAngle(u3, v6);
+          if (vectorsRatio(u3, v6) <= -1) {
             ad = Math.PI;
           }
-          if (vectorsRatio(u3, v3) >= 1) {
+          if (vectorsRatio(u3, v6) >= 1) {
             ad = 0;
           }
           return {
@@ -19686,60 +20352,8 @@
     }
   });
 
-  // node_modules/uuid/dist/esm-browser/rng.js
-  var getRandomValues;
-  var rnds8 = new Uint8Array(16);
-  function rng() {
-    if (!getRandomValues) {
-      getRandomValues = typeof crypto !== "undefined" && crypto.getRandomValues && crypto.getRandomValues.bind(crypto) || typeof msCrypto !== "undefined" && typeof msCrypto.getRandomValues === "function" && msCrypto.getRandomValues.bind(msCrypto);
-      if (!getRandomValues) {
-        throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
-      }
-    }
-    return getRandomValues(rnds8);
-  }
-
-  // node_modules/uuid/dist/esm-browser/regex.js
-  var regex_default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
-
-  // node_modules/uuid/dist/esm-browser/validate.js
-  function validate(uuid) {
-    return typeof uuid === "string" && regex_default.test(uuid);
-  }
-  var validate_default = validate;
-
-  // node_modules/uuid/dist/esm-browser/stringify.js
-  var byteToHex = [];
-  for (i3 = 0; i3 < 256; ++i3) {
-    byteToHex.push((i3 + 256).toString(16).substr(1));
-  }
-  var i3;
-  function stringify(arr) {
-    var offset = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : 0;
-    var uuid = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
-    if (!validate_default(uuid)) {
-      throw TypeError("Stringified UUID is invalid");
-    }
-    return uuid;
-  }
-  var stringify_default = stringify;
-
-  // node_modules/uuid/dist/esm-browser/v4.js
-  function v4(options, buf, offset) {
-    options = options || {};
-    var rnds = options.random || (options.rng || rng)();
-    rnds[6] = rnds[6] & 15 | 64;
-    rnds[8] = rnds[8] & 63 | 128;
-    if (buf) {
-      offset = offset || 0;
-      for (var i3 = 0; i3 < 16; ++i3) {
-        buf[offset + i3] = rnds[i3];
-      }
-      return buf;
-    }
-    return stringify_default(rnds);
-  }
-  var v4_default = v4;
+  // index.ts
+  var uuid = __toESM(require_short_uuid(), 1);
 
   // node_modules/@babel/runtime/helpers/esm/typeof.js
   function _typeof(obj) {
@@ -19805,9 +20419,9 @@
         if (cd[i3]) {
           var sv = i3 << 4 | cd[i3];
           var r_1 = mb - cd[i3];
-          var v3 = le2[cd[i3] - 1]++ << r_1;
-          for (var m4 = v3 | (1 << r_1) - 1; v3 <= m4; ++v3) {
-            co[rev[v3] >>> rvb] = sv;
+          var v6 = le2[cd[i3] - 1]++ << r_1;
+          for (var m4 = v6 | (1 << r_1) - 1; v6 <= m4; ++v6) {
+            co[rev[v6] >>> rvb] = sv;
           }
         }
       }
@@ -19858,13 +20472,13 @@
   var shft = function(p3) {
     return (p3 / 8 >> 0) + (p3 & 7 && 1);
   };
-  var slc = function(v3, s3, e2) {
+  var slc = function(v6, s3, e2) {
     if (s3 == null || s3 < 0)
       s3 = 0;
-    if (e2 == null || e2 > v3.length)
-      e2 = v3.length;
-    var n3 = new (v3 instanceof u16 ? u16 : v3 instanceof u32 ? u32 : u8)(e2 - s3);
-    n3.set(v3.subarray(s3, e2));
+    if (e2 == null || e2 > v6.length)
+      e2 = v6.length;
+    var n3 = new (v6 instanceof u16 ? u16 : v6 instanceof u32 ? u32 : u8)(e2 - s3);
+    n3.set(v6.subarray(s3, e2));
     return n3;
   };
   var inflt = function(dat, buf, st2) {
@@ -19998,18 +20612,18 @@
     } while (!final);
     return bt2 == buf.length ? buf : slc(buf, 0, bt2);
   };
-  var wbits = function(d2, p3, v3) {
-    v3 <<= p3 & 7;
+  var wbits = function(d2, p3, v6) {
+    v6 <<= p3 & 7;
     var o3 = p3 / 8 >> 0;
-    d2[o3] |= v3;
-    d2[o3 + 1] |= v3 >>> 8;
+    d2[o3] |= v6;
+    d2[o3 + 1] |= v6 >>> 8;
   };
-  var wbits16 = function(d2, p3, v3) {
-    v3 <<= p3 & 7;
+  var wbits16 = function(d2, p3, v6) {
+    v6 <<= p3 & 7;
     var o3 = p3 / 8 >> 0;
-    d2[o3] |= v3;
-    d2[o3 + 1] |= v3 >>> 8;
-    d2[o3 + 2] |= v3 >>> 16;
+    d2[o3] |= v6;
+    d2[o3 + 1] |= v6 >>> 8;
+    d2[o3 + 2] |= v6 >>> 16;
   };
   var hTree = function(d2, mb) {
     var t3 = [];
@@ -20022,9 +20636,9 @@
     if (!s3)
       return [new u8(0), 0];
     if (s3 == 1) {
-      var v3 = new u8(t3[0].s + 1);
-      v3[t3[0].s] = 1;
-      return [v3, 1];
+      var v6 = new u8(t3[0].s + 1);
+      v6[t3[0].s] = 1;
+      return [v6, 1];
     }
     t3.sort(function(a3, b2) {
       return a3.f - b2.f;
@@ -20086,8 +20700,8 @@
       ;
     var cl = new u16(++s3);
     var cli = 0, cln = c4[0], cls = 1;
-    var w2 = function(v3) {
-      cl[cli++] = v3;
+    var w2 = function(v6) {
+      cl[cli++] = v6;
     };
     for (var i3 = 1; i3 <= s3; ++i3) {
       if (c4[i3] == cln && i3 != s3)
@@ -20311,9 +20925,9 @@
   var dopt = function(dat, opt, pre, post, st2) {
     return dflt(dat, opt.level == null ? 6 : opt.level, opt.mem == null ? Math.ceil(Math.max(8, Math.min(13, Math.log(dat.length))) * 1.5) : 12 + opt.mem, pre, post, !st2);
   };
-  var wbytes = function(d2, b2, v3) {
-    for (; v3; ++b2)
-      d2[b2] = v3, v3 >>>= 8;
+  var wbytes = function(d2, b2, v6) {
+    for (; v6; ++b2)
+      d2[b2] = v6, v6 >>>= 8;
   };
   var zlh = function(c4, o3) {
     var lv = o3.level, fl2 = lv == 0 ? 0 : lv < 6 ? 1 : lv == 9 ? 3 : 2;
@@ -20410,13 +21024,13 @@
         t3 = u3 ? t3 : t3.replace(/^data:[^;]*;/, "data:attachment/file;"), a3 ? a3.location.href = t3 : location = t3, a3 = null;
       }, h3.readAsDataURL(e2);
     } else {
-      var l3 = n2.URL || n2.webkitURL, f3 = l3.createObjectURL(e2);
-      a3 ? a3.location = f3 : location.href = f3, a3 = null, setTimeout(function() {
-        l3.revokeObjectURL(f3);
+      var l3 = n2.URL || n2.webkitURL, f4 = l3.createObjectURL(e2);
+      a3 ? a3.location = f4 : location.href = f4, a3 = null, setTimeout(function() {
+        l3.revokeObjectURL(f4);
       }, 4e4);
     }
   });
-  function f2(t3) {
+  function f3(t3) {
     var e2;
     t3 = t3 || "", this.ok = false, t3.charAt(0) == "#" && (t3 = t3.substr(1, 6));
     t3 = { aliceblue: "f0f8ff", antiquewhite: "faebd7", aqua: "00ffff", aquamarine: "7fffd4", azure: "f0ffff", beige: "f5f5dc", bisque: "ffe4c4", black: "000000", blanchedalmond: "ffebcd", blue: "0000ff", blueviolet: "8a2be2", brown: "a52a2a", burlywood: "deb887", cadetblue: "5f9ea0", chartreuse: "7fff00", chocolate: "d2691e", coral: "ff7f50", cornflowerblue: "6495ed", cornsilk: "fff8dc", crimson: "dc143c", cyan: "00ffff", darkblue: "00008b", darkcyan: "008b8b", darkgoldenrod: "b8860b", darkgray: "a9a9a9", darkgreen: "006400", darkkhaki: "bdb76b", darkmagenta: "8b008b", darkolivegreen: "556b2f", darkorange: "ff8c00", darkorchid: "9932cc", darkred: "8b0000", darksalmon: "e9967a", darkseagreen: "8fbc8f", darkslateblue: "483d8b", darkslategray: "2f4f4f", darkturquoise: "00ced1", darkviolet: "9400d3", deeppink: "ff1493", deepskyblue: "00bfff", dimgray: "696969", dodgerblue: "1e90ff", feldspar: "d19275", firebrick: "b22222", floralwhite: "fffaf0", forestgreen: "228b22", fuchsia: "ff00ff", gainsboro: "dcdcdc", ghostwhite: "f8f8ff", gold: "ffd700", goldenrod: "daa520", gray: "808080", green: "008000", greenyellow: "adff2f", honeydew: "f0fff0", hotpink: "ff69b4", indianred: "cd5c5c", indigo: "4b0082", ivory: "fffff0", khaki: "f0e68c", lavender: "e6e6fa", lavenderblush: "fff0f5", lawngreen: "7cfc00", lemonchiffon: "fffacd", lightblue: "add8e6", lightcoral: "f08080", lightcyan: "e0ffff", lightgoldenrodyellow: "fafad2", lightgrey: "d3d3d3", lightgreen: "90ee90", lightpink: "ffb6c1", lightsalmon: "ffa07a", lightseagreen: "20b2aa", lightskyblue: "87cefa", lightslateblue: "8470ff", lightslategray: "778899", lightsteelblue: "b0c4de", lightyellow: "ffffe0", lime: "00ff00", limegreen: "32cd32", linen: "faf0e6", magenta: "ff00ff", maroon: "800000", mediumaquamarine: "66cdaa", mediumblue: "0000cd", mediumorchid: "ba55d3", mediumpurple: "9370d8", mediumseagreen: "3cb371", mediumslateblue: "7b68ee", mediumspringgreen: "00fa9a", mediumturquoise: "48d1cc", mediumvioletred: "c71585", midnightblue: "191970", mintcream: "f5fffa", mistyrose: "ffe4e1", moccasin: "ffe4b5", navajowhite: "ffdead", navy: "000080", oldlace: "fdf5e6", olive: "808000", olivedrab: "6b8e23", orange: "ffa500", orangered: "ff4500", orchid: "da70d6", palegoldenrod: "eee8aa", palegreen: "98fb98", paleturquoise: "afeeee", palevioletred: "d87093", papayawhip: "ffefd5", peachpuff: "ffdab9", peru: "cd853f", pink: "ffc0cb", plum: "dda0dd", powderblue: "b0e0e6", purple: "800080", red: "ff0000", rosybrown: "bc8f8f", royalblue: "4169e1", saddlebrown: "8b4513", salmon: "fa8072", sandybrown: "f4a460", seagreen: "2e8b57", seashell: "fff5ee", sienna: "a0522d", silver: "c0c0c0", skyblue: "87ceeb", slateblue: "6a5acd", slategray: "708090", snow: "fffafa", springgreen: "00ff7f", steelblue: "4682b4", tan: "d2b48c", teal: "008080", thistle: "d8bfd8", tomato: "ff6347", turquoise: "40e0d0", violet: "ee82ee", violetred: "d02090", wheat: "f5deb3", white: "ffffff", whitesmoke: "f5f5f5", yellow: "ffff00", yellowgreen: "9acd32" }[t3 = (t3 = t3.replace(/ /g, "")).toLowerCase()] || t3;
@@ -20513,9 +21127,9 @@
       r2 = t3, n3 = s3;
     } else
       s3 = n3;
-    var l3 = e2.length, f3 = 0, d2 = 0, p3 = "";
+    var l3 = e2.length, f4 = 0, d2 = 0, p3 = "";
     for (c4 = 0; c4 < l3; c4++)
-      d2 = (d2 + (h3 = s3[f3 = (f3 + 1) % 256])) % 256, s3[f3] = s3[d2], s3[d2] = h3, o3 = s3[(s3[f3] + s3[d2]) % 256], p3 += String.fromCharCode(e2.charCodeAt(c4) ^ o3);
+      d2 = (d2 + (h3 = s3[f4 = (f4 + 1) % 256])) % 256, s3[f4] = s3[d2], s3[d2] = h3, o3 = s3[(s3[f4] + s3[d2]) % 256], p3 += String.fromCharCode(e2.charCodeAt(c4) ^ o3);
     return p3;
   }
   var k = { print: 4, modify: 8, copy: 16, "annot-forms": 32 };
@@ -20599,7 +21213,7 @@
   function E(e2) {
     var r2, i3 = typeof arguments[0] == "string" ? arguments[0] : "p", o3 = arguments[1], s3 = arguments[2], c4 = arguments[3], u3 = [], d2 = 1, p3 = 16, g2 = "S", m4 = null;
     _typeof(e2 = e2 || {}) === "object" && (i3 = e2.orientation, o3 = e2.unit || o3, s3 = e2.format || s3, c4 = e2.compress || e2.compressPdf || c4, (m4 = e2.encryption || null) !== null && (m4.userPassword = m4.userPassword || "", m4.ownerPassword = m4.ownerPassword || "", m4.userPermissions = m4.userPermissions || []), d2 = typeof e2.userUnit == "number" ? Math.abs(e2.userUnit) : 1, e2.precision !== void 0 && (r2 = e2.precision), e2.floatPrecision !== void 0 && (p3 = e2.floatPrecision), g2 = e2.defaultPathOperation || "S"), u3 = e2.filters || (c4 === true ? ["FlateEncode"] : u3), o3 = o3 || "mm", i3 = ("" + (i3 || "P")).toLowerCase();
-    var v3 = e2.putOnlyUsedFonts || false, b2 = {}, y3 = { internal: {}, __private__: {} };
+    var v6 = e2.putOnlyUsedFonts || false, b2 = {}, y3 = { internal: {}, __private__: {} };
     y3.__private__.PubSub = C;
     var w2 = "1.3", N3 = y3.__private__.getPdfVersion = function() {
       return w2;
@@ -20936,7 +21550,7 @@
       typeof e3 == "string" && (e3 = { ch1: e3 });
       var n3 = e3.ch1, i4 = e3.ch2, a3 = e3.ch3, o4 = e3.ch4, s4 = e3.pdfColorType === "draw" ? ["G", "RG", "K"] : ["g", "rg", "k"];
       if (typeof n3 == "string" && n3.charAt(0) !== "#") {
-        var c5 = new f2(n3);
+        var c5 = new f3(n3);
         if (c5.ok)
           n3 = c5.toHex();
         else if (!/^\d*\.?\d*$/.test(n3))
@@ -21003,9 +21617,9 @@
           u4.push({ key: "Filter", value: "[" + h3 + "]" });
           for (var l3 = 0; l3 < u4.length; l3 += 1)
             if (u4[l3].key === "DecodeParms") {
-              for (var f3 = [], d3 = 0; d3 < c5.reverseChain.split("/").length - 1; d3 += 1)
-                f3.push("null");
-              f3.push(u4[l3].value), u4[l3].value = "[" + f3.join(" ") + "]";
+              for (var f4 = [], d3 = 0; d3 < c5.reverseChain.split("/").length - 1; d3 += 1)
+                f4.push("null");
+              f4.push(u4[l3].value), u4[l3].value = "[" + f4.join(" ") + "]";
             }
         }
       lt2("<<");
@@ -21032,7 +21646,7 @@
       Tt2.publish("putFont", { font: t3, out: lt2, newObject: Xt2, putStream: ie2 }), t3.isAlreadyPutted !== true && (t3.objectNumber = Xt2(), lt2("<<"), lt2("/Type /Font"), lt2("/BaseFont /" + F(t3.postScriptName)), lt2("/Subtype /Type1"), typeof t3.encoding == "string" && lt2("/Encoding /" + t3.encoding), lt2("/FirstChar 32"), lt2("/LastChar 255"), lt2(">>"), lt2("endobj"));
     }, ce2 = function() {
       for (var t3 in Ft2)
-        Ft2.hasOwnProperty(t3) && (v3 === false || v3 === true && b2.hasOwnProperty(t3)) && se2(Ft2[t3]);
+        Ft2.hasOwnProperty(t3) && (v6 === false || v6 === true && b2.hasOwnProperty(t3)) && se2(Ft2[t3]);
     }, ue2 = function(t3) {
       t3.objectNumber = Xt2();
       var e3 = [];
@@ -21057,8 +21671,8 @@
       for (var s4 = "", c5 = 0, u4 = 0; u4 < n3.length; u4++) {
         for (r3 = n3[u4]; r3 > t3[c5 + 1].offset; )
           c5++;
-        var h3 = t3[c5].offset, l3 = (r3 - h3) / (t3[c5 + 1].offset - h3), f3 = t3[c5].color, d3 = t3[c5 + 1].color;
-        s4 += tt2(Math.round((1 - l3) * f3[0] + l3 * d3[0]).toString(16)) + tt2(Math.round((1 - l3) * f3[1] + l3 * d3[1]).toString(16)) + tt2(Math.round((1 - l3) * f3[2] + l3 * d3[2]).toString(16));
+        var h3 = t3[c5].offset, l3 = (r3 - h3) / (t3[c5 + 1].offset - h3), f4 = t3[c5].color, d3 = t3[c5 + 1].color;
+        s4 += tt2(Math.round((1 - l3) * f4[0] + l3 * d3[0]).toString(16)) + tt2(Math.round((1 - l3) * f4[1] + l3 * d3[1]).toString(16)) + tt2(Math.round((1 - l3) * f4[2] + l3 * d3[2]).toString(16));
       }
       return s4.trim();
     }, fe2 = function(t3, e3) {
@@ -21098,7 +21712,7 @@
       Ye.oid = Xt2(), lt2("<<"), lt2("/Filter /Standard"), lt2("/V " + Ye.v), lt2("/R " + Ye.r), lt2("/U <" + Ye.toHexString(Ye.U) + ">"), lt2("/O <" + Ye.toHexString(Ye.O) + ">"), lt2("/P " + Ye.P), lt2(">>"), lt2("endobj");
     }, ye2 = function() {
       for (var t3 in lt2("/Font <<"), Ft2)
-        Ft2.hasOwnProperty(t3) && (v3 === false || v3 === true && b2.hasOwnProperty(t3)) && lt2("/" + t3 + " " + Ft2[t3].objectNumber + " 0 R");
+        Ft2.hasOwnProperty(t3) && (v6 === false || v6 === true && b2.hasOwnProperty(t3)) && lt2("/" + t3 + " " + Ft2[t3].objectNumber + " 0 R");
       lt2(">>");
     }, we2 = function() {
       if (Object.keys(Ot2).length > 0) {
@@ -21139,7 +21753,7 @@
     }, ke = function(t3) {
       for (var e3 = 0, r3 = pt2.length; e3 < r3; e3++) {
         var n3 = Pe.call(this, t3[e3][0], t3[e3][1], t3[e3][2], pt2[e3][3], true);
-        v3 === false && (b2[n3] = true);
+        v6 === false && (b2[n3] = true);
         var i4 = t3[e3][0].split("-");
         _e({ id: n3, fontName: i4[0], fontStyle: i4[1] || "" });
       }
@@ -21290,15 +21904,15 @@
           throw new Error("The option pdfobjectnewwindow just works in a browser-environment.");
         case "pdfjsnewwindow":
           if (Object.prototype.toString.call(n2) === "[object Window]") {
-            var l3 = '<html><style>html, body { padding: 0; margin: 0; } iframe { width: 100%; height: 100%; border: 0;}  </style><body><iframe id="pdfViewer" src="' + (e3.pdfJsUrl || "examples/PDF.js/web/viewer.html") + "?file=&downloadName=" + e3.filename + '" width="500px" height="400px" /></body></html>', f3 = n2.open();
-            if (f3 !== null) {
-              f3.document.write(l3);
+            var l3 = '<html><style>html, body { padding: 0; margin: 0; } iframe { width: 100%; height: 100%; border: 0;}  </style><body><iframe id="pdfViewer" src="' + (e3.pdfJsUrl || "examples/PDF.js/web/viewer.html") + "?file=&downloadName=" + e3.filename + '" width="500px" height="400px" /></body></html>', f4 = n2.open();
+            if (f4 !== null) {
+              f4.document.write(l3);
               var d3 = this;
-              f3.document.documentElement.querySelector("#pdfViewer").onload = function() {
-                f3.document.title = e3.filename, f3.document.documentElement.querySelector("#pdfViewer").contentWindow.PDFViewerApplication.open(d3.output("bloburl"));
+              f4.document.documentElement.querySelector("#pdfViewer").onload = function() {
+                f4.document.title = e3.filename, f4.document.documentElement.querySelector("#pdfViewer").contentWindow.PDFViewerApplication.open(d3.output("bloburl"));
               };
             }
-            return f3;
+            return f4;
           }
           throw new Error("The option pdfjsnewwindow just works in a browser-environment.");
         case "dataurlnewwindow":
@@ -21388,18 +22002,18 @@
     }, y3.deletePage = function() {
       return Be.apply(this, arguments), this;
     }, y3.__private__.text = y3.text = function(e3, r3, n3, i4, a3) {
-      var o4, s4, c5, u4, h3, l3, f3, d3, p4, g3 = (i4 = i4 || {}).scope || this;
+      var o4, s4, c5, u4, h3, l3, f4, d3, p4, g3 = (i4 = i4 || {}).scope || this;
       if (typeof e3 == "number" && typeof r3 == "number" && (typeof n3 == "string" || Array.isArray(n3))) {
         var m5 = n3;
         n3 = r3, r3 = e3, e3 = m5;
       }
-      if (arguments[3] instanceof Vt2 == false ? (c5 = arguments[4], u4 = arguments[5], _typeof(f3 = arguments[3]) === "object" && f3 !== null || (typeof c5 == "string" && (u4 = c5, c5 = null), typeof f3 == "string" && (u4 = f3, f3 = null), typeof f3 == "number" && (c5 = f3, f3 = null), i4 = { flags: f3, angle: c5, align: u4 })) : (q2("The transform parameter of text() with a Matrix value"), p4 = a3), isNaN(r3) || isNaN(n3) || e3 == null)
+      if (arguments[3] instanceof Vt2 == false ? (c5 = arguments[4], u4 = arguments[5], _typeof(f4 = arguments[3]) === "object" && f4 !== null || (typeof c5 == "string" && (u4 = c5, c5 = null), typeof f4 == "string" && (u4 = f4, f4 = null), typeof f4 == "number" && (c5 = f4, f4 = null), i4 = { flags: f4, angle: c5, align: u4 })) : (q2("The transform parameter of text() with a Matrix value"), p4 = a3), isNaN(r3) || isNaN(n3) || e3 == null)
         throw new Error("Invalid arguments passed to jsPDF.text");
       if (e3.length === 0)
         return g3;
-      var v5 = "", y4 = false, w3 = typeof i4.lineHeightFactor == "number" ? i4.lineHeightFactor : lr, N4 = g3.internal.scaleFactor;
+      var v7 = "", y4 = false, w3 = typeof i4.lineHeightFactor == "number" ? i4.lineHeightFactor : lr, N4 = g3.internal.scaleFactor;
       function L3(t3) {
-        return t3 = t3.split("	").join(Array(i4.TabLen || 9).join(" ")), Ce(t3, f3);
+        return t3 = t3.split("	").join(Array(i4.TabLen || 9).join(" ")), Ce(t3, f4);
       }
       function A3(t3) {
         for (var e4, r4 = t3.concat(), n4 = [], i5 = r4.length; i5--; )
@@ -21452,7 +22066,7 @@
         p4 = new Vt2(M2, E2, -E2, M2, 0, 0);
       } else
         c5 && c5 instanceof Vt2 && (p4 = c5);
-      S2 !== x2.ADVANCED || p4 || (p4 = Yt2), (h3 = i4.charSpace || _r) !== void 0 && (v5 += O3(U2(h3)) + " Tc\n", this.setCharSpace(this.getCharSpace() || 0)), (d3 = i4.horizontalScale) !== void 0 && (v5 += O3(100 * d3) + " Tz\n");
+      S2 !== x2.ADVANCED || p4 || (p4 = Yt2), (h3 = i4.charSpace || _r) !== void 0 && (v7 += O3(U2(h3)) + " Tc\n", this.setCharSpace(this.getCharSpace() || 0)), (d3 = i4.horizontalScale) !== void 0 && (v7 += O3(100 * d3) + " Tz\n");
       i4.lang;
       var D3 = -1, R3 = i4.renderingMode !== void 0 ? i4.renderingMode : i4.stroke, T4 = g3.internal.getCurrentPageInfo().pageContext;
       switch (R3) {
@@ -21491,9 +22105,9 @@
           D3 = 7;
       }
       var z3 = T4.usedRenderingMode !== void 0 ? T4.usedRenderingMode : -1;
-      D3 !== -1 ? v5 += D3 + " Tr\n" : z3 !== -1 && (v5 += "0 Tr\n"), D3 !== -1 && (T4.usedRenderingMode = D3), u4 = i4.align || "left";
+      D3 !== -1 ? v7 += D3 + " Tr\n" : z3 !== -1 && (v7 += "0 Tr\n"), D3 !== -1 && (T4.usedRenderingMode = D3), u4 = i4.align || "left";
       var H3, W3 = gt2 * w3, V3 = g3.internal.pageSize.getWidth(), G3 = Ft2[St2];
-      h3 = i4.charSpace || _r, l3 = i4.maxWidth || 0, f3 = Object.assign({ autoencode: true, noBOM: true }, i4.flags);
+      h3 = i4.charSpace || _r, l3 = i4.maxWidth || 0, f4 = Object.assign({ autoencode: true, noBOM: true }, i4.flags);
       var Y3 = [];
       if (Object.prototype.toString.call(e3) === "[object Array]") {
         var J3;
@@ -21544,7 +22158,7 @@
       }
       e3 = ct3 === ot3 ? e3.join(" Tj\nT* ") : e3.join(" Tj\n"), e3 += " Tj\n";
       var dt3 = "BT\n/";
-      return dt3 += St2 + " " + gt2 + " Tf\n", dt3 += O3(gt2 * w3) + " TL\n", dt3 += xr + "\n", dt3 += v5, dt3 += e3, lt2(dt3 += "ET"), b2[St2] = true, g3;
+      return dt3 += St2 + " " + gt2 + " Tf\n", dt3 += O3(gt2 * w3) + " TL\n", dt3 += xr + "\n", dt3 += v7, dt3 += e3, lt2(dt3 += "ET"), b2[St2] = true, g3;
     };
     var $e = y3.__private__.clip = y3.clip = function(t3) {
       return lt2(t3 === "evenodd" ? "W*" : "W"), this;
@@ -21643,11 +22257,11 @@
         throw new Error("Invalid arguments passed to jsPDF.line");
       return S2 === x2.COMPAT ? this.lines([[r3 - t3, n3 - e3]], t3, e3, [1, 1], i4 || "S") : this.lines([[r3 - t3, n3 - e3]], t3, e3, [1, 1]).stroke();
     }, y3.__private__.lines = y3.lines = function(t3, e3, r3, n3, i4, a3) {
-      var o4, s4, c5, u4, h3, l3, f3, d3, p4, g3, m5, v5;
-      if (typeof t3 == "number" && (v5 = r3, r3 = e3, e3 = t3, t3 = v5), n3 = n3 || [1, 1], a3 = a3 || false, isNaN(e3) || isNaN(r3) || !Array.isArray(t3) || !Array.isArray(n3) || !Qe(i4) || typeof a3 != "boolean")
+      var o4, s4, c5, u4, h3, l3, f4, d3, p4, g3, m5, v7;
+      if (typeof t3 == "number" && (v7 = r3, r3 = e3, e3 = t3, t3 = v7), n3 = n3 || [1, 1], a3 = a3 || false, isNaN(e3) || isNaN(r3) || !Array.isArray(t3) || !Array.isArray(n3) || !Qe(i4) || typeof a3 != "boolean")
         throw new Error("Invalid arguments passed to jsPDF.lines");
       for (sr(e3, r3), o4 = n3[0], s4 = n3[1], u4 = t3.length, g3 = e3, m5 = r3, c5 = 0; c5 < u4; c5++)
-        (h3 = t3[c5]).length === 2 ? (g3 = h3[0] * o4 + g3, m5 = h3[1] * s4 + m5, cr(g3, m5)) : (l3 = h3[0] * o4 + g3, f3 = h3[1] * s4 + m5, d3 = h3[2] * o4 + g3, p4 = h3[3] * s4 + m5, g3 = h3[4] * o4 + g3, m5 = h3[5] * s4 + m5, ur(l3, f3, d3, p4, g3, m5));
+        (h3 = t3[c5]).length === 2 ? (g3 = h3[0] * o4 + g3, m5 = h3[1] * s4 + m5, cr(g3, m5)) : (l3 = h3[0] * o4 + g3, f4 = h3[1] * s4 + m5, d3 = h3[2] * o4 + g3, p4 = h3[3] * s4 + m5, g3 = h3[4] * o4 + g3, m5 = h3[5] * s4 + m5, ur(l3, f4, d3, p4, g3, m5));
       return a3 && er(), nr(i4), this;
     }, y3.path = function(t3) {
       for (var e3 = 0; e3 < t3.length; e3++) {
@@ -22040,23 +22654,23 @@
     t:
       for (; a3 > 0; ) {
         e2 = "", a3--;
-        var u3, h3, l3 = et2("3", t3, a3).height, f3 = t3.multiline ? o3 - a3 : (o3 - l3) / 2, d2 = f3 += 2, p3 = 0, g2 = 0, m4 = 0;
+        var u3, h3, l3 = et2("3", t3, a3).height, f4 = t3.multiline ? o3 - a3 : (o3 - l3) / 2, d2 = f4 += 2, p3 = 0, g2 = 0, m4 = 0;
         if (a3 <= 0) {
           e2 = "(...) Tj\n", e2 += "% Width of Text: " + et2(e2, t3, a3 = 12).width + ", FieldWidth:" + s3 + "\n";
           break;
         }
-        for (var v3 = "", b2 = 0, y3 = 0; y3 < i3.length; y3++)
+        for (var v6 = "", b2 = 0, y3 = 0; y3 < i3.length; y3++)
           if (i3.hasOwnProperty(y3)) {
             var w2 = false;
             if (i3[y3].length !== 1 && m4 !== i3[y3].length - 1) {
               if ((l3 + 2) * (b2 + 2) + 2 > o3)
                 continue t;
-              v3 += i3[y3][m4], w2 = true, g2 = y3, y3--;
+              v6 += i3[y3][m4], w2 = true, g2 = y3, y3--;
             } else {
-              v3 = (v3 += i3[y3][m4] + " ").substr(v3.length - 1) == " " ? v3.substr(0, v3.length - 1) : v3;
-              var N3 = parseInt(y3), L2 = c4(N3, v3, a3), A2 = y3 >= i3.length - 1;
+              v6 = (v6 += i3[y3][m4] + " ").substr(v6.length - 1) == " " ? v6.substr(0, v6.length - 1) : v6;
+              var N3 = parseInt(y3), L2 = c4(N3, v6, a3), A2 = y3 >= i3.length - 1;
               if (L2 && !A2) {
-                v3 += " ", m4 = 0;
+                v6 += " ", m4 = 0;
                 continue;
               }
               if (L2 || A2) {
@@ -22097,7 +22711,7 @@
               default:
                 u3 = 2;
             }
-            e2 += U(u3) + " " + U(d2) + " Td\n", e2 += "(" + R(x2) + ") Tj\n", e2 += -U(u3) + " 0 Td\n", d2 = -(a3 + 2), h3 = 0, p3 = w2 ? g2 : g2 + 1, b2++, v3 = "";
+            e2 += U(u3) + " " + U(d2) + " Td\n", e2 += "(" + R(x2) + ") Tj\n", e2 += -U(u3) + " 0 Td\n", d2 = -(a3 + 2), h3 = 0, p3 = w2 ? g2 : g2 + 1, b2++, v6 = "";
           } else
             ;
         break;
@@ -22164,11 +22778,11 @@
                     if (u3 += "/" + h3 + " ", u3 += "<<", Object.keys(l3).length >= 1 || Array.isArray(l3)) {
                       for (var i3 in l3)
                         if (l3.hasOwnProperty(i3)) {
-                          var f3 = l3[i3];
-                          typeof f3 == "function" && (f3 = f3.call(r4, a3)), u3 += "/" + i3 + " " + f3 + " ", r4.internal.acroformPlugin.xForms.indexOf(f3) >= 0 || r4.internal.acroformPlugin.xForms.push(f3);
+                          var f4 = l3[i3];
+                          typeof f4 == "function" && (f4 = f4.call(r4, a3)), u3 += "/" + i3 + " " + f4 + " ", r4.internal.acroformPlugin.xForms.indexOf(f4) >= 0 || r4.internal.acroformPlugin.xForms.push(f4);
                         }
                     } else
-                      typeof (f3 = l3) == "function" && (f3 = f3.call(r4, a3)), u3 += "/" + i3 + " " + f3, r4.internal.acroformPlugin.xForms.indexOf(f3) >= 0 || r4.internal.acroformPlugin.xForms.push(f3);
+                      typeof (f4 = l3) == "function" && (f4 = f4.call(r4, a3)), u3 += "/" + i3 + " " + f4, r4.internal.acroformPlugin.xForms.indexOf(f4) >= 0 || r4.internal.acroformPlugin.xForms.push(f4);
                     u3 += ">>";
                   }
                 o3.push({ key: "AP", value: "<<\n" + u3 + ">>" });
@@ -22381,16 +22995,16 @@
     }, set: function(t3) {
       t3 = t3.toString(), l3 = t3;
     } });
-    var f3 = null;
+    var f4 = null;
     Object.defineProperty(this, "DV", { enumerable: false, configurable: false, get: function() {
-      if (f3)
-        return this instanceof mt == false ? st(f3, this.objId, this.scope) : f3;
+      if (f4)
+        return this instanceof mt == false ? st(f4, this.objId, this.scope) : f4;
     }, set: function(t3) {
-      t3 = t3.toString(), f3 = this instanceof mt == false ? t3.substr(0, 1) === "(" ? T2(t3.substr(1, t3.length - 2)) : T2(t3) : t3;
+      t3 = t3.toString(), f4 = this instanceof mt == false ? t3.substr(0, 1) === "(" ? T2(t3.substr(1, t3.length - 2)) : T2(t3) : t3;
     } }), Object.defineProperty(this, "defaultValue", { enumerable: true, configurable: true, get: function() {
-      return this instanceof mt == true ? T2(f3.substr(1, f3.length - 1)) : f3;
+      return this instanceof mt == true ? T2(f4.substr(1, f4.length - 1)) : f4;
     }, set: function(t3) {
-      t3 = t3.toString(), f3 = this instanceof mt == true ? "/" + t3 : t3;
+      t3 = t3.toString(), f4 = this instanceof mt == true ? "/" + t3 : t3;
     } });
     var d2 = null;
     Object.defineProperty(this, "_V", { enumerable: false, configurable: false, get: function() {
@@ -22849,8 +23463,8 @@
         "filter" in e3 && (l4.filter = e3.filter), t3.call(this, l4);
       }
       if (e3.colorSpace === b2.INDEXED) {
-        var f4 = this.internal.newObject();
-        n4({ data: _3(new Uint8Array(e3.palette)), objectId: f4 }), r3("endobj");
+        var f5 = this.internal.newObject();
+        n4({ data: _3(new Uint8Array(e3.palette)), objectId: f5 }), r3("endobj");
       }
     }, o3 = function() {
       var t3 = this.internal.collections.addImage_images;
@@ -22867,7 +23481,7 @@
       return c4.call(this), t3;
     }, l3 = function() {
       return Object.keys(this.internal.collections.addImage_images).length;
-    }, f3 = function(t3) {
+    }, f4 = function(t3) {
       return typeof e2["process" + t3.toUpperCase()] == "function";
     }, d2 = function(e3) {
       return _typeof(e3) === "object" && e3.nodeType === 1;
@@ -22907,13 +23521,13 @@
       }
     }, m4 = function(t3, e3, r3) {
       return t3 || e3 || (t3 = -96, e3 = -96), t3 < 0 && (t3 = -1 * r3.width * 72 / t3 / this.internal.scaleFactor), e3 < 0 && (e3 = -1 * r3.height * 72 / e3 / this.internal.scaleFactor), t3 === 0 && (t3 = e3 * r3.width / r3.height), e3 === 0 && (e3 = t3 * r3.height / r3.width), [t3, e3];
-    }, v3 = function(t3, e3, r3, n4, i4, a4) {
+    }, v6 = function(t3, e3, r3, n4, i4, a4) {
       var o4 = m4.call(this, r3, n4, i4), s4 = this.internal.getCoordinateString, c5 = this.internal.getVerticalCoordinateString, u3 = h3.call(this);
       if (r3 = o4[0], n4 = o4[1], u3[i4.index] = i4, a4) {
         a4 *= Math.PI / 180;
-        var l4 = Math.cos(a4), f4 = Math.sin(a4), d3 = function(t4) {
+        var l4 = Math.cos(a4), f5 = Math.sin(a4), d3 = function(t4) {
           return t4.toFixed(4);
-        }, p4 = [d3(l4), d3(f4), d3(-1 * f4), d3(l4), 0, 0, "cm"];
+        }, p4 = [d3(l4), d3(f5), d3(-1 * f5), d3(l4), 0, 0, "cm"];
       }
       this.internal.write("q"), a4 ? (this.internal.write([1, "0", "0", 1, s4(t3), c5(e3 + n4), "cm"].join(" ")), this.internal.write(p4.join(" ")), this.internal.write([s4(r3), "0", "0", s4(n4), "0", "0", "cm"].join(" "))) : this.internal.write([s4(r3), "0", "0", s4(n4), s4(t3), c5(e3 + n4), "cm"].join(" ")), this.isAdvancedAPI() && this.internal.write([1, 0, 0, -1, 0, 0, "cm"].join(" ")), this.internal.write("/I" + i4.index + " Do"), this.internal.write("Q");
     }, b2 = e2.color_spaces = { DEVICE_RGB: "DeviceRGB", DEVICE_GRAY: "DeviceGray", DEVICE_CMYK: "DeviceCMYK", CAL_GREY: "CalGray", CAL_RGB: "CalRGB", LAB: "Lab", ICC_BASED: "ICCBased", INDEXED: "Indexed", PATTERN: "Pattern", SEPARATION: "Separation", DEVICE_N: "DeviceN" };
@@ -22958,15 +23572,15 @@
     e2.addImage = function() {
       var e3, n4, i4, a4, o4, s4, u3, h4, l4;
       if (typeof arguments[1] == "number" ? (n4 = r2, i4 = arguments[1], a4 = arguments[2], o4 = arguments[3], s4 = arguments[4], u3 = arguments[5], h4 = arguments[6], l4 = arguments[7]) : (n4 = arguments[1], i4 = arguments[2], a4 = arguments[3], o4 = arguments[4], s4 = arguments[5], u3 = arguments[6], h4 = arguments[7], l4 = arguments[8]), _typeof(e3 = arguments[0]) === "object" && !d2(e3) && "imageData" in e3) {
-        var f4 = e3;
-        e3 = f4.imageData, n4 = f4.format || n4 || r2, i4 = f4.x || i4 || 0, a4 = f4.y || a4 || 0, o4 = f4.w || f4.width || o4, s4 = f4.h || f4.height || s4, u3 = f4.alias || u3, h4 = f4.compression || h4, l4 = f4.rotation || f4.angle || l4;
+        var f5 = e3;
+        e3 = f5.imageData, n4 = f5.format || n4 || r2, i4 = f5.x || i4 || 0, a4 = f5.y || a4 || 0, o4 = f5.w || f5.width || o4, s4 = f5.h || f5.height || s4, u3 = f5.alias || u3, h4 = f5.compression || h4, l4 = f5.rotation || f5.angle || l4;
       }
       var p4 = this.internal.getFilters();
       if (h4 === void 0 && p4.indexOf("FlateEncode") !== -1 && (h4 = "SLOW"), isNaN(i4) || isNaN(a4))
         throw new Error("Invalid coordinates passed to jsPDF.addImage");
       c4.call(this);
       var g3 = P2.call(this, e3, n4, u3, h4);
-      return v3.call(this, i4, a4, o4, s4, g3, l4), this;
+      return v6.call(this, i4, a4, o4, s4, g3, l4), this;
     };
     var P2 = function(t3, n4, a4, o4) {
       var s4, c5, u3;
@@ -22975,7 +23589,7 @@
         var h4 = k2(t3, false);
         (h4 !== "" || (h4 = e2.loadFile(t3, true)) !== void 0) && (t3 = h4);
       }
-      if (d2(t3) && (t3 = p3(t3, n4)), n4 = i3(t3, n4), !f3(n4))
+      if (d2(t3) && (t3 = p3(t3, n4)), n4 = i3(t3, n4), !f4(n4))
         throw new Error("addImage does not support files of type '" + n4 + "', please ensure that a plugin for '" + n4 + "' support is added.");
       if (((u3 = a4) == null || u3.length === 0) && (a4 = function(t4) {
         return typeof t4 == "string" || x2(t4) ? w2(t4) : x2(t4.data) ? w2(t4.data) : null;
@@ -23001,7 +23615,7 @@
     };
     e2.getImageProperties = function(t3) {
       var n4, a4, o4 = "";
-      if (d2(t3) && (t3 = p3(t3)), typeof t3 == "string" && i3(t3) === r2 && ((o4 = k2(t3, false)) === "" && (o4 = e2.loadFile(t3) || ""), t3 = o4), a4 = i3(t3), !f3(a4))
+      if (d2(t3) && (t3 = p3(t3)), typeof t3 == "string" && i3(t3) === r2 && ((o4 = k2(t3, false)) === "" && (o4 = e2.loadFile(t3) || ""), t3 = o4), a4 = i3(t3), !f4(a4))
         throw new Error("addImage does not support files of type '" + a4 + "', please ensure that a plugin for '" + a4 + "' support is added.");
       if (!A2() || t3 instanceof Uint8Array || (t3 = S2(t3)), !(n4 = this["process" + a4.toUpperCase()](t3)))
         throw new Error("An unknown error occurred whilst processing the image");
@@ -23029,21 +23643,21 @@
         this.internal.write("/Annots [");
         for (var l3 = 0; l3 < c4.length; l3++) {
           r2 = c4[l3];
-          var f3 = this.internal.pdfEscape, d2 = this.internal.getEncryptor(t4.objId);
+          var f4 = this.internal.pdfEscape, d2 = this.internal.getEncryptor(t4.objId);
           switch (r2.type) {
             case "reference":
               this.internal.write(" " + r2.object.objId + " 0 R ");
               break;
             case "text":
-              var p3 = this.internal.newAdditionalObject(), g2 = this.internal.newAdditionalObject(), m4 = this.internal.getEncryptor(p3.objId), v3 = r2.title || "Note";
-              i3 = "<</Type /Annot /Subtype /Text " + (n3 = "/Rect [" + a3(r2.bounds.x) + " " + o3(r2.bounds.y + r2.bounds.h) + " " + a3(r2.bounds.x + r2.bounds.w) + " " + o3(r2.bounds.y) + "] ") + "/Contents (" + f3(m4(r2.contents)) + ")", i3 += " /Popup " + g2.objId + " 0 R", i3 += " /P " + s3.objId + " 0 R", i3 += " /T (" + f3(m4(v3)) + ") >>", p3.content = i3;
+              var p3 = this.internal.newAdditionalObject(), g2 = this.internal.newAdditionalObject(), m4 = this.internal.getEncryptor(p3.objId), v6 = r2.title || "Note";
+              i3 = "<</Type /Annot /Subtype /Text " + (n3 = "/Rect [" + a3(r2.bounds.x) + " " + o3(r2.bounds.y + r2.bounds.h) + " " + a3(r2.bounds.x + r2.bounds.w) + " " + o3(r2.bounds.y) + "] ") + "/Contents (" + f4(m4(r2.contents)) + ")", i3 += " /Popup " + g2.objId + " 0 R", i3 += " /P " + s3.objId + " 0 R", i3 += " /T (" + f4(m4(v6)) + ") >>", p3.content = i3;
               var b2 = p3.objId + " 0 R";
               i3 = "<</Type /Annot /Subtype /Popup " + (n3 = "/Rect [" + a3(r2.bounds.x + 30) + " " + o3(r2.bounds.y + r2.bounds.h) + " " + a3(r2.bounds.x + r2.bounds.w + 30) + " " + o3(r2.bounds.y) + "] ") + " /Parent " + b2, r2.open && (i3 += " /Open true"), i3 += " >>", g2.content = i3, this.internal.write(p3.objId, "0 R", g2.objId, "0 R");
               break;
             case "freetext":
               n3 = "/Rect [" + a3(r2.bounds.x) + " " + o3(r2.bounds.y) + " " + a3(r2.bounds.x + r2.bounds.w) + " " + o3(r2.bounds.y + r2.bounds.h) + "] ";
               var y3 = r2.color || "#000000";
-              i3 = "<</Type /Annot /Subtype /FreeText " + n3 + "/Contents (" + f3(d2(r2.contents)) + ")", i3 += " /DS(font: Helvetica,sans-serif 12.0pt; text-align:left; color:#" + y3 + ")", i3 += " /Border [0 0 0]", i3 += " >>", this.internal.write(i3);
+              i3 = "<</Type /Annot /Subtype /FreeText " + n3 + "/Contents (" + f4(d2(r2.contents)) + ")", i3 += " /DS(font: Helvetica,sans-serif 12.0pt; text-align:left; color:#" + y3 + ")", i3 += " /Border [0 0 0]", i3 += " >>", this.internal.write(i3);
               break;
             case "link":
               if (r2.options.name) {
@@ -23052,7 +23666,7 @@
               } else
                 r2.options.top || (r2.options.top = 0);
               if (n3 = "/Rect [" + r2.finalBounds.x + " " + r2.finalBounds.y + " " + r2.finalBounds.w + " " + r2.finalBounds.h + "] ", i3 = "", r2.options.url)
-                i3 = "<</Type /Annot /Subtype /Link " + n3 + "/Border [0 0 0] /A <</S /URI /URI (" + f3(d2(r2.options.url)) + ") >>";
+                i3 = "<</Type /Annot /Subtype /Link " + n3 + "/Border [0 0 0] /A <</S /URI /URI (" + f4(d2(r2.options.url)) + ") >>";
               else if (r2.options.pageNumber) {
                 switch (i3 = "<</Type /Annot /Subtype /Link " + n3 + "/Border [0 0 0] /Dest [" + this.internal.getPageInfo(r2.options.pageNumber).objId + " 0 R", r2.options.magFactor = r2.options.magFactor || "XYZ", r2.options.magFactor) {
                   case "Fit":
@@ -23133,13 +23747,13 @@
     t3.__arabicParser__.isArabicDiacritic = function(t4) {
       return t4 !== void 0 && n3[t4.charCodeAt(0)] !== void 0;
     };
-    var f3 = t3.__arabicParser__.getCorrectForm = function(t4, e3, r3) {
+    var f4 = t3.__arabicParser__.getCorrectForm = function(t4, e3, r3) {
       return o3(t4) ? a3(t4) === false ? -1 : !u3(t4) || !o3(e3) && !o3(r3) || !o3(r3) && s3(e3) || s3(t4) && !o3(e3) || s3(t4) && c4(e3) || s3(t4) && s3(e3) ? 0 : h3(t4) && o3(e3) && !s3(e3) && o3(r3) && u3(r3) ? 3 : s3(t4) || !o3(r3) ? 1 : 2 : -1;
     }, d2 = function(t4) {
       var r3 = 0, n4 = 0, i4 = 0, a4 = "", s4 = "", c5 = "", u4 = (t4 = t4 || "").split("\\s+"), h4 = [];
       for (r3 = 0; r3 < u4.length; r3 += 1) {
         for (h4.push(""), n4 = 0; n4 < u4[r3].length; n4 += 1)
-          a4 = u4[r3][n4], s4 = u4[r3][n4 - 1], c5 = u4[r3][n4 + 1], o3(a4) ? (i4 = f3(a4, s4, c5), h4[r3] += i4 !== -1 ? String.fromCharCode(e2[a4.charCodeAt(0)][i4]) : a4) : h4[r3] += a4;
+          a4 = u4[r3][n4], s4 = u4[r3][n4 - 1], c5 = u4[r3][n4 + 1], o3(a4) ? (i4 = f4(a4, s4, c5), h4[r3] += i4 !== -1 ? String.fromCharCode(e2[a4.charCodeAt(0)][i4]) : a4) : h4[r3] += a4;
         h4[r3] = l3(h4[r3]);
       }
       return h4.join(" ");
@@ -23299,36 +23913,36 @@
     e2.table = function(e3, n4, u3, h3, l3) {
       if (i3.call(this), !u3)
         throw new Error("No data for PDF table.");
-      var f3, d2, p3, g2, m4 = [], v3 = [], b2 = [], y3 = {}, w2 = {}, N3 = [], L2 = [], A2 = (l3 = l3 || {}).autoSize || false, x2 = l3.printHeaders !== false, S2 = l3.css && l3.css["font-size"] !== void 0 ? 16 * l3.css["font-size"] : l3.fontSize || 12, _3 = l3.margins || Object.assign({ width: this.getPageWidth() }, r2), P2 = typeof l3.padding == "number" ? l3.padding : 3, k2 = l3.headerBackgroundColor || "#c8c8c8", I2 = l3.headerTextColor || "#000";
+      var f4, d2, p3, g2, m4 = [], v6 = [], b2 = [], y3 = {}, w2 = {}, N3 = [], L2 = [], A2 = (l3 = l3 || {}).autoSize || false, x2 = l3.printHeaders !== false, S2 = l3.css && l3.css["font-size"] !== void 0 ? 16 * l3.css["font-size"] : l3.fontSize || 12, _3 = l3.margins || Object.assign({ width: this.getPageWidth() }, r2), P2 = typeof l3.padding == "number" ? l3.padding : 3, k2 = l3.headerBackgroundColor || "#c8c8c8", I2 = l3.headerTextColor || "#000";
       if (a3.call(this), this.internal.__cell__.printHeaders = x2, this.internal.__cell__.margins = _3, this.internal.__cell__.table_font_size = S2, this.internal.__cell__.padding = P2, this.internal.__cell__.headerBackgroundColor = k2, this.internal.__cell__.headerTextColor = I2, this.setFontSize(S2), h3 == null)
-        v3 = m4 = Object.keys(u3[0]), b2 = m4.map(function() {
+        v6 = m4 = Object.keys(u3[0]), b2 = m4.map(function() {
           return "left";
         });
       else if (Array.isArray(h3) && _typeof(h3[0]) === "object")
         for (m4 = h3.map(function(t3) {
           return t3.name;
-        }), v3 = h3.map(function(t3) {
+        }), v6 = h3.map(function(t3) {
           return t3.prompt || t3.name || "";
         }), b2 = h3.map(function(t3) {
           return t3.align || "left";
-        }), f3 = 0; f3 < h3.length; f3 += 1)
-          w2[h3[f3].name] = h3[f3].width * (19.049976 / 25.4);
+        }), f4 = 0; f4 < h3.length; f4 += 1)
+          w2[h3[f4].name] = h3[f4].width * (19.049976 / 25.4);
       else
-        Array.isArray(h3) && typeof h3[0] == "string" && (v3 = m4 = h3, b2 = m4.map(function() {
+        Array.isArray(h3) && typeof h3[0] == "string" && (v6 = m4 = h3, b2 = m4.map(function() {
           return "left";
         }));
       if (A2 || Array.isArray(h3) && typeof h3[0] == "string")
-        for (f3 = 0; f3 < m4.length; f3 += 1) {
-          for (y3[g2 = m4[f3]] = u3.map(function(t3) {
+        for (f4 = 0; f4 < m4.length; f4 += 1) {
+          for (y3[g2 = m4[f4]] = u3.map(function(t3) {
             return t3[g2];
-          }), this.setFont(void 0, "bold"), N3.push(this.getTextDimensions(v3[f3], { fontSize: this.internal.__cell__.table_font_size, scaleFactor: this.internal.scaleFactor }).w), d2 = y3[g2], this.setFont(void 0, "normal"), p3 = 0; p3 < d2.length; p3 += 1)
+          }), this.setFont(void 0, "bold"), N3.push(this.getTextDimensions(v6[f4], { fontSize: this.internal.__cell__.table_font_size, scaleFactor: this.internal.scaleFactor }).w), d2 = y3[g2], this.setFont(void 0, "normal"), p3 = 0; p3 < d2.length; p3 += 1)
             N3.push(this.getTextDimensions(d2[p3], { fontSize: this.internal.__cell__.table_font_size, scaleFactor: this.internal.scaleFactor }).w);
           w2[g2] = Math.max.apply(null, N3) + P2 + P2, N3 = [];
         }
       if (x2) {
         var F2 = {};
-        for (f3 = 0; f3 < m4.length; f3 += 1)
-          F2[m4[f3]] = {}, F2[m4[f3]].text = v3[f3], F2[m4[f3]].align = b2[f3];
+        for (f4 = 0; f4 < m4.length; f4 += 1)
+          F2[m4[f4]] = {}, F2[m4[f4]].text = v6[f4], F2[m4[f4]].align = b2[f4];
         var C2 = c4.call(this, F2, w2);
         L2 = m4.map(function(t3) {
           return new o3(e3, n4, w2[t3], C2, F2[t3].text, void 0, F2[t3].align);
@@ -23337,12 +23951,12 @@
       var j2 = h3.reduce(function(t3, e4) {
         return t3[e4.name] = e4.align, t3;
       }, {});
-      for (f3 = 0; f3 < u3.length; f3 += 1) {
-        "rowStart" in l3 && l3.rowStart instanceof Function && l3.rowStart({ row: f3, data: u3[f3] }, this);
-        var O3 = c4.call(this, u3[f3], w2);
+      for (f4 = 0; f4 < u3.length; f4 += 1) {
+        "rowStart" in l3 && l3.rowStart instanceof Function && l3.rowStart({ row: f4, data: u3[f4] }, this);
+        var O3 = c4.call(this, u3[f4], w2);
         for (p3 = 0; p3 < m4.length; p3 += 1) {
-          var B2 = u3[f3][m4[p3]];
-          "cellStart" in l3 && l3.cellStart instanceof Function && l3.cellStart({ row: f3, col: p3, data: B2 }, this), s3.call(this, new o3(e3, n4, w2[m4[p3]], O3, B2, f3 + 2, j2[m4[p3]]));
+          var B2 = u3[f4][m4[p3]];
+          "cellStart" in l3 && l3.cellStart instanceof Function && l3.cellStart({ row: f4, col: p3, data: B2 }, this), s3.call(this, new o3(e3, n4, w2[m4[p3]], O3, B2, f4 + 2, j2[m4[p3]]));
         }
       }
       return this.internal.__cell__.table_x = e3, this.internal.__cell__.table_y = n4, this;
@@ -23585,7 +24199,7 @@
         ["right", "end", "center", "left", "start"].indexOf(t4) !== -1 && (this.ctx.textAlign = t4);
       } });
       var h4 = null;
-      function f3(t4, e4) {
+      function f4(t4, e4) {
         if (h4 === null) {
           var r4 = function(t5) {
             var e5 = [];
@@ -23656,7 +24270,7 @@
             return n6;
           }(a4);
           if (this.fontFaces) {
-            var c6 = qt(f3(this.pdf, this.fontFaces), s5.map(function(t5) {
+            var c6 = qt(f4(this.pdf, this.fontFaces), s5.map(function(t5) {
               return { family: t5, stretch: "normal", weight: n5, style: r4 };
             }));
             this.pdf.setFont(c6.ref.name, c6.ref.style);
@@ -23773,7 +24387,7 @@
     }, p3.prototype.strokeRect = function(t3, e3, r3, n4) {
       if (isNaN(t3) || isNaN(e3) || isNaN(r3) || isNaN(n4))
         throw a2.error("jsPDF.context2d.strokeRect: Invalid arguments", arguments), new Error("Invalid arguments passed to jsPDF.context2d.strokeRect");
-      v3.call(this) || (this.beginPath(), this.rect(t3, e3, r3, n4), this.stroke());
+      v6.call(this) || (this.beginPath(), this.rect(t3, e3, r3, n4), this.stroke());
     }, p3.prototype.clearRect = function(t3, e3, r3, n4) {
       if (isNaN(t3) || isNaN(e3) || isNaN(r3) || isNaN(n4))
         throw a2.error("jsPDF.context2d.clearRect: Invalid arguments", arguments), new Error("Invalid arguments passed to jsPDF.context2d.clearRect");
@@ -23809,7 +24423,7 @@
           e3 = parseInt(a3[1]), r3 = parseInt(a3[2]), n4 = parseInt(a3[3]), i4 = parseFloat(a3[4]);
         else {
           if (i4 = 1, typeof t3 == "string" && t3.charAt(0) !== "#") {
-            var o4 = new f2(t3);
+            var o4 = new f3(t3);
             t3 = o4.ok ? o4.toHex() : "#000000";
           }
           t3.length === 4 ? (e3 = t3.substring(1, 2), e3 += e3, r3 = t3.substring(2, 3), r3 += r3, n4 = t3.substring(3, 4), n4 += n4) : (e3 = t3.substring(1, 3), r3 = t3.substring(3, 5), n4 = t3.substring(5, 7)), e3 = parseInt(e3, 16), r3 = parseInt(r3, 16), n4 = parseInt(n4, 16);
@@ -23818,7 +24432,7 @@
       return { r: e3, g: r3, b: n4, a: i4, style: t3 };
     }, m4 = function() {
       return this.ctx.isFillTransparent || this.globalAlpha == 0;
-    }, v3 = function() {
+    }, v6 = function() {
       return Boolean(this.ctx.isStrokeTransparent || this.globalAlpha == 0);
     };
     p3.prototype.fillText = function(t3, e3, r3, n4) {
@@ -23831,7 +24445,7 @@
     }, p3.prototype.strokeText = function(t3, e3, r3, n4) {
       if (isNaN(e3) || isNaN(r3) || typeof t3 != "string")
         throw a2.error("jsPDF.context2d.strokeText: Invalid arguments", arguments), new Error("Invalid arguments passed to jsPDF.context2d.strokeText");
-      if (!v3.call(this)) {
+      if (!v6.call(this)) {
         n4 = isNaN(n4) ? void 0 : n4;
         var i4 = q2(this.ctx.transform.rotation), o4 = this.ctx.transform.scaleX;
         C2.call(this, { text: t3, x: e3, y: r3, scale: o4, renderingMode: "stroke", angle: i4, align: this.textAlign, maxWidth: n4 });
@@ -23873,9 +24487,9 @@
       return this.margin[0] > 0 || this.margin[1] > 0 || this.margin[2] > 0 || this.margin[3] > 0;
     };
     p3.prototype.drawImage = function(t3, e3, r3, n4, i4, a3, o4, s4, c5) {
-      var l4 = this.pdf.getImageProperties(t3), f3 = 1, d3 = 1, p4 = 1, g3 = 1;
-      n4 !== void 0 && s4 !== void 0 && (p4 = s4 / n4, g3 = c5 / i4, f3 = l4.width / n4 * s4 / n4, d3 = l4.height / i4 * c5 / i4), a3 === void 0 && (a3 = e3, o4 = r3, e3 = 0, r3 = 0), n4 !== void 0 && s4 === void 0 && (s4 = n4, c5 = i4), n4 === void 0 && s4 === void 0 && (s4 = l4.width, c5 = l4.height);
-      for (var m5, v5 = this.ctx.transform.decompose(), w3 = q2(v5.rotate.shx), A3 = new h3(), S3 = (A3 = (A3 = (A3 = A3.multiply(v5.translate)).multiply(v5.skew)).multiply(v5.scale)).applyToRectangle(new u3(a3 - e3 * p4, o4 - r3 * g3, n4 * f3, i4 * d3)), _4 = y3.call(this, S3), P3 = [], k3 = 0; k3 < _4.length; k3 += 1)
+      var l4 = this.pdf.getImageProperties(t3), f4 = 1, d3 = 1, p4 = 1, g3 = 1;
+      n4 !== void 0 && s4 !== void 0 && (p4 = s4 / n4, g3 = c5 / i4, f4 = l4.width / n4 * s4 / n4, d3 = l4.height / i4 * c5 / i4), a3 === void 0 && (a3 = e3, o4 = r3, e3 = 0, r3 = 0), n4 !== void 0 && s4 === void 0 && (s4 = n4, c5 = i4), n4 === void 0 && s4 === void 0 && (s4 = l4.width, c5 = l4.height);
+      for (var m5, v7 = this.ctx.transform.decompose(), w3 = q2(v7.rotate.shx), A3 = new h3(), S3 = (A3 = (A3 = (A3 = A3.multiply(v7.translate)).multiply(v7.skew)).multiply(v7.scale)).applyToRectangle(new u3(a3 - e3 * p4, o4 - r3 * g3, n4 * f4, i4 * d3)), _4 = y3.call(this, S3), P3 = [], k3 = 0; k3 < _4.length; k3 += 1)
         P3.indexOf(_4[k3]) === -1 && P3.push(_4[k3]);
       if (L2(P3), this.autoPaging)
         for (var I3 = P3[0], F3 = P3[P3.length - 1], C3 = I3; C3 < F3 + 1; C3++) {
@@ -23943,15 +24557,15 @@
         return t4 - e3;
       });
     }, A2 = function(t3, e3) {
-      for (var r3, n4, i4 = this.fillStyle, a3 = this.strokeStyle, o4 = this.lineCap, s4 = this.lineWidth, c5 = Math.abs(s4 * this.ctx.transform.scaleX), u4 = this.lineJoin, h4 = JSON.parse(JSON.stringify(this.path)), l4 = JSON.parse(JSON.stringify(this.path)), f3 = [], d3 = 0; d3 < l4.length; d3++)
+      for (var r3, n4, i4 = this.fillStyle, a3 = this.strokeStyle, o4 = this.lineCap, s4 = this.lineWidth, c5 = Math.abs(s4 * this.ctx.transform.scaleX), u4 = this.lineJoin, h4 = JSON.parse(JSON.stringify(this.path)), l4 = JSON.parse(JSON.stringify(this.path)), f4 = [], d3 = 0; d3 < l4.length; d3++)
         if (l4[d3].x !== void 0)
           for (var p4 = y3.call(this, l4[d3]), g3 = 0; g3 < p4.length; g3 += 1)
-            f3.indexOf(p4[g3]) === -1 && f3.push(p4[g3]);
-      for (var m5 = 0; m5 < f3.length; m5++)
-        for (; this.pdf.internal.getNumberOfPages() < f3[m5]; )
+            f4.indexOf(p4[g3]) === -1 && f4.push(p4[g3]);
+      for (var m5 = 0; m5 < f4.length; m5++)
+        for (; this.pdf.internal.getNumberOfPages() < f4[m5]; )
           w2.call(this);
-      if (L2(f3), this.autoPaging)
-        for (var v5 = f3[0], A3 = f3[f3.length - 1], S3 = v5; S3 < A3 + 1; S3++) {
+      if (L2(f4), this.autoPaging)
+        for (var v7 = f4[0], A3 = f4[f4.length - 1], S3 = v7; S3 < A3 + 1; S3++) {
           this.pdf.setPage(S3), this.fillStyle = i4, this.strokeStyle = a3, this.lineCap = o4, this.lineWidth = c5, this.lineJoin = u4;
           var _4 = this.pdf.internal.pageSize.width - this.margin[3] - this.margin[1], P3 = S3 === 1 ? this.posY + this.margin[0] : this.margin[0], k3 = this.pdf.internal.pageSize.height - this.posY - this.margin[0] - this.margin[2], I3 = this.pdf.internal.pageSize.height - this.margin[0] - this.margin[2], F3 = S3 === 1 ? 0 : k3 + (S3 - 2) * I3;
           if (this.ctx.clip_path.length !== 0) {
@@ -23959,7 +24573,7 @@
             r3 = JSON.parse(JSON.stringify(this.ctx.clip_path)), this.path = N3(r3, this.posX + this.margin[3], -F3 + P3 + this.ctx.prevPageLastElemOffset), x2.call(this, t3, true), this.path = C3;
           }
           if (n4 = JSON.parse(JSON.stringify(h4)), this.path = N3(n4, this.posX + this.margin[3], -F3 + P3 + this.ctx.prevPageLastElemOffset), e3 === false || S3 === 0) {
-            var j3 = (S3 > v5 || S3 < A3) && b2.call(this);
+            var j3 = (S3 > v7 || S3 < A3) && b2.call(this);
             j3 && (this.pdf.saveGraphicsState(), this.pdf.rect(this.margin[3], this.margin[0], _4, I3, null).clip().discardPath()), x2.call(this, t3, e3), j3 && this.pdf.restoreGraphicsState();
           }
           this.lineWidth = s4;
@@ -23968,7 +24582,7 @@
         this.lineWidth = c5, x2.call(this, t3, e3), this.lineWidth = s4;
       this.path = h4;
     }, x2 = function(t3, e3) {
-      if ((t3 !== "stroke" || e3 || !v3.call(this)) && (t3 === "stroke" || e3 || !m4.call(this))) {
+      if ((t3 !== "stroke" || e3 || !v6.call(this)) && (t3 === "stroke" || e3 || !m4.call(this))) {
         for (var r3, n4, i4 = [], a3 = this.path, o4 = 0; o4 < a3.length; o4++) {
           var s4 = a3[o4];
           switch (s4.type) {
@@ -23995,8 +24609,8 @@
               r3 = [s4.x1 - a3[o4 - 1].x, s4.y1 - a3[o4 - 1].y, s4.x2 - a3[o4 - 1].x, s4.y2 - a3[o4 - 1].y, s4.x - a3[o4 - 1].x, s4.y - a3[o4 - 1].y], i4[i4.length - 1].deltas.push(r3);
               break;
             case "qct":
-              var u4 = a3[o4 - 1].x + 2 / 3 * (s4.x1 - a3[o4 - 1].x), h4 = a3[o4 - 1].y + 2 / 3 * (s4.y1 - a3[o4 - 1].y), l4 = s4.x + 2 / 3 * (s4.x1 - s4.x), f3 = s4.y + 2 / 3 * (s4.y1 - s4.y), d3 = s4.x, p4 = s4.y;
-              r3 = [u4 - a3[o4 - 1].x, h4 - a3[o4 - 1].y, l4 - a3[o4 - 1].x, f3 - a3[o4 - 1].y, d3 - a3[o4 - 1].x, p4 - a3[o4 - 1].y], i4[i4.length - 1].deltas.push(r3);
+              var u4 = a3[o4 - 1].x + 2 / 3 * (s4.x1 - a3[o4 - 1].x), h4 = a3[o4 - 1].y + 2 / 3 * (s4.y1 - a3[o4 - 1].y), l4 = s4.x + 2 / 3 * (s4.x1 - s4.x), f4 = s4.y + 2 / 3 * (s4.y1 - s4.y), d3 = s4.x, p4 = s4.y;
+              r3 = [u4 - a3[o4 - 1].x, h4 - a3[o4 - 1].y, l4 - a3[o4 - 1].x, f4 - a3[o4 - 1].y, d3 - a3[o4 - 1].x, p4 - a3[o4 - 1].y], i4[i4.length - 1].deltas.push(r3);
               break;
             case "arc":
               i4.push({ deltas: [], abs: [], arc: true }), Array.isArray(i4[i4.length - 1].abs) && i4[i4.length - 1].abs.push(s4);
@@ -24085,10 +24699,10 @@
       }
       var r3 = this.pdf.getTextDimensions(t3.text), n4 = S2.call(this, t3.y), i4 = _3.call(this, n4) - r3.h, a3 = this.ctx.transform.applyToPoint(new c4(t3.x, n4)), o4 = this.ctx.transform.decompose(), s4 = new h3();
       s4 = (s4 = (s4 = s4.multiply(o4.translate)).multiply(o4.skew)).multiply(o4.scale);
-      for (var l4, f3, d3, p4 = this.ctx.transform.applyToRectangle(new u3(t3.x, n4, r3.w, r3.h)), g3 = s4.applyToRectangle(new u3(t3.x, i4, r3.w, r3.h)), m5 = y3.call(this, g3), v5 = [], w3 = 0; w3 < m5.length; w3 += 1)
-        v5.indexOf(m5[w3]) === -1 && v5.push(m5[w3]);
-      if (L2(v5), this.autoPaging)
-        for (var A3 = v5[0], P3 = v5[v5.length - 1], k3 = A3; k3 < P3 + 1; k3++) {
+      for (var l4, f4, d3, p4 = this.ctx.transform.applyToRectangle(new u3(t3.x, n4, r3.w, r3.h)), g3 = s4.applyToRectangle(new u3(t3.x, i4, r3.w, r3.h)), m5 = y3.call(this, g3), v7 = [], w3 = 0; w3 < m5.length; w3 += 1)
+        v7.indexOf(m5[w3]) === -1 && v7.push(m5[w3]);
+      if (L2(v7), this.autoPaging)
+        for (var A3 = v7[0], P3 = v7[v7.length - 1], k3 = A3; k3 < P3 + 1; k3++) {
           this.pdf.setPage(k3);
           var I3 = k3 === 1 ? this.posY + this.margin[0] : this.margin[0], F3 = this.pdf.internal.pageSize.height - this.posY - this.margin[0] - this.margin[2], C3 = this.pdf.internal.pageSize.height - this.margin[2], j3 = C3 - this.margin[0], O4 = this.pdf.internal.pageSize.width - this.margin[1], B3 = O4 - this.margin[3], M3 = k3 === 1 ? 0 : F3 + (k3 - 2) * j3;
           if (this.ctx.clip_path.length !== 0) {
@@ -24096,7 +24710,7 @@
             l4 = JSON.parse(JSON.stringify(this.ctx.clip_path)), this.path = N3(l4, this.posX + this.margin[3], -1 * M3 + I3), x2.call(this, "fill", true), this.path = E3;
           }
           var q3 = N3([JSON.parse(JSON.stringify(g3))], this.posX + this.margin[3], -M3 + I3 + this.ctx.prevPageLastElemOffset)[0];
-          t3.scale >= 0.01 && (f3 = this.pdf.internal.getFontSize(), this.pdf.setFontSize(f3 * t3.scale), d3 = this.lineWidth, this.lineWidth = d3 * t3.scale);
+          t3.scale >= 0.01 && (f4 = this.pdf.internal.getFontSize(), this.pdf.setFontSize(f4 * t3.scale), d3 = this.lineWidth, this.lineWidth = d3 * t3.scale);
           var D3 = this.autoPaging !== "text";
           if (D3 || q3.y + q3.h <= C3) {
             if (D3 || q3.y >= I3 && q3.x <= O4) {
@@ -24105,10 +24719,10 @@
             }
           } else
             q3.y < C3 && (this.ctx.prevPageLastElemOffset += C3 - q3.y);
-          t3.scale >= 0.01 && (this.pdf.setFontSize(f3), this.lineWidth = d3);
+          t3.scale >= 0.01 && (this.pdf.setFontSize(f4), this.lineWidth = d3);
         }
       else
-        t3.scale >= 0.01 && (f3 = this.pdf.internal.getFontSize(), this.pdf.setFontSize(f3 * t3.scale), d3 = this.lineWidth, this.lineWidth = d3 * t3.scale), this.pdf.text(t3.text, a3.x + this.posX, a3.y + this.posY, { angle: t3.angle, align: e3, renderingMode: t3.renderingMode, maxWidth: t3.maxWidth }), t3.scale >= 0.01 && (this.pdf.setFontSize(f3), this.lineWidth = d3);
+        t3.scale >= 0.01 && (f4 = this.pdf.internal.getFontSize(), this.pdf.setFontSize(f4 * t3.scale), d3 = this.lineWidth, this.lineWidth = d3 * t3.scale), this.pdf.text(t3.text, a3.x + this.posX, a3.y + this.posY, { angle: t3.angle, align: e3, renderingMode: t3.renderingMode, maxWidth: t3.maxWidth }), t3.scale >= 0.01 && (this.pdf.setFontSize(f4), this.lineWidth = d3);
     }, j2 = function(t3, e3, r3, a3) {
       r3 = r3 || 0, a3 = a3 || 0, this.pdf.internal.out(n3(t3 + r3) + " " + i3(e3 + a3) + " l");
     }, O3 = function(t3, e3, r3) {
@@ -24126,17 +24740,17 @@
       }
       return s4;
     }, E2 = function(t3, e3, r3) {
-      var n4 = (r3 - e3) / 2, i4 = t3 * Math.cos(n4), a3 = t3 * Math.sin(n4), o4 = i4, s4 = -a3, c5 = o4 * o4 + s4 * s4, u4 = c5 + o4 * i4 + s4 * a3, h4 = 4 / 3 * (Math.sqrt(2 * c5 * u4) - u4) / (o4 * a3 - s4 * i4), l4 = o4 - h4 * s4, f3 = s4 + h4 * o4, d3 = l4, p4 = -f3, g3 = n4 + e3, m5 = Math.cos(g3), v5 = Math.sin(g3);
-      return { x1: t3 * Math.cos(e3), y1: t3 * Math.sin(e3), x2: l4 * m5 - f3 * v5, y2: l4 * v5 + f3 * m5, x3: d3 * m5 - p4 * v5, y3: d3 * v5 + p4 * m5, x4: t3 * Math.cos(r3), y4: t3 * Math.sin(r3) };
+      var n4 = (r3 - e3) / 2, i4 = t3 * Math.cos(n4), a3 = t3 * Math.sin(n4), o4 = i4, s4 = -a3, c5 = o4 * o4 + s4 * s4, u4 = c5 + o4 * i4 + s4 * a3, h4 = 4 / 3 * (Math.sqrt(2 * c5 * u4) - u4) / (o4 * a3 - s4 * i4), l4 = o4 - h4 * s4, f4 = s4 + h4 * o4, d3 = l4, p4 = -f4, g3 = n4 + e3, m5 = Math.cos(g3), v7 = Math.sin(g3);
+      return { x1: t3 * Math.cos(e3), y1: t3 * Math.sin(e3), x2: l4 * m5 - f4 * v7, y2: l4 * v7 + f4 * m5, x3: d3 * m5 - p4 * v7, y3: d3 * v7 + p4 * m5, x4: t3 * Math.cos(r3), y4: t3 * Math.sin(r3) };
     }, q2 = function(t3) {
       return 180 * t3 / Math.PI;
     }, D2 = function(t3, e3, r3, n4, i4, a3) {
-      var o4 = t3 + 0.5 * (r3 - t3), s4 = e3 + 0.5 * (n4 - e3), c5 = i4 + 0.5 * (r3 - i4), h4 = a3 + 0.5 * (n4 - a3), l4 = Math.min(t3, i4, o4, c5), f3 = Math.max(t3, i4, o4, c5), d3 = Math.min(e3, a3, s4, h4), p4 = Math.max(e3, a3, s4, h4);
-      return new u3(l4, d3, f3 - l4, p4 - d3);
+      var o4 = t3 + 0.5 * (r3 - t3), s4 = e3 + 0.5 * (n4 - e3), c5 = i4 + 0.5 * (r3 - i4), h4 = a3 + 0.5 * (n4 - a3), l4 = Math.min(t3, i4, o4, c5), f4 = Math.max(t3, i4, o4, c5), d3 = Math.min(e3, a3, s4, h4), p4 = Math.max(e3, a3, s4, h4);
+      return new u3(l4, d3, f4 - l4, p4 - d3);
     }, R2 = function(t3, e3, r3, n4, i4, a3, o4, s4) {
-      var c5, h4, l4, f3, d3, p4, g3, m5, v5, b3, y4, w3, N4, L3, A3 = r3 - t3, x3 = n4 - e3, S3 = i4 - r3, _4 = a3 - n4, P3 = o4 - i4, k3 = s4 - a3;
+      var c5, h4, l4, f4, d3, p4, g3, m5, v7, b3, y4, w3, N4, L3, A3 = r3 - t3, x3 = n4 - e3, S3 = i4 - r3, _4 = a3 - n4, P3 = o4 - i4, k3 = s4 - a3;
       for (h4 = 0; h4 < 41; h4++)
-        v5 = (g3 = (l4 = t3 + (c5 = h4 / 40) * A3) + c5 * ((d3 = r3 + c5 * S3) - l4)) + c5 * (d3 + c5 * (i4 + c5 * P3 - d3) - g3), b3 = (m5 = (f3 = e3 + c5 * x3) + c5 * ((p4 = n4 + c5 * _4) - f3)) + c5 * (p4 + c5 * (a3 + c5 * k3 - p4) - m5), h4 == 0 ? (y4 = v5, w3 = b3, N4 = v5, L3 = b3) : (y4 = Math.min(y4, v5), w3 = Math.min(w3, b3), N4 = Math.max(N4, v5), L3 = Math.max(L3, b3));
+        v7 = (g3 = (l4 = t3 + (c5 = h4 / 40) * A3) + c5 * ((d3 = r3 + c5 * S3) - l4)) + c5 * (d3 + c5 * (i4 + c5 * P3 - d3) - g3), b3 = (m5 = (f4 = e3 + c5 * x3) + c5 * ((p4 = n4 + c5 * _4) - f4)) + c5 * (p4 + c5 * (a3 + c5 * k3 - p4) - m5), h4 == 0 ? (y4 = v7, w3 = b3, N4 = v7, L3 = b3) : (y4 = Math.min(y4, v7), w3 = Math.min(w3, b3), N4 = Math.max(N4, v7), L3 = Math.max(L3, b3));
       return new u3(Math.round(y4), Math.round(w3), Math.round(N4 - y4), Math.round(L3 - w3));
     }, T3 = function() {
       if (this.prevLineDash || this.ctx.lineDash.length || this.ctx.lineDashOffset) {
@@ -24563,11 +25177,11 @@
           var l3 = t4.internal.getPageInfo(i3 + 1);
           t4.internal.write("<< /D[" + l3.objId + " 0 R /XYZ null null null]>> endobj");
         }
-        var f3 = t4.internal.newObject();
+        var f4 = t4.internal.newObject();
         t4.internal.write("<< /Names [ ");
         for (i3 = 0; i3 < u3.length; i3++)
           t4.internal.write("(page_" + (i3 + 1) + ")" + u3[i3] + " 0 R");
-        t4.internal.write(" ] >>", "endobj"), e2 = t4.internal.newObject(), t4.internal.write("<< /Dests " + f3 + " 0 R"), t4.internal.write(">>", "endobj");
+        t4.internal.write(" ] >>", "endobj"), e2 = t4.internal.newObject(), t4.internal.write("<< /Dests " + f4 + " 0 R"), t4.internal.write(">>", "endobj");
       }
     }]), t3.events.push(["putCatalog", function() {
       this.outline.root.children.length > 0 && (this.internal.write("/Outlines", this.outline.makeRef(this.outline.root)), this.outline.createNamedDestinations && this.internal.write("/Names " + e2 + " 0 R"));
@@ -24650,7 +25264,7 @@
   var Kt = function() {
     var t3, e2, i3;
     function a3(t4) {
-      var e3, r2, n3, i4, a4, o4, s3, c4, u3, h3, l3, f3, d2, p3;
+      var e3, r2, n3, i4, a4, o4, s3, c4, u3, h3, l3, f4, d2, p3;
       for (this.data = t4, this.pos = 8, this.palette = [], this.imgData = [], this.transparency = {}, this.animation = null, this.text = {}, o4 = null; ; ) {
         switch (e3 = this.readUInt32(), u3 = function() {
           var t5, e4;
@@ -24672,7 +25286,7 @@
             break;
           case "IDAT":
           case "fdAT":
-            for (u3 === "fdAT" && (this.pos += 4, e3 -= 4), t4 = (o4 != null ? o4.data : void 0) || this.imgData, f3 = 0; 0 <= e3 ? f3 < e3 : f3 > e3; 0 <= e3 ? ++f3 : --f3)
+            for (u3 === "fdAT" && (this.pos += 4, e3 -= 4), t4 = (o4 != null ? o4.data : void 0) || this.imgData, f4 = 0; 0 <= e3 ? f4 < e3 : f4 > e3; 0 <= e3 ? ++f4 : --f4)
               t4.push(this.data[this.pos++]);
             break;
           case "tRNS":
@@ -24734,35 +25348,35 @@
       if (t4 == null && (t4 = this.imgData), t4.length === 0)
         return new Uint8Array(0);
       function o4(r2, o5, s3, c4) {
-        var u3, h3, l3, f3, d2, p3, g2, m4, v3, b2, y3, w2, N3, L2, A2, x2, S2, _3, P2, k2, I2, F2 = Math.ceil((a4.width - r2) / s3), C2 = Math.ceil((a4.height - o5) / c4), j2 = a4.width == F2 && a4.height == C2;
+        var u3, h3, l3, f4, d2, p3, g2, m4, v6, b2, y3, w2, N3, L2, A2, x2, S2, _3, P2, k2, I2, F2 = Math.ceil((a4.width - r2) / s3), C2 = Math.ceil((a4.height - o5) / c4), j2 = a4.width == F2 && a4.height == C2;
         for (L2 = e3 * F2, w2 = j2 ? n3 : new Uint8Array(L2 * C2), p3 = t4.length, N3 = 0, h3 = 0; N3 < C2 && i4 < p3; ) {
           switch (t4[i4++]) {
             case 0:
-              for (f3 = S2 = 0; S2 < L2; f3 = S2 += 1)
+              for (f4 = S2 = 0; S2 < L2; f4 = S2 += 1)
                 w2[h3++] = t4[i4++];
               break;
             case 1:
-              for (f3 = _3 = 0; _3 < L2; f3 = _3 += 1)
-                u3 = t4[i4++], d2 = f3 < e3 ? 0 : w2[h3 - e3], w2[h3++] = (u3 + d2) % 256;
+              for (f4 = _3 = 0; _3 < L2; f4 = _3 += 1)
+                u3 = t4[i4++], d2 = f4 < e3 ? 0 : w2[h3 - e3], w2[h3++] = (u3 + d2) % 256;
               break;
             case 2:
-              for (f3 = P2 = 0; P2 < L2; f3 = P2 += 1)
-                u3 = t4[i4++], l3 = (f3 - f3 % e3) / e3, A2 = N3 && w2[(N3 - 1) * L2 + l3 * e3 + f3 % e3], w2[h3++] = (A2 + u3) % 256;
+              for (f4 = P2 = 0; P2 < L2; f4 = P2 += 1)
+                u3 = t4[i4++], l3 = (f4 - f4 % e3) / e3, A2 = N3 && w2[(N3 - 1) * L2 + l3 * e3 + f4 % e3], w2[h3++] = (A2 + u3) % 256;
               break;
             case 3:
-              for (f3 = k2 = 0; k2 < L2; f3 = k2 += 1)
-                u3 = t4[i4++], l3 = (f3 - f3 % e3) / e3, d2 = f3 < e3 ? 0 : w2[h3 - e3], A2 = N3 && w2[(N3 - 1) * L2 + l3 * e3 + f3 % e3], w2[h3++] = (u3 + Math.floor((d2 + A2) / 2)) % 256;
+              for (f4 = k2 = 0; k2 < L2; f4 = k2 += 1)
+                u3 = t4[i4++], l3 = (f4 - f4 % e3) / e3, d2 = f4 < e3 ? 0 : w2[h3 - e3], A2 = N3 && w2[(N3 - 1) * L2 + l3 * e3 + f4 % e3], w2[h3++] = (u3 + Math.floor((d2 + A2) / 2)) % 256;
               break;
             case 4:
-              for (f3 = I2 = 0; I2 < L2; f3 = I2 += 1)
-                u3 = t4[i4++], l3 = (f3 - f3 % e3) / e3, d2 = f3 < e3 ? 0 : w2[h3 - e3], N3 === 0 ? A2 = x2 = 0 : (A2 = w2[(N3 - 1) * L2 + l3 * e3 + f3 % e3], x2 = l3 && w2[(N3 - 1) * L2 + (l3 - 1) * e3 + f3 % e3]), g2 = d2 + A2 - x2, m4 = Math.abs(g2 - d2), b2 = Math.abs(g2 - A2), y3 = Math.abs(g2 - x2), v3 = m4 <= b2 && m4 <= y3 ? d2 : b2 <= y3 ? A2 : x2, w2[h3++] = (u3 + v3) % 256;
+              for (f4 = I2 = 0; I2 < L2; f4 = I2 += 1)
+                u3 = t4[i4++], l3 = (f4 - f4 % e3) / e3, d2 = f4 < e3 ? 0 : w2[h3 - e3], N3 === 0 ? A2 = x2 = 0 : (A2 = w2[(N3 - 1) * L2 + l3 * e3 + f4 % e3], x2 = l3 && w2[(N3 - 1) * L2 + (l3 - 1) * e3 + f4 % e3]), g2 = d2 + A2 - x2, m4 = Math.abs(g2 - d2), b2 = Math.abs(g2 - A2), y3 = Math.abs(g2 - x2), v6 = m4 <= b2 && m4 <= y3 ? d2 : b2 <= y3 ? A2 : x2, w2[h3++] = (u3 + v6) % 256;
               break;
             default:
               throw new Error("Invalid filter algorithm: " + t4[i4 - 1]);
           }
           if (!j2) {
             var O3 = ((o5 + N3 * c4) * a4.width + r2) * e3, B2 = N3 * L2;
-            for (f3 = 0; f3 < F2; f3 += 1) {
+            for (f4 = 0; f4 < F2; f4 += 1) {
               for (var M2 = 0; M2 < e3; M2 += 1)
                 n3[O3++] = w2[B2++];
               O3 += (s3 - 1) * e3;
@@ -24778,8 +25392,8 @@
         i4[n3++] = r2[e3], i4[n3++] = r2[e3 + 1], i4[n3++] = r2[e3 + 2], i4[n3++] = (c4 = a4[t4++]) != null ? c4 : 255;
       return i4;
     }, a3.prototype.copyToImageData = function(t4, e3) {
-      var r2, n3, i4, a4, o4, s3, c4, u3, h3, l3, f3;
-      if (n3 = this.colors, h3 = null, r2 = this.hasAlphaChannel, this.palette.length && (h3 = (f3 = this._decodedPalette) != null ? f3 : this._decodedPalette = this.decodePalette(), n3 = 4, r2 = true), u3 = (i4 = t4.data || t4).length, o4 = h3 || e3, a4 = s3 = 0, n3 === 1)
+      var r2, n3, i4, a4, o4, s3, c4, u3, h3, l3, f4;
+      if (n3 = this.colors, h3 = null, r2 = this.hasAlphaChannel, this.palette.length && (h3 = (f4 = this._decodedPalette) != null ? f4 : this._decodedPalette = this.decodePalette(), n3 = 4, r2 = true), u3 = (i4 = t4.data || t4).length, o4 = h3 || e3, a4 = s3 = 0, n3 === 1)
         for (; a4 < u3; )
           c4 = h3 ? 4 * e3[a4 / 4] : s3, l3 = o4[c4++], i4[a4++] = l3, i4[a4++] = l3, i4[a4++] = l3, i4[a4++] = r2 ? o4[c4++] : 255, s3 = c4;
       else
@@ -24839,7 +25453,7 @@
     t3[e2++];
     var s3 = null, c4 = null;
     a3 && (s3 = e2, c4 = o3, e2 += 3 * o3);
-    var u3 = true, h3 = [], l3 = 0, f3 = null, d2 = 0, p3 = null;
+    var u3 = true, h3 = [], l3 = 0, f4 = null, d2 = 0, p3 = null;
     for (this.width = r2, this.height = n3; u3 && e2 < t3.length; )
       switch (t3[e2++]) {
         case 33:
@@ -24860,7 +25474,7 @@
               if (t3[e2++] !== 4 || t3[e2 + 4] !== 0)
                 throw new Error("Invalid graphics extension block.");
               var g2 = t3[e2++];
-              l3 = t3[e2++] | t3[e2++] << 8, f3 = t3[e2++], (1 & g2) == 0 && (f3 = null), d2 = g2 >> 2 & 7, e2++;
+              l3 = t3[e2++] | t3[e2++] << 8, f4 = t3[e2++], (1 & g2) == 0 && (f4 = null), d2 = g2 >> 2 & 7, e2++;
               break;
             case 254:
               for (; ; ) {
@@ -24876,7 +25490,7 @@
           }
           break;
         case 44:
-          var m4 = t3[e2++] | t3[e2++] << 8, v3 = t3[e2++] | t3[e2++] << 8, b2 = t3[e2++] | t3[e2++] << 8, y3 = t3[e2++] | t3[e2++] << 8, w2 = t3[e2++], N3 = w2 >> 6 & 1, L2 = 1 << (7 & w2) + 1, A2 = s3, x2 = c4, S2 = false;
+          var m4 = t3[e2++] | t3[e2++] << 8, v6 = t3[e2++] | t3[e2++] << 8, b2 = t3[e2++] | t3[e2++] << 8, y3 = t3[e2++] | t3[e2++] << 8, w2 = t3[e2++], N3 = w2 >> 6 & 1, L2 = 1 << (7 & w2) + 1, A2 = s3, x2 = c4, S2 = false;
           if (w2 >> 7) {
             S2 = true;
             A2 = e2, x2 = L2, e2 += 3 * L2;
@@ -24890,7 +25504,7 @@
               break;
             e2 += P2;
           }
-          h3.push({ x: m4, y: v3, width: b2, height: y3, has_local_palette: S2, palette_offset: A2, palette_size: x2, data_offset: _3, data_length: e2 - _3, transparent_index: f3, interlaced: !!N3, delay: l3, disposal: d2 });
+          h3.push({ x: m4, y: v6, width: b2, height: y3, has_local_palette: S2, palette_offset: A2, palette_size: x2, data_offset: _3, data_length: e2 - _3, transparent_index: f4, interlaced: !!N3, delay: l3, disposal: d2 });
           break;
         case 59:
           u3 = false;
@@ -24911,11 +25525,11 @@
       $t(t3, i4.data_offset, o4, a4);
       var s4 = i4.palette_offset, c5 = i4.transparent_index;
       c5 === null && (c5 = 256);
-      var u4 = i4.width, h4 = r2 - u4, l4 = u4, f4 = 4 * (i4.y * r2 + i4.x), d3 = 4 * ((i4.y + i4.height) * r2 + i4.x), p4 = f4, g3 = 4 * h4;
+      var u4 = i4.width, h4 = r2 - u4, l4 = u4, f5 = 4 * (i4.y * r2 + i4.x), d3 = 4 * ((i4.y + i4.height) * r2 + i4.x), p4 = f5, g3 = 4 * h4;
       i4.interlaced === true && (g3 += 4 * r2 * 7);
-      for (var m5 = 8, v5 = 0, b3 = o4.length; v5 < b3; ++v5) {
-        var y4 = o4[v5];
-        if (l4 === 0 && (l4 = u4, (p4 += g3) >= d3 && (g3 = 4 * h4 + 4 * r2 * (m5 - 1), p4 = f4 + (u4 + h4) * (m5 << 1), m5 >>= 1)), y4 === c5)
+      for (var m5 = 8, v7 = 0, b3 = o4.length; v7 < b3; ++v7) {
+        var y4 = o4[v7];
+        if (l4 === 0 && (l4 = u4, (p4 += g3) >= d3 && (g3 = 4 * h4 + 4 * r2 * (m5 - 1), p4 = f5 + (u4 + h4) * (m5 << 1), m5 >>= 1)), y4 === c5)
           p4 += 4;
         else {
           var w3 = t3[s4 + 3 * y4], N4 = t3[s4 + 3 * y4 + 1], L3 = t3[s4 + 3 * y4 + 2];
@@ -24928,11 +25542,11 @@
       $t(t3, i4.data_offset, o4, a4);
       var s4 = i4.palette_offset, c5 = i4.transparent_index;
       c5 === null && (c5 = 256);
-      var u4 = i4.width, h4 = r2 - u4, l4 = u4, f4 = 4 * (i4.y * r2 + i4.x), d3 = 4 * ((i4.y + i4.height) * r2 + i4.x), p4 = f4, g3 = 4 * h4;
+      var u4 = i4.width, h4 = r2 - u4, l4 = u4, f5 = 4 * (i4.y * r2 + i4.x), d3 = 4 * ((i4.y + i4.height) * r2 + i4.x), p4 = f5, g3 = 4 * h4;
       i4.interlaced === true && (g3 += 4 * r2 * 7);
-      for (var m5 = 8, v5 = 0, b3 = o4.length; v5 < b3; ++v5) {
-        var y4 = o4[v5];
-        if (l4 === 0 && (l4 = u4, (p4 += g3) >= d3 && (g3 = 4 * h4 + 4 * r2 * (m5 - 1), p4 = f4 + (u4 + h4) * (m5 << 1), m5 >>= 1)), y4 === c5)
+      for (var m5 = 8, v7 = 0, b3 = o4.length; v7 < b3; ++v7) {
+        var y4 = o4[v7];
+        if (l4 === 0 && (l4 = u4, (p4 += g3) >= d3 && (g3 = 4 * h4 + 4 * r2 * (m5 - 1), p4 = f5 + (u4 + h4) * (m5 << 1), m5 >>= 1)), y4 === c5)
           p4 += 4;
         else {
           var w3 = t3[s4 + 3 * y4], N4 = t3[s4 + 3 * y4 + 1], L3 = t3[s4 + 3 * y4 + 2];
@@ -24943,32 +25557,32 @@
     };
   }
   function $t(t3, e2, r2, n3) {
-    for (var i3 = t3[e2++], o3 = 1 << i3, s3 = o3 + 1, c4 = s3 + 1, u3 = i3 + 1, h3 = (1 << u3) - 1, l3 = 0, f3 = 0, d2 = 0, p3 = t3[e2++], g2 = new Int32Array(4096), m4 = null; ; ) {
+    for (var i3 = t3[e2++], o3 = 1 << i3, s3 = o3 + 1, c4 = s3 + 1, u3 = i3 + 1, h3 = (1 << u3) - 1, l3 = 0, f4 = 0, d2 = 0, p3 = t3[e2++], g2 = new Int32Array(4096), m4 = null; ; ) {
       for (; l3 < 16 && p3 !== 0; )
-        f3 |= t3[e2++] << l3, l3 += 8, p3 === 1 ? p3 = t3[e2++] : --p3;
+        f4 |= t3[e2++] << l3, l3 += 8, p3 === 1 ? p3 = t3[e2++] : --p3;
       if (l3 < u3)
         break;
-      var v3 = f3 & h3;
-      if (f3 >>= u3, l3 -= u3, v3 !== o3) {
-        if (v3 === s3)
+      var v6 = f4 & h3;
+      if (f4 >>= u3, l3 -= u3, v6 !== o3) {
+        if (v6 === s3)
           break;
-        for (var b2 = v3 < c4 ? v3 : m4, y3 = 0, w2 = b2; w2 > o3; )
+        for (var b2 = v6 < c4 ? v6 : m4, y3 = 0, w2 = b2; w2 > o3; )
           w2 = g2[w2] >> 8, ++y3;
         var N3 = w2;
-        if (d2 + y3 + (b2 !== v3 ? 1 : 0) > n3)
+        if (d2 + y3 + (b2 !== v6 ? 1 : 0) > n3)
           return void a2.log("Warning, gif stream longer than expected.");
         r2[d2++] = N3;
         var L2 = d2 += y3;
-        for (b2 !== v3 && (r2[d2++] = N3), w2 = b2; y3--; )
+        for (b2 !== v6 && (r2[d2++] = N3), w2 = b2; y3--; )
           w2 = g2[w2], r2[--L2] = 255 & w2, w2 >>= 8;
-        m4 !== null && c4 < 4096 && (g2[c4++] = m4 << 8 | N3, c4 >= h3 + 1 && u3 < 12 && (++u3, h3 = h3 << 1 | 1)), m4 = v3;
+        m4 !== null && c4 < 4096 && (g2[c4++] = m4 << 8 | N3, c4 >= h3 + 1 && u3 < 12 && (++u3, h3 = h3 << 1 | 1)), m4 = v6;
       } else
         c4 = s3 + 1, h3 = (1 << (u3 = i3 + 1)) - 1, m4 = null;
     }
     return d2 !== n3 && a2.log("Warning, gif stream shorter than expected."), r2;
   }
   function Qt(t3) {
-    var e2, r2, n3, i3, a3, o3 = Math.floor, s3 = new Array(64), c4 = new Array(64), u3 = new Array(64), h3 = new Array(64), l3 = new Array(65535), f3 = new Array(65535), d2 = new Array(64), p3 = new Array(64), g2 = [], m4 = 0, v3 = 7, b2 = new Array(64), y3 = new Array(64), w2 = new Array(64), N3 = new Array(256), L2 = new Array(2048), A2 = [0, 1, 5, 6, 14, 15, 27, 28, 2, 4, 7, 13, 16, 26, 29, 42, 3, 8, 12, 17, 25, 30, 41, 43, 9, 11, 18, 24, 31, 40, 44, 53, 10, 19, 23, 32, 39, 45, 52, 54, 20, 22, 33, 38, 46, 51, 55, 60, 21, 34, 37, 47, 50, 56, 59, 61, 35, 36, 48, 49, 57, 58, 62, 63], x2 = [0, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], S2 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], _3 = [0, 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125], P2 = [1, 2, 3, 0, 4, 17, 5, 18, 33, 49, 65, 6, 19, 81, 97, 7, 34, 113, 20, 50, 129, 145, 161, 8, 35, 66, 177, 193, 21, 82, 209, 240, 36, 51, 98, 114, 130, 9, 10, 22, 23, 24, 25, 26, 37, 38, 39, 40, 41, 42, 52, 53, 54, 55, 56, 57, 58, 67, 68, 69, 70, 71, 72, 73, 74, 83, 84, 85, 86, 87, 88, 89, 90, 99, 100, 101, 102, 103, 104, 105, 106, 115, 116, 117, 118, 119, 120, 121, 122, 131, 132, 133, 134, 135, 136, 137, 138, 146, 147, 148, 149, 150, 151, 152, 153, 154, 162, 163, 164, 165, 166, 167, 168, 169, 170, 178, 179, 180, 181, 182, 183, 184, 185, 186, 194, 195, 196, 197, 198, 199, 200, 201, 202, 210, 211, 212, 213, 214, 215, 216, 217, 218, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250], k2 = [0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0], I2 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], F2 = [0, 0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119], C2 = [0, 1, 2, 3, 17, 4, 5, 33, 49, 6, 18, 65, 81, 7, 97, 113, 19, 34, 50, 129, 8, 20, 66, 145, 161, 177, 193, 9, 35, 51, 82, 240, 21, 98, 114, 209, 10, 22, 36, 52, 225, 37, 241, 23, 24, 25, 26, 38, 39, 40, 41, 42, 53, 54, 55, 56, 57, 58, 67, 68, 69, 70, 71, 72, 73, 74, 83, 84, 85, 86, 87, 88, 89, 90, 99, 100, 101, 102, 103, 104, 105, 106, 115, 116, 117, 118, 119, 120, 121, 122, 130, 131, 132, 133, 134, 135, 136, 137, 138, 146, 147, 148, 149, 150, 151, 152, 153, 154, 162, 163, 164, 165, 166, 167, 168, 169, 170, 178, 179, 180, 181, 182, 183, 184, 185, 186, 194, 195, 196, 197, 198, 199, 200, 201, 202, 210, 211, 212, 213, 214, 215, 216, 217, 218, 226, 227, 228, 229, 230, 231, 232, 233, 234, 242, 243, 244, 245, 246, 247, 248, 249, 250];
+    var e2, r2, n3, i3, a3, o3 = Math.floor, s3 = new Array(64), c4 = new Array(64), u3 = new Array(64), h3 = new Array(64), l3 = new Array(65535), f4 = new Array(65535), d2 = new Array(64), p3 = new Array(64), g2 = [], m4 = 0, v6 = 7, b2 = new Array(64), y3 = new Array(64), w2 = new Array(64), N3 = new Array(256), L2 = new Array(2048), A2 = [0, 1, 5, 6, 14, 15, 27, 28, 2, 4, 7, 13, 16, 26, 29, 42, 3, 8, 12, 17, 25, 30, 41, 43, 9, 11, 18, 24, 31, 40, 44, 53, 10, 19, 23, 32, 39, 45, 52, 54, 20, 22, 33, 38, 46, 51, 55, 60, 21, 34, 37, 47, 50, 56, 59, 61, 35, 36, 48, 49, 57, 58, 62, 63], x2 = [0, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0], S2 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], _3 = [0, 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125], P2 = [1, 2, 3, 0, 4, 17, 5, 18, 33, 49, 65, 6, 19, 81, 97, 7, 34, 113, 20, 50, 129, 145, 161, 8, 35, 66, 177, 193, 21, 82, 209, 240, 36, 51, 98, 114, 130, 9, 10, 22, 23, 24, 25, 26, 37, 38, 39, 40, 41, 42, 52, 53, 54, 55, 56, 57, 58, 67, 68, 69, 70, 71, 72, 73, 74, 83, 84, 85, 86, 87, 88, 89, 90, 99, 100, 101, 102, 103, 104, 105, 106, 115, 116, 117, 118, 119, 120, 121, 122, 131, 132, 133, 134, 135, 136, 137, 138, 146, 147, 148, 149, 150, 151, 152, 153, 154, 162, 163, 164, 165, 166, 167, 168, 169, 170, 178, 179, 180, 181, 182, 183, 184, 185, 186, 194, 195, 196, 197, 198, 199, 200, 201, 202, 210, 211, 212, 213, 214, 215, 216, 217, 218, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250], k2 = [0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0], I2 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], F2 = [0, 0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119], C2 = [0, 1, 2, 3, 17, 4, 5, 33, 49, 6, 18, 65, 81, 7, 97, 113, 19, 34, 50, 129, 8, 20, 66, 145, 161, 177, 193, 9, 35, 51, 82, 240, 21, 98, 114, 209, 10, 22, 36, 52, 225, 37, 241, 23, 24, 25, 26, 38, 39, 40, 41, 42, 53, 54, 55, 56, 57, 58, 67, 68, 69, 70, 71, 72, 73, 74, 83, 84, 85, 86, 87, 88, 89, 90, 99, 100, 101, 102, 103, 104, 105, 106, 115, 116, 117, 118, 119, 120, 121, 122, 130, 131, 132, 133, 134, 135, 136, 137, 138, 146, 147, 148, 149, 150, 151, 152, 153, 154, 162, 163, 164, 165, 166, 167, 168, 169, 170, 178, 179, 180, 181, 182, 183, 184, 185, 186, 194, 195, 196, 197, 198, 199, 200, 201, 202, 210, 211, 212, 213, 214, 215, 216, 217, 218, 226, 227, 228, 229, 230, 231, 232, 233, 234, 242, 243, 244, 245, 246, 247, 248, 249, 250];
     function j2(t4, e3) {
       for (var r3 = 0, n4 = 0, i4 = new Array(), a4 = 1; a4 <= 16; a4++) {
         for (var o4 = 1; o4 <= t4[a4]; o4++)
@@ -24979,7 +25593,7 @@
     }
     function O3(t4) {
       for (var e3 = t4[0], r3 = t4[1] - 1; r3 >= 0; )
-        e3 & 1 << r3 && (m4 |= 1 << v3), r3--, --v3 < 0 && (m4 == 255 ? (B2(255), B2(0)) : B2(m4), v3 = 7, m4 = 0);
+        e3 & 1 << r3 && (m4 |= 1 << v6), r3--, --v6 < 0 && (m4 == 255 ? (B2(255), B2(0)) : B2(m4), v6 = 7, m4 = 0);
     }
     function B2(t4) {
       g2.push(t4);
@@ -24989,24 +25603,24 @@
     }
     function E2(t4, e3, r3, n4, i4) {
       for (var a4, o4 = i4[0], s4 = i4[240], c5 = function(t5, e4) {
-        var r4, n5, i5, a5, o5, s5, c6, u5, h5, l4, f4 = 0;
+        var r4, n5, i5, a5, o5, s5, c6, u5, h5, l4, f5 = 0;
         for (h5 = 0; h5 < 8; ++h5) {
-          r4 = t5[f4], n5 = t5[f4 + 1], i5 = t5[f4 + 2], a5 = t5[f4 + 3], o5 = t5[f4 + 4], s5 = t5[f4 + 5], c6 = t5[f4 + 6];
-          var p4 = r4 + (u5 = t5[f4 + 7]), g4 = r4 - u5, m6 = n5 + c6, v6 = n5 - c6, b4 = i5 + s5, y5 = i5 - s5, w4 = a5 + o5, N4 = a5 - o5, L3 = p4 + w4, A3 = p4 - w4, x3 = m6 + b4, S3 = m6 - b4;
-          t5[f4] = L3 + x3, t5[f4 + 4] = L3 - x3;
+          r4 = t5[f5], n5 = t5[f5 + 1], i5 = t5[f5 + 2], a5 = t5[f5 + 3], o5 = t5[f5 + 4], s5 = t5[f5 + 5], c6 = t5[f5 + 6];
+          var p4 = r4 + (u5 = t5[f5 + 7]), g4 = r4 - u5, m6 = n5 + c6, v8 = n5 - c6, b4 = i5 + s5, y5 = i5 - s5, w4 = a5 + o5, N4 = a5 - o5, L3 = p4 + w4, A3 = p4 - w4, x3 = m6 + b4, S3 = m6 - b4;
+          t5[f5] = L3 + x3, t5[f5 + 4] = L3 - x3;
           var _4 = 0.707106781 * (S3 + A3);
-          t5[f4 + 2] = A3 + _4, t5[f4 + 6] = A3 - _4;
-          var P3 = 0.382683433 * ((L3 = N4 + y5) - (S3 = v6 + g4)), k3 = 0.5411961 * L3 + P3, I3 = 1.306562965 * S3 + P3, F3 = 0.707106781 * (x3 = y5 + v6), C3 = g4 + F3, j3 = g4 - F3;
-          t5[f4 + 5] = j3 + k3, t5[f4 + 3] = j3 - k3, t5[f4 + 1] = C3 + I3, t5[f4 + 7] = C3 - I3, f4 += 8;
+          t5[f5 + 2] = A3 + _4, t5[f5 + 6] = A3 - _4;
+          var P3 = 0.382683433 * ((L3 = N4 + y5) - (S3 = v8 + g4)), k3 = 0.5411961 * L3 + P3, I3 = 1.306562965 * S3 + P3, F3 = 0.707106781 * (x3 = y5 + v8), C3 = g4 + F3, j3 = g4 - F3;
+          t5[f5 + 5] = j3 + k3, t5[f5 + 3] = j3 - k3, t5[f5 + 1] = C3 + I3, t5[f5 + 7] = C3 - I3, f5 += 8;
         }
-        for (f4 = 0, h5 = 0; h5 < 8; ++h5) {
-          r4 = t5[f4], n5 = t5[f4 + 8], i5 = t5[f4 + 16], a5 = t5[f4 + 24], o5 = t5[f4 + 32], s5 = t5[f4 + 40], c6 = t5[f4 + 48];
-          var O4 = r4 + (u5 = t5[f4 + 56]), B3 = r4 - u5, M3 = n5 + c6, E3 = n5 - c6, q3 = i5 + s5, D2 = i5 - s5, R2 = a5 + o5, T3 = a5 - o5, U2 = O4 + R2, z2 = O4 - R2, H2 = M3 + q3, W2 = M3 - q3;
-          t5[f4] = U2 + H2, t5[f4 + 32] = U2 - H2;
+        for (f5 = 0, h5 = 0; h5 < 8; ++h5) {
+          r4 = t5[f5], n5 = t5[f5 + 8], i5 = t5[f5 + 16], a5 = t5[f5 + 24], o5 = t5[f5 + 32], s5 = t5[f5 + 40], c6 = t5[f5 + 48];
+          var O4 = r4 + (u5 = t5[f5 + 56]), B3 = r4 - u5, M3 = n5 + c6, E3 = n5 - c6, q3 = i5 + s5, D2 = i5 - s5, R2 = a5 + o5, T3 = a5 - o5, U2 = O4 + R2, z2 = O4 - R2, H2 = M3 + q3, W2 = M3 - q3;
+          t5[f5] = U2 + H2, t5[f5 + 32] = U2 - H2;
           var V2 = 0.707106781 * (W2 + z2);
-          t5[f4 + 16] = z2 + V2, t5[f4 + 48] = z2 - V2;
+          t5[f5 + 16] = z2 + V2, t5[f5 + 48] = z2 - V2;
           var G2 = 0.382683433 * ((U2 = T3 + D2) - (W2 = E3 + B3)), Y2 = 0.5411961 * U2 + G2, J2 = 1.306562965 * W2 + G2, X2 = 0.707106781 * (H2 = D2 + E3), K2 = B3 + X2, Z2 = B3 - X2;
-          t5[f4 + 40] = Z2 + Y2, t5[f4 + 24] = Z2 - Y2, t5[f4 + 8] = K2 + J2, t5[f4 + 56] = K2 - J2, f4++;
+          t5[f5 + 40] = Z2 + Y2, t5[f5 + 24] = Z2 - Y2, t5[f5 + 8] = K2 + J2, t5[f5 + 56] = K2 - J2, f5++;
         }
         for (h5 = 0; h5 < 64; ++h5)
           l4 = t5[h5] * e4[h5], d2[h5] = l4 > 0 ? l4 + 0.5 | 0 : l4 - 0.5 | 0;
@@ -25014,22 +25628,22 @@
       }(t4, e3), u4 = 0; u4 < 64; ++u4)
         p3[A2[u4]] = c5[u4];
       var h4 = p3[0] - r3;
-      r3 = p3[0], h4 == 0 ? O3(n4[0]) : (O3(n4[f3[a4 = 32767 + h4]]), O3(l3[a4]));
+      r3 = p3[0], h4 == 0 ? O3(n4[0]) : (O3(n4[f4[a4 = 32767 + h4]]), O3(l3[a4]));
       for (var g3 = 63; g3 > 0 && p3[g3] == 0; )
         g3--;
       if (g3 == 0)
         return O3(o4), r3;
-      for (var m5, v5 = 1; v5 <= g3; ) {
-        for (var b3 = v5; p3[v5] == 0 && v5 <= g3; )
-          ++v5;
-        var y4 = v5 - b3;
+      for (var m5, v7 = 1; v7 <= g3; ) {
+        for (var b3 = v7; p3[v7] == 0 && v7 <= g3; )
+          ++v7;
+        var y4 = v7 - b3;
         if (y4 >= 16) {
           m5 = y4 >> 4;
           for (var w3 = 1; w3 <= m5; ++w3)
             O3(s4);
           y4 &= 15;
         }
-        a4 = 32767 + p3[v5], O3(i4[(y4 << 4) + f3[a4]]), O3(l3[a4]), v5++;
+        a4 = 32767 + p3[v7], O3(i4[(y4 << 4) + f4[a4]]), O3(l3[a4]), v7++;
       }
       return g3 != 63 && O3(o4), r3;
     }
@@ -25043,13 +25657,13 @@
           var l4 = o3((i4[a4] * t5 + 50) / 100);
           l4 = Math.min(Math.max(l4, 1), 255), c4[A2[a4]] = l4;
         }
-        for (var f4 = [1, 1.387039845, 1.306562965, 1.175875602, 1, 0.785694958, 0.5411961, 0.275899379], d3 = 0, p4 = 0; p4 < 8; p4++)
+        for (var f5 = [1, 1.387039845, 1.306562965, 1.175875602, 1, 0.785694958, 0.5411961, 0.275899379], d3 = 0, p4 = 0; p4 < 8; p4++)
           for (var g3 = 0; g3 < 8; g3++)
-            u3[d3] = 1 / (s3[A2[d3]] * f4[p4] * f4[g3] * 8), h3[d3] = 1 / (c4[A2[d3]] * f4[p4] * f4[g3] * 8), d3++;
+            u3[d3] = 1 / (s3[A2[d3]] * f5[p4] * f5[g3] * 8), h3[d3] = 1 / (c4[A2[d3]] * f5[p4] * f5[g3] * 8), d3++;
       }(t4 < 50 ? Math.floor(5e3 / t4) : Math.floor(200 - 2 * t4)), a3 = t4);
     }
     this.encode = function(t4, a4) {
-      a4 && q2(a4), g2 = new Array(), m4 = 0, v3 = 7, M2(65496), M2(65504), M2(16), B2(74), B2(70), B2(73), B2(70), B2(0), B2(1), B2(1), B2(0), M2(1), M2(1), B2(0), B2(0), function() {
+      a4 && q2(a4), g2 = new Array(), m4 = 0, v6 = 7, M2(65496), M2(65504), M2(16), B2(74), B2(70), B2(73), B2(70), B2(0), B2(1), B2(1), B2(0), M2(1), M2(1), B2(0), B2(0), function() {
         M2(65499), M2(132), B2(0);
         for (var t5 = 0; t5 < 64; t5++)
           B2(s3[t5]);
@@ -25080,19 +25694,19 @@
         for (var s4 = 0; s4 <= 161; s4++)
           B2(C2[s4]);
       }(), M2(65498), M2(12), B2(3), B2(1), B2(0), B2(2), B2(17), B2(3), B2(17), B2(0), B2(63), B2(0);
-      var o4 = 0, l4 = 0, f4 = 0;
-      m4 = 0, v3 = 7, this.encode.displayName = "_encode_";
+      var o4 = 0, l4 = 0, f5 = 0;
+      m4 = 0, v6 = 7, this.encode.displayName = "_encode_";
       for (var d3, p4, N4, A3, j3, D2, R2, T3, U2, z2 = t4.data, H2 = t4.width, W2 = t4.height, V2 = 4 * H2, G2 = 0; G2 < W2; ) {
         for (d3 = 0; d3 < V2; ) {
           for (j3 = V2 * G2 + d3, R2 = -1, T3 = 0, U2 = 0; U2 < 64; U2++)
             D2 = j3 + (T3 = U2 >> 3) * V2 + (R2 = 4 * (7 & U2)), G2 + T3 >= W2 && (D2 -= V2 * (G2 + 1 + T3 - W2)), d3 + R2 >= V2 && (D2 -= d3 + R2 - V2 + 4), p4 = z2[D2++], N4 = z2[D2++], A3 = z2[D2++], b2[U2] = (L2[p4] + L2[N4 + 256 >> 0] + L2[A3 + 512 >> 0] >> 16) - 128, y3[U2] = (L2[p4 + 768 >> 0] + L2[N4 + 1024 >> 0] + L2[A3 + 1280 >> 0] >> 16) - 128, w2[U2] = (L2[p4 + 1280 >> 0] + L2[N4 + 1536 >> 0] + L2[A3 + 1792 >> 0] >> 16) - 128;
-          o4 = E2(b2, u3, o4, e2, n3), l4 = E2(y3, h3, l4, r2, i3), f4 = E2(w2, h3, f4, r2, i3), d3 += 32;
+          o4 = E2(b2, u3, o4, e2, n3), l4 = E2(y3, h3, l4, r2, i3), f5 = E2(w2, h3, f5, r2, i3), d3 += 32;
         }
         G2 += 8;
       }
-      if (v3 >= 0) {
+      if (v6 >= 0) {
         var Y2 = [];
-        Y2[1] = v3 + 1, Y2[0] = (1 << v3 + 1) - 1, O3(Y2);
+        Y2[1] = v6 + 1, Y2[0] = (1 << v6 + 1) - 1, O3(Y2);
       }
       return M2(65497), new Uint8Array(g2);
     }, t3 = t3 || 50, function() {
@@ -25101,9 +25715,9 @@
     }(), e2 = j2(x2, S2), r2 = j2(k2, I2), n3 = j2(_3, P2), i3 = j2(F2, C2), function() {
       for (var t4 = 1, e3 = 2, r3 = 1; r3 <= 15; r3++) {
         for (var n4 = t4; n4 < e3; n4++)
-          f3[32767 + n4] = r3, l3[32767 + n4] = [], l3[32767 + n4][1] = r3, l3[32767 + n4][0] = n4;
+          f4[32767 + n4] = r3, l3[32767 + n4] = [], l3[32767 + n4][1] = r3, l3[32767 + n4][0] = n4;
         for (var i4 = -(e3 - 1); i4 <= -t4; i4++)
-          f3[32767 + i4] = r3, l3[32767 + i4] = [], l3[32767 + i4][1] = r3, l3[32767 + i4][0] = e3 - 1 + i4;
+          f4[32767 + i4] = r3, l3[32767 + i4] = [], l3[32767 + i4][1] = r3, l3[32767 + i4][0] = e3 - 1 + i4;
         t4 <<= 1, e3 <<= 1;
       }
     }(), function() {
@@ -25169,11 +25783,11 @@
         else if ((s4 = a3(o4)) == null)
           return 0;
         return function(t6, r4, n5, i5, o5, s5) {
-          var h5, f5, d4 = r4, p5 = 1 << n5, g4 = a3(16), m6 = a3(16);
-          for (e2(o5 != 0), e2(i5 != null), e2(t6 != null), e2(0 < n5), f5 = 0; f5 < o5; ++f5) {
-            if (15 < i5[f5])
+          var h5, f6, d4 = r4, p5 = 1 << n5, g4 = a3(16), m6 = a3(16);
+          for (e2(o5 != 0), e2(i5 != null), e2(t6 != null), e2(0 < n5), f6 = 0; f6 < o5; ++f6) {
+            if (15 < i5[f6])
               return 0;
-            ++g4[i5[f5]];
+            ++g4[i5[f6]];
           }
           if (g4[0] == o5)
             return 0;
@@ -25182,27 +25796,27 @@
               return 0;
             m6[h5 + 1] = m6[h5] + g4[h5];
           }
-          for (f5 = 0; f5 < o5; ++f5)
-            h5 = i5[f5], 0 < i5[f5] && (s5[m6[h5]++] = f5);
+          for (f6 = 0; f6 < o5; ++f6)
+            h5 = i5[f6], 0 < i5[f6] && (s5[m6[h5]++] = f6);
           if (m6[15] == 1)
             return (i5 = new l4()).g = 0, i5.value = s5[0], u4(t6, d4, 1, p5, i5), p5;
-          var v6, b4 = -1, y5 = p5 - 1, w4 = 0, N5 = 1, L4 = 1, A4 = 1 << n5;
-          for (f5 = 0, h5 = 1, o5 = 2; h5 <= n5; ++h5, o5 <<= 1) {
+          var v8, b4 = -1, y5 = p5 - 1, w4 = 0, N5 = 1, L4 = 1, A4 = 1 << n5;
+          for (f6 = 0, h5 = 1, o5 = 2; h5 <= n5; ++h5, o5 <<= 1) {
             if (N5 += L4 <<= 1, 0 > (L4 -= g4[h5]))
               return 0;
             for (; 0 < g4[h5]; --g4[h5])
-              (i5 = new l4()).g = h5, i5.value = s5[f5++], u4(t6, d4 + w4, o5, A4, i5), w4 = c5(w4, h5);
+              (i5 = new l4()).g = h5, i5.value = s5[f6++], u4(t6, d4 + w4, o5, A4, i5), w4 = c5(w4, h5);
           }
           for (h5 = n5 + 1, o5 = 2; 15 >= h5; ++h5, o5 <<= 1) {
             if (N5 += L4 <<= 1, 0 > (L4 -= g4[h5]))
               return 0;
             for (; 0 < g4[h5]; --g4[h5]) {
               if (i5 = new l4(), (w4 & y5) != b4) {
-                for (d4 += A4, v6 = 1 << (b4 = h5) - n5; 15 > b4 && !(0 >= (v6 -= g4[b4])); )
-                  ++b4, v6 <<= 1;
-                p5 += A4 = 1 << (v6 = b4 - n5), t6[r4 + (b4 = w4 & y5)].g = v6 + n5, t6[r4 + b4].value = d4 - r4 - b4;
+                for (d4 += A4, v8 = 1 << (b4 = h5) - n5; 15 > b4 && !(0 >= (v8 -= g4[b4])); )
+                  ++b4, v8 <<= 1;
+                p5 += A4 = 1 << (v8 = b4 - n5), t6[r4 + (b4 = w4 & y5)].g = v8 + n5, t6[r4 + b4].value = d4 - r4 - b4;
               }
-              i5.g = h5 - n5, i5.value = s5[f5++], u4(t6, d4 + (w4 >> n5), o5, A4, i5), w4 = c5(w4, h5);
+              i5.g = h5 - n5, i5.value = s5[f6++], u4(t6, d4 + (w4 >> n5), o5, A4, i5), w4 = c5(w4, h5);
             }
           }
           return N5 != 2 * m6[15] - 1 ? 0 : p5;
@@ -25211,11 +25825,11 @@
       function l4() {
         this.value = this.g = 0;
       }
-      function f4() {
+      function f5() {
         this.value = this.g = 0;
       }
       function d3() {
-        this.G = o3(5, l4), this.H = a3(5), this.jc = this.Qb = this.qb = this.nd = 0, this.pd = o3(Dr, f4);
+        this.G = o3(5, l4), this.H = a3(5), this.jc = this.Qb = this.qb = this.nd = 0, this.pd = o3(Dr, f5);
       }
       function p4(t5, r3, n4, i4) {
         e2(t5 != null), e2(r3 != null), e2(2147483648 > i4), t5.Ca = 254, t5.I = 0, t5.b = -8, t5.Ka = 0, t5.oa = r3, t5.pa = n4, t5.Jd = r3, t5.Yc = n4 + i4, t5.Zc = 4 <= i4 ? n4 + i4 - 4 + 1 : n4, _3(t5);
@@ -25229,7 +25843,7 @@
         var r3 = g3(t5, e3);
         return P2(t5) ? -r3 : r3;
       }
-      function v5(t5, r3, n4, i4) {
+      function v7(t5, r3, n4, i4) {
         var a4, o4 = 0;
         for (e2(t5 != null), e2(r3 != null), e2(4294967288 > i4), t5.Sb = i4, t5.Ra = 0, t5.u = 0, t5.h = 0, 4 < i4 && (i4 = 4), a4 = 0; a4 < i4; ++a4)
           o4 += r3[n4 + a4] << 8 * a4;
@@ -25364,15 +25978,15 @@
             for (c6 = 0; c6 < h5; ++c6)
               o4[s4++] = a4(r4[i4(t5[e4++])]);
         }, t4[e3] = function(e4, r4, o4, s4, c6, u5, h5) {
-          var l5 = 8 >> e4.b, f5 = e4.Ea, d4 = e4.K[0], p5 = e4.w;
+          var l5 = 8 >> e4.b, f6 = e4.Ea, d4 = e4.K[0], p5 = e4.w;
           if (8 > l5)
             for (e4 = (1 << e4.b) - 1, p5 = (1 << l5) - 1; r4 < o4; ++r4) {
               var g4, m6 = 0;
-              for (g4 = 0; g4 < f5; ++g4)
+              for (g4 = 0; g4 < f6; ++g4)
                 g4 & e4 || (m6 = i4(s4[c6++])), u5[h5++] = a4(d4[m6 & p5]), m6 >>= l5;
             }
           else
-            t4["VP8LMapColor" + n4](s4, c6, d4, p5, u5, h5, r4, o4, f5);
+            t4["VP8LMapColor" + n4](s4, c6, d4, p5, u5, h5, r4, o4, f6);
         };
       }
       function K2(t5, e3, r3, n4, i4) {
@@ -25437,10 +26051,10 @@
         return alert("todo:WebPSamplerProcessPlane"), t5.T;
       }
       function ht2(t5, e3) {
-        var r3 = t5.T, i4 = e3.ba.f.RGBA, a4 = i4.eb, o4 = i4.fb + t5.ka * i4.A, s4 = vi[e3.ba.S], c6 = t5.y, u5 = t5.O, h5 = t5.f, l5 = t5.N, f5 = t5.ea, d4 = t5.W, p5 = e3.cc, g4 = e3.dc, m6 = e3.Mc, v6 = e3.Nc, b4 = t5.ka, y5 = t5.ka + t5.T, w4 = t5.U, N5 = w4 + 1 >> 1;
-        for (b4 == 0 ? s4(c6, u5, null, null, h5, l5, f5, d4, h5, l5, f5, d4, a4, o4, null, null, w4) : (s4(e3.ec, e3.fc, c6, u5, p5, g4, m6, v6, h5, l5, f5, d4, a4, o4 - i4.A, a4, o4, w4), ++r3); b4 + 2 < y5; b4 += 2)
-          p5 = h5, g4 = l5, m6 = f5, v6 = d4, l5 += t5.Rc, d4 += t5.Rc, o4 += 2 * i4.A, s4(c6, (u5 += 2 * t5.fa) - t5.fa, c6, u5, p5, g4, m6, v6, h5, l5, f5, d4, a4, o4 - i4.A, a4, o4, w4);
-        return u5 += t5.fa, t5.j + y5 < t5.o ? (n3(e3.ec, e3.fc, c6, u5, w4), n3(e3.cc, e3.dc, h5, l5, N5), n3(e3.Mc, e3.Nc, f5, d4, N5), r3--) : 1 & y5 || s4(c6, u5, null, null, h5, l5, f5, d4, h5, l5, f5, d4, a4, o4 + i4.A, null, null, w4), r3;
+        var r3 = t5.T, i4 = e3.ba.f.RGBA, a4 = i4.eb, o4 = i4.fb + t5.ka * i4.A, s4 = vi[e3.ba.S], c6 = t5.y, u5 = t5.O, h5 = t5.f, l5 = t5.N, f6 = t5.ea, d4 = t5.W, p5 = e3.cc, g4 = e3.dc, m6 = e3.Mc, v8 = e3.Nc, b4 = t5.ka, y5 = t5.ka + t5.T, w4 = t5.U, N5 = w4 + 1 >> 1;
+        for (b4 == 0 ? s4(c6, u5, null, null, h5, l5, f6, d4, h5, l5, f6, d4, a4, o4, null, null, w4) : (s4(e3.ec, e3.fc, c6, u5, p5, g4, m6, v8, h5, l5, f6, d4, a4, o4 - i4.A, a4, o4, w4), ++r3); b4 + 2 < y5; b4 += 2)
+          p5 = h5, g4 = l5, m6 = f6, v8 = d4, l5 += t5.Rc, d4 += t5.Rc, o4 += 2 * i4.A, s4(c6, (u5 += 2 * t5.fa) - t5.fa, c6, u5, p5, g4, m6, v8, h5, l5, f6, d4, a4, o4 - i4.A, a4, o4, w4);
+        return u5 += t5.fa, t5.j + y5 < t5.o ? (n3(e3.ec, e3.fc, c6, u5, w4), n3(e3.cc, e3.dc, h5, l5, N5), n3(e3.Mc, e3.Nc, f6, d4, N5), r3--) : 1 & y5 || s4(c6, u5, null, null, h5, l5, f6, d4, h5, l5, f6, d4, a4, o4 + i4.A, null, null, w4), r3;
       }
       function lt2(t5, r3, n4) {
         var i4 = t5.F, a4 = [t5.J];
@@ -25517,40 +26131,40 @@
         r3 = c6 + r3;
         var u5 = i4, h5 = a4;
         for (a4 = t5.Ta, i4 = t5.Ua; 0 < o4--; ) {
-          var l5 = t5.gc[o4], f5 = c6, d4 = r3, p5 = u5, g4 = h5, m6 = (h5 = a4, u5 = i4, l5.Ea);
-          switch (e2(f5 < d4), e2(d4 <= l5.nc), l5.hc) {
+          var l5 = t5.gc[o4], f6 = c6, d4 = r3, p5 = u5, g4 = h5, m6 = (h5 = a4, u5 = i4, l5.Ea);
+          switch (e2(f6 < d4), e2(d4 <= l5.nc), l5.hc) {
             case 2:
-              Gr(p5, g4, (d4 - f5) * m6, h5, u5);
+              Gr(p5, g4, (d4 - f6) * m6, h5, u5);
               break;
             case 0:
-              var v6 = f5, b4 = d4, y5 = h5, w4 = u5, N5 = (_4 = l5).Ea;
-              v6 == 0 && (Wr(p5, g4, null, null, 1, y5, w4), V2(p5, g4 + 1, 0, 0, N5 - 1, y5, w4 + 1), g4 += N5, w4 += N5, ++v6);
-              for (var L4 = 1 << _4.b, A4 = L4 - 1, x3 = q2(N5, _4.b), S3 = _4.K, _4 = _4.w + (v6 >> _4.b) * x3; v6 < b4; ) {
+              var v8 = f6, b4 = d4, y5 = h5, w4 = u5, N5 = (_4 = l5).Ea;
+              v8 == 0 && (Wr(p5, g4, null, null, 1, y5, w4), V2(p5, g4 + 1, 0, 0, N5 - 1, y5, w4 + 1), g4 += N5, w4 += N5, ++v8);
+              for (var L4 = 1 << _4.b, A4 = L4 - 1, x3 = q2(N5, _4.b), S3 = _4.K, _4 = _4.w + (v8 >> _4.b) * x3; v8 < b4; ) {
                 var P3 = S3, k3 = _4, I3 = 1;
                 for (Vr(p5, g4, y5, w4 - N5, 1, y5, w4); I3 < N5; ) {
                   var F3 = (I3 & ~A4) + L4;
                   F3 > N5 && (F3 = N5), (0, Zr[P3[k3++] >> 8 & 15])(p5, g4 + +I3, y5, w4 + I3 - N5, F3 - I3, y5, w4 + I3), I3 = F3;
                 }
-                g4 += N5, w4 += N5, ++v6 & A4 || (_4 += x3);
+                g4 += N5, w4 += N5, ++v8 & A4 || (_4 += x3);
               }
-              d4 != l5.nc && n3(h5, u5 - m6, h5, u5 + (d4 - f5 - 1) * m6, m6);
+              d4 != l5.nc && n3(h5, u5 - m6, h5, u5 + (d4 - f6 - 1) * m6, m6);
               break;
             case 1:
-              for (m6 = p5, b4 = g4, N5 = (p5 = l5.Ea) - (w4 = p5 & ~(y5 = (g4 = 1 << l5.b) - 1)), v6 = q2(p5, l5.b), L4 = l5.K, l5 = l5.w + (f5 >> l5.b) * v6; f5 < d4; ) {
+              for (m6 = p5, b4 = g4, N5 = (p5 = l5.Ea) - (w4 = p5 & ~(y5 = (g4 = 1 << l5.b) - 1)), v8 = q2(p5, l5.b), L4 = l5.K, l5 = l5.w + (f6 >> l5.b) * v8; f6 < d4; ) {
                 for (A4 = L4, x3 = l5, S3 = new T3(), _4 = b4 + w4, P3 = b4 + p5; b4 < _4; )
                   Y2(A4[x3++], S3), $r(S3, m6, b4, g4, h5, u5), b4 += g4, u5 += g4;
-                b4 < P3 && (Y2(A4[x3++], S3), $r(S3, m6, b4, N5, h5, u5), b4 += N5, u5 += N5), ++f5 & y5 || (l5 += v6);
+                b4 < P3 && (Y2(A4[x3++], S3), $r(S3, m6, b4, N5, h5, u5), b4 += N5, u5 += N5), ++f6 & y5 || (l5 += v8);
               }
               break;
             case 3:
               if (p5 == h5 && g4 == u5 && 0 < l5.b) {
-                for (b4 = h5, p5 = m6 = u5 + (d4 - f5) * m6 - (w4 = (d4 - f5) * q2(l5.Ea, l5.b)), g4 = h5, y5 = u5, v6 = [], w4 = (N5 = w4) - 1; 0 <= w4; --w4)
-                  v6[w4] = g4[y5 + w4];
+                for (b4 = h5, p5 = m6 = u5 + (d4 - f6) * m6 - (w4 = (d4 - f6) * q2(l5.Ea, l5.b)), g4 = h5, y5 = u5, v8 = [], w4 = (N5 = w4) - 1; 0 <= w4; --w4)
+                  v8[w4] = g4[y5 + w4];
                 for (w4 = N5 - 1; 0 <= w4; --w4)
-                  b4[p5 + w4] = v6[w4];
-                Yr(l5, f5, d4, h5, m6, h5, u5);
+                  b4[p5 + w4] = v8[w4];
+                Yr(l5, f6, d4, h5, m6, h5, u5);
               } else
-                Yr(l5, f5, d4, p5, g4, h5, u5);
+                Yr(l5, f6, d4, p5, g4, h5, u5);
           }
           u5 = a4, h5 = i4;
         }
@@ -25567,47 +26181,47 @@
           }
           if (n4 >= i4 ? n4 = 0 : (a4[0] += 4 * o4.v, o4.ka = n4 - o4.j, o4.U = o4.va - o4.v, o4.T = i4 - n4, n4 = 1), n4) {
             if (c6 = c6[0], 11 > (n4 = t5.ca).S) {
-              var l5 = n4.f.RGBA, f5 = (i4 = n4.S, a4 = o4.U, o4 = o4.T, h5 = l5.eb, l5.A), d4 = o4;
+              var l5 = n4.f.RGBA, f6 = (i4 = n4.S, a4 = o4.U, o4 = o4.T, h5 = l5.eb, l5.A), d4 = o4;
               for (l5 = l5.fb + t5.Ma * l5.A; 0 < d4--; ) {
-                var p5 = s4, g4 = c6, m6 = a4, v6 = h5, b4 = l5;
+                var p5 = s4, g4 = c6, m6 = a4, v8 = h5, b4 = l5;
                 switch (i4) {
                   case En:
-                    Qr(p5, g4, m6, v6, b4);
+                    Qr(p5, g4, m6, v8, b4);
                     break;
                   case qn:
-                    tn(p5, g4, m6, v6, b4);
+                    tn(p5, g4, m6, v8, b4);
                     break;
                   case Hn:
-                    tn(p5, g4, m6, v6, b4), An(v6, b4, 0, m6, 1, 0);
+                    tn(p5, g4, m6, v8, b4), An(v8, b4, 0, m6, 1, 0);
                     break;
                   case Dn:
-                    nn(p5, g4, m6, v6, b4);
+                    nn(p5, g4, m6, v8, b4);
                     break;
                   case Rn:
-                    et3(p5, g4, m6, v6, b4, 1);
+                    et3(p5, g4, m6, v8, b4, 1);
                     break;
                   case Wn:
-                    et3(p5, g4, m6, v6, b4, 1), An(v6, b4, 0, m6, 1, 0);
+                    et3(p5, g4, m6, v8, b4, 1), An(v8, b4, 0, m6, 1, 0);
                     break;
                   case Tn:
-                    et3(p5, g4, m6, v6, b4, 0);
+                    et3(p5, g4, m6, v8, b4, 0);
                     break;
                   case Vn:
-                    et3(p5, g4, m6, v6, b4, 0), An(v6, b4, 1, m6, 1, 0);
+                    et3(p5, g4, m6, v8, b4, 0), An(v8, b4, 1, m6, 1, 0);
                     break;
                   case Un:
-                    en(p5, g4, m6, v6, b4);
+                    en(p5, g4, m6, v8, b4);
                     break;
                   case Gn:
-                    en(p5, g4, m6, v6, b4), xn(v6, b4, m6, 1, 0);
+                    en(p5, g4, m6, v8, b4), xn(v8, b4, m6, 1, 0);
                     break;
                   case zn:
-                    rn(p5, g4, m6, v6, b4);
+                    rn(p5, g4, m6, v8, b4);
                     break;
                   default:
                     e2(0);
                 }
-                c6 += u5, l5 += f5;
+                c6 += u5, l5 += f6;
               }
               t5.Ma += o4;
             } else
@@ -25646,23 +26260,23 @@
         t5.C = t5.Ma = r3;
       }
       function _t2(t5, r3, n4, i4, a4, o4, s4) {
-        var c6 = t5.$ / i4, u5 = t5.$ % i4, h5 = t5.m, l5 = t5.s, f5 = n4 + t5.$, d4 = f5;
+        var c6 = t5.$ / i4, u5 = t5.$ % i4, h5 = t5.m, l5 = t5.s, f6 = n4 + t5.$, d4 = f6;
         a4 = n4 + i4 * a4;
-        var p5 = n4 + i4 * o4, g4 = 280 + l5.ua, m6 = t5.Pb ? c6 : 16777216, v6 = 0 < l5.ua ? l5.Wa : null, b4 = l5.wc, y5 = f5 < p5 ? wt2(l5, u5, c6) : null;
+        var p5 = n4 + i4 * o4, g4 = 280 + l5.ua, m6 = t5.Pb ? c6 : 16777216, v8 = 0 < l5.ua ? l5.Wa : null, b4 = l5.wc, y5 = f6 < p5 ? wt2(l5, u5, c6) : null;
         e2(t5.C < o4), e2(p5 <= a4);
         var w4 = false;
         t:
           for (; ; ) {
-            for (; w4 || f5 < p5; ) {
+            for (; w4 || f6 < p5; ) {
               var N5 = 0;
               if (c6 >= m6) {
-                var _4 = f5 - n4;
+                var _4 = f6 - n4;
                 e2((m6 = t5).Pb), m6.wd = m6.m, m6.xd = _4, 0 < m6.s.ua && B2(m6.s.Wa, m6.s.vb), m6 = c6 + ti;
               }
-              if (u5 & b4 || (y5 = wt2(l5, u5, c6)), e2(y5 != null), y5.Qb && (r3[f5] = y5.qb, w4 = true), !w4)
+              if (u5 & b4 || (y5 = wt2(l5, u5, c6)), e2(y5 != null), y5.Qb && (r3[f6] = y5.qb, w4 = true), !w4)
                 if (S2(h5), y5.jc) {
                   N5 = h5, _4 = r3;
-                  var P3 = f5, k3 = y5.pd[L3(N5) & Dr - 1];
+                  var P3 = f6, k3 = y5.pd[L3(N5) & Dr - 1];
                   e2(y5.jc), 256 > k3.g ? (x2(N5, N5.u + k3.g), _4[P3] = k3.value, N5 = 0) : (x2(N5, N5.u + k3.g - 256), e2(256 <= k3.value), N5 = k3.value), N5 == 0 && (w4 = true);
                 } else
                   N5 = bt2(y5.G[0], y5.H[0], h5);
@@ -25671,42 +26285,42 @@
               if (w4 || 256 > N5) {
                 if (!w4)
                   if (y5.nd)
-                    r3[f5] = (y5.qb | N5 << 8) >>> 0;
+                    r3[f6] = (y5.qb | N5 << 8) >>> 0;
                   else {
                     if (S2(h5), w4 = bt2(y5.G[1], y5.H[1], h5), S2(h5), _4 = bt2(y5.G[2], y5.H[2], h5), P3 = bt2(y5.G[3], y5.H[3], h5), h5.h)
                       break;
-                    r3[f5] = (P3 << 24 | w4 << 16 | N5 << 8 | _4) >>> 0;
+                    r3[f6] = (P3 << 24 | w4 << 16 | N5 << 8 | _4) >>> 0;
                   }
-                if (w4 = false, ++f5, ++u5 >= i4 && (u5 = 0, ++c6, s4 != null && c6 <= o4 && !(c6 % 16) && s4(t5, c6), v6 != null))
-                  for (; d4 < f5; )
-                    N5 = r3[d4++], v6.X[(506832829 * N5 & 4294967295) >>> v6.Mb] = N5;
+                if (w4 = false, ++f6, ++u5 >= i4 && (u5 = 0, ++c6, s4 != null && c6 <= o4 && !(c6 % 16) && s4(t5, c6), v8 != null))
+                  for (; d4 < f6; )
+                    N5 = r3[d4++], v8.X[(506832829 * N5 & 4294967295) >>> v8.Mb] = N5;
               } else if (280 > N5) {
                 if (N5 = mt2(N5 - 256, h5), _4 = bt2(y5.G[4], y5.H[4], h5), S2(h5), _4 = vt2(i4, _4 = mt2(_4, h5)), h5.h)
                   break;
-                if (f5 - n4 < _4 || a4 - f5 < N5)
+                if (f6 - n4 < _4 || a4 - f6 < N5)
                   break t;
                 for (P3 = 0; P3 < N5; ++P3)
-                  r3[f5 + P3] = r3[f5 + P3 - _4];
-                for (f5 += N5, u5 += N5; u5 >= i4; )
+                  r3[f6 + P3] = r3[f6 + P3 - _4];
+                for (f6 += N5, u5 += N5; u5 >= i4; )
                   u5 -= i4, ++c6, s4 != null && c6 <= o4 && !(c6 % 16) && s4(t5, c6);
-                if (e2(f5 <= a4), u5 & b4 && (y5 = wt2(l5, u5, c6)), v6 != null)
-                  for (; d4 < f5; )
-                    N5 = r3[d4++], v6.X[(506832829 * N5 & 4294967295) >>> v6.Mb] = N5;
+                if (e2(f6 <= a4), u5 & b4 && (y5 = wt2(l5, u5, c6)), v8 != null)
+                  for (; d4 < f6; )
+                    N5 = r3[d4++], v8.X[(506832829 * N5 & 4294967295) >>> v8.Mb] = N5;
               } else {
                 if (!(N5 < g4))
                   break t;
-                for (w4 = N5 - 280, e2(v6 != null); d4 < f5; )
-                  N5 = r3[d4++], v6.X[(506832829 * N5 & 4294967295) >>> v6.Mb] = N5;
-                N5 = f5, e2(!(w4 >>> (_4 = v6).Xa)), r3[N5] = _4.X[w4], w4 = true;
+                for (w4 = N5 - 280, e2(v8 != null); d4 < f6; )
+                  N5 = r3[d4++], v8.X[(506832829 * N5 & 4294967295) >>> v8.Mb] = N5;
+                N5 = f6, e2(!(w4 >>> (_4 = v8).Xa)), r3[N5] = _4.X[w4], w4 = true;
               }
               w4 || e2(h5.h == A3(h5));
             }
-            if (t5.Pb && h5.h && f5 < a4)
+            if (t5.Pb && h5.h && f6 < a4)
               e2(t5.m.h), t5.a = 5, t5.m = t5.wd, t5.$ = t5.xd, 0 < t5.s.ua && B2(t5.s.vb, t5.s.Wa);
             else {
               if (h5.h)
                 break t;
-              s4 != null && s4(t5, c6 > o4 ? o4 : c6), t5.a = 0, t5.$ = f5 - n4;
+              s4 != null && s4(t5, c6 > o4 ? o4 : c6), t5.a = 0, t5.$ = f6 - n4;
             }
             return 1;
           }
@@ -25722,12 +26336,12 @@
         return e3 == null ? null : (e3.a = 0, e3.xb = gi, rt2("Predictor", "VP8LPredictors"), rt2("Predictor", "VP8LPredictors_C"), rt2("PredictorAdd", "VP8LPredictorsAdd"), rt2("PredictorAdd", "VP8LPredictorsAdd_C"), Gr = G2, $r = J2, Qr = K2, tn = Z2, en = $9, rn = Q2, nn = tt2, t4.VP8LMapColor32b = Jr, t4.VP8LMapColor8b = Kr, e3);
       }
       function It2(t5, r3, n4, s4, c6) {
-        var u5 = 1, f5 = [t5], p5 = [r3], g4 = s4.m, m6 = s4.s, v6 = null, b4 = 0;
+        var u5 = 1, f6 = [t5], p5 = [r3], g4 = s4.m, m6 = s4.s, v8 = null, b4 = 0;
         t:
           for (; ; ) {
             if (n4)
               for (; u5 && y4(g4, 1); ) {
-                var w4 = f5, N5 = p5, A4 = s4, _4 = 1, P3 = A4.m, k3 = A4.gc[A4.ab], I3 = y4(P3, 2);
+                var w4 = f6, N5 = p5, A4 = s4, _4 = 1, P3 = A4.m, k3 = A4.gc[A4.ab], I3 = y4(P3, 2);
                 if (A4.Oc & 1 << I3)
                   u5 = 0;
                 else {
@@ -25761,14 +26375,14 @@
                   u5 = _4;
                 }
               }
-            if (f5 = f5[0], p5 = p5[0], u5 && y4(g4, 1) && !(u5 = 1 <= (b4 = y4(g4, 4)) && 11 >= b4)) {
+            if (f6 = f6[0], p5 = p5[0], u5 && y4(g4, 1) && !(u5 = 1 <= (b4 = y4(g4, 4)) && 11 >= b4)) {
               s4.a = 3;
               break t;
             }
             var H3;
             if (H3 = u5)
               e: {
-                var W3, V3, G3, Y3 = s4, J3 = f5, X3 = p5, K3 = b4, Z3 = n4, $10 = Y3.m, Q3 = Y3.s, tt3 = [null], et4 = 1, rt3 = 0, nt3 = Qn[K3];
+                var W3, V3, G3, Y3 = s4, J3 = f6, X3 = p5, K3 = b4, Z3 = n4, $10 = Y3.m, Q3 = Y3.s, tt3 = [null], et4 = 1, rt3 = 0, nt3 = Qn[K3];
                 r:
                   for (; ; ) {
                     if (Z3 && y4($10, 1)) {
@@ -25880,19 +26494,19 @@
               }
             } else
               m6.ua = 0;
-            var de3 = s4, pe3 = f5, ge3 = p5, me3 = de3.s, ve3 = me3.xc;
+            var de3 = s4, pe3 = f6, ge3 = p5, me3 = de3.s, ve3 = me3.xc;
             if (de3.c = pe3, de3.i = ge3, me3.md = q2(pe3, ve3), me3.wc = ve3 == 0 ? -1 : (1 << ve3) - 1, n4) {
               s4.xb = pi;
               break t;
             }
-            if ((v6 = a3(f5 * p5)) == null) {
+            if ((v8 = a3(f6 * p5)) == null) {
               s4.a = 1, u5 = 0;
               break t;
             }
-            u5 = (u5 = _t2(s4, v6, 0, f5, p5, p5, null)) && !g4.h;
+            u5 = (u5 = _t2(s4, v8, 0, f6, p5, p5, null)) && !g4.h;
             break t;
           }
-        return u5 ? (c6 != null ? c6[0] = v6 : (e2(v6 == null), e2(n4)), s4.$ = 0, n4 || Pt2(m6)) : Pt2(m6), u5;
+        return u5 ? (c6 != null ? c6[0] = v8 : (e2(v8 == null), e2(n4)), s4.$ = 0, n4 || Pt2(m6)) : Pt2(m6), u5;
       }
       function Ft2(t5, r3) {
         var n4 = t5.c * t5.i, i4 = n4 + r3 + 16 * r3;
@@ -25901,8 +26515,8 @@
       function Ct2(t5, r3) {
         var n4 = t5.C, i4 = r3 - n4, a4 = t5.V, o4 = t5.Ba + t5.c * n4;
         for (e2(r3 <= t5.l.o); 0 < i4; ) {
-          var s4 = 16 < i4 ? 16 : i4, c6 = t5.l.ma, u5 = t5.l.width, h5 = u5 * s4, l5 = c6.ca, f5 = c6.tb + u5 * n4, d4 = t5.Ta, p5 = t5.Ua;
-          Nt2(t5, s4, a4, o4), _n(d4, p5, l5, f5, h5), xt2(c6, n4, n4 + s4, l5, f5, u5), i4 -= s4, a4 += s4 * t5.c, n4 += s4;
+          var s4 = 16 < i4 ? 16 : i4, c6 = t5.l.ma, u5 = t5.l.width, h5 = u5 * s4, l5 = c6.ca, f6 = c6.tb + u5 * n4, d4 = t5.Ta, p5 = t5.Ua;
+          Nt2(t5, s4, a4, o4), _n(d4, p5, l5, f6, h5), xt2(c6, n4, n4 + s4, l5, f6, u5), i4 -= s4, a4 += s4 * t5.c, n4 += s4;
         }
         e2(n4 == r3), t5.C = t5.Ma = r3;
       }
@@ -26015,31 +26629,31 @@
         }
         if (t5.L = u5.Tb == 0 ? 0 : u5.zd ? 1 : 2, s4.Ka)
           return Jt2(t5, 3, "cannot parse filter header");
-        var f5 = o4;
-        if (o4 = h5 = a4, a4 = h5 + f5, u5 = f5, t5.Xb = (1 << g3(t5.m, 2)) - 1, f5 < 3 * (l5 = t5.Xb))
+        var f6 = o4;
+        if (o4 = h5 = a4, a4 = h5 + f6, u5 = f6, t5.Xb = (1 << g3(t5.m, 2)) - 1, f6 < 3 * (l5 = t5.Xb))
           n4 = 7;
         else {
-          for (h5 += 3 * l5, u5 -= 3 * l5, f5 = 0; f5 < l5; ++f5) {
+          for (h5 += 3 * l5, u5 -= 3 * l5, f6 = 0; f6 < l5; ++f6) {
             var d4 = n4[o4 + 0] | n4[o4 + 1] << 8 | n4[o4 + 2] << 16;
-            d4 > u5 && (d4 = u5), p4(t5.Jc[+f5], n4, h5, d4), h5 += d4, u5 -= d4, o4 += 3;
+            d4 > u5 && (d4 = u5), p4(t5.Jc[+f6], n4, h5, d4), h5 += d4, u5 -= d4, o4 += 3;
           }
           p4(t5.Jc[+l5], n4, h5, u5), n4 = h5 < a4 ? 0 : 5;
         }
         if (n4 != 0)
           return Jt2(t5, n4, "cannot parse partitions");
-        for (n4 = g3(h5 = t5.m, 7), o4 = P2(h5) ? m5(h5, 4) : 0, a4 = P2(h5) ? m5(h5, 4) : 0, u5 = P2(h5) ? m5(h5, 4) : 0, l5 = P2(h5) ? m5(h5, 4) : 0, h5 = P2(h5) ? m5(h5, 4) : 0, f5 = t5.Qa, d4 = 0; 4 > d4; ++d4) {
-          if (f5.Cb) {
-            var v6 = f5.Zb[d4];
-            f5.Fb || (v6 += n4);
+        for (n4 = g3(h5 = t5.m, 7), o4 = P2(h5) ? m5(h5, 4) : 0, a4 = P2(h5) ? m5(h5, 4) : 0, u5 = P2(h5) ? m5(h5, 4) : 0, l5 = P2(h5) ? m5(h5, 4) : 0, h5 = P2(h5) ? m5(h5, 4) : 0, f6 = t5.Qa, d4 = 0; 4 > d4; ++d4) {
+          if (f6.Cb) {
+            var v8 = f6.Zb[d4];
+            f6.Fb || (v8 += n4);
           } else {
             if (0 < d4) {
               t5.pb[d4] = t5.pb[0];
               continue;
             }
-            v6 = n4;
+            v8 = n4;
           }
           var b4 = t5.pb[d4];
-          b4.Sc[0] = ei[Vt2(v6 + o4, 127)], b4.Sc[1] = ri[Vt2(v6 + 0, 127)], b4.Eb[0] = 2 * ei[Vt2(v6 + a4, 127)], b4.Eb[1] = 101581 * ri[Vt2(v6 + u5, 127)] >> 16, 8 > b4.Eb[1] && (b4.Eb[1] = 8), b4.Qc[0] = ei[Vt2(v6 + l5, 117)], b4.Qc[1] = ri[Vt2(v6 + h5, 127)], b4.lc = v6 + h5;
+          b4.Sc[0] = ei[Vt2(v8 + o4, 127)], b4.Sc[1] = ri[Vt2(v8 + 0, 127)], b4.Eb[0] = 2 * ei[Vt2(v8 + a4, 127)], b4.Eb[1] = 101581 * ri[Vt2(v8 + u5, 127)] >> 16, 8 > b4.Eb[1] && (b4.Eb[1] = 8), b4.Qc[0] = ei[Vt2(v8 + l5, 117)], b4.Qc[1] = ri[Vt2(v8 + h5, 127)], b4.lc = v8 + h5;
         }
         if (!c6.Rb)
           return Jt2(t5, 4, "Not a key frame.");
@@ -26064,21 +26678,21 @@
           var c6 = e3[i4 + 1].Yb;
           if (k2(t5, s4[r3 + 2])) {
             var u5 = t5, h5 = 0;
-            if (k2(u5, (f5 = s4)[(l5 = r3) + 3]))
-              if (k2(u5, f5[l5 + 6])) {
-                for (s4 = 0, l5 = 2 * (h5 = k2(u5, f5[l5 + 8])) + (f5 = k2(u5, f5[l5 + 9 + h5])), h5 = 0, f5 = ii[l5]; f5[s4]; ++s4)
-                  h5 += h5 + k2(u5, f5[s4]);
+            if (k2(u5, (f6 = s4)[(l5 = r3) + 3]))
+              if (k2(u5, f6[l5 + 6])) {
+                for (s4 = 0, l5 = 2 * (h5 = k2(u5, f6[l5 + 8])) + (f6 = k2(u5, f6[l5 + 9 + h5])), h5 = 0, f6 = ii[l5]; f6[s4]; ++s4)
+                  h5 += h5 + k2(u5, f6[s4]);
                 h5 += 3 + (8 << l5);
               } else
-                k2(u5, f5[l5 + 7]) ? (h5 = 7 + 2 * k2(u5, 165), h5 += k2(u5, 145)) : h5 = 5 + k2(u5, 159);
+                k2(u5, f6[l5 + 7]) ? (h5 = 7 + 2 * k2(u5, 165), h5 += k2(u5, 145)) : h5 = 5 + k2(u5, 159);
             else
-              h5 = k2(u5, f5[l5 + 4]) ? 3 + k2(u5, f5[l5 + 5]) : 2;
+              h5 = k2(u5, f6[l5 + 4]) ? 3 + k2(u5, f6[l5 + 5]) : 2;
             s4 = c6[2];
           } else
             h5 = 1, s4 = c6[1];
           c6 = o4 + ai[i4], 0 > (u5 = t5).b && _3(u5);
-          var l5, f5 = u5.b, d4 = (l5 = u5.Ca >> 1) - (u5.I >> f5) >> 31;
-          --u5.b, u5.Ca += d4, u5.Ca |= 1, u5.I -= (l5 + 1 & d4) << f5, a4[c6] = ((h5 ^ d4) - d4) * n4[(0 < i4) + 0];
+          var l5, f6 = u5.b, d4 = (l5 = u5.Ca >> 1) - (u5.I >> f6) >> 31;
+          --u5.b, u5.Ca += d4, u5.Ca |= 1, u5.I -= (l5 + 1 & d4) << f6, a4[c6] = ((h5 ^ d4) - d4) * n4[(0 < i4) + 0];
         }
         return 16;
       }
@@ -26106,10 +26720,10 @@
               } else
                 h5 = c6.Tb;
               for (u5 = 0; 1 >= u5; ++u5) {
-                var l5 = t5.gd[s4][u5], f5 = h5;
-                if (c6.Pc && (f5 += c6.vd[0], u5 && (f5 += c6.od[0])), 0 < (f5 = 0 > f5 ? 0 : 63 < f5 ? 63 : f5)) {
-                  var d4 = f5;
-                  0 < c6.wb && ((d4 = 4 < c6.wb ? d4 >> 2 : d4 >> 1) > 9 - c6.wb && (d4 = 9 - c6.wb)), 1 > d4 && (d4 = 1), l5.dd = d4, l5.tc = 2 * f5 + d4, l5.ld = 40 <= f5 ? 2 : 15 <= f5 ? 1 : 0;
+                var l5 = t5.gd[s4][u5], f6 = h5;
+                if (c6.Pc && (f6 += c6.vd[0], u5 && (f6 += c6.od[0])), 0 < (f6 = 0 > f6 ? 0 : 63 < f6 ? 63 : f6)) {
+                  var d4 = f6;
+                  0 < c6.wb && ((d4 = 4 < c6.wb ? d4 >> 2 : d4 >> 1) > 9 - c6.wb && (d4 = 9 - c6.wb)), 1 > d4 && (d4 = 1), l5.dd = d4, l5.tc = 2 * f6 + d4, l5.ld = 40 <= f6 ? 2 : 15 <= f6 ? 1 : 0;
                 } else
                   l5.tc = 0;
                 l5.La = u5;
@@ -26125,7 +26739,7 @@
             t: {
               s4 = t5.Ic;
               c6 = 4 * (d4 = t5.za);
-              var p5 = 32 * d4, g4 = d4 + 1, m6 = 0 < t5.L ? d4 * (0 < t5.Aa ? 2 : 1) : 0, v6 = (t5.Aa == 2 ? 2 : 1) * d4;
+              var p5 = 32 * d4, g4 = d4 + 1, m6 = 0 < t5.L ? d4 * (0 < t5.Aa ? 2 : 1) : 0, v8 = (t5.Aa == 2 ? 2 : 1) * d4;
               if ((l5 = c6 + 832 + (u5 = 3 * (16 * s4 + Ri[t5.L]) / 2 * p5) + (h5 = t5.Fa != null && 0 < t5.Fa.length ? t5.Kc.c * t5.Kc.i : 0)) != l5)
                 s4 = 0;
               else {
@@ -26136,7 +26750,7 @@
                   }
                   t5.Vb = l5;
                 }
-                l5 = t5.Ec, f5 = t5.Fc, t5.Ac = l5, t5.Bc = f5, f5 += c6, t5.Gd = o3(p5, Ht2), t5.Hd = 0, t5.rb = o3(g4 + 1, Rt2), t5.sb = 1, t5.wa = m6 ? o3(m6, Dt2) : null, t5.Y = 0, t5.D.Nb = 0, t5.D.wa = t5.wa, t5.D.Y = t5.Y, 0 < t5.Aa && (t5.D.Y += d4), e2(true), t5.oc = l5, t5.pc = f5, f5 += 832, t5.ya = o3(v6, Ut2), t5.aa = 0, t5.D.ya = t5.ya, t5.D.aa = t5.aa, t5.Aa == 2 && (t5.D.aa += d4), t5.R = 16 * d4, t5.B = 8 * d4, d4 = (p5 = Ri[t5.L]) * t5.R, p5 = p5 / 2 * t5.B, t5.sa = l5, t5.ta = f5 + d4, t5.qa = t5.sa, t5.ra = t5.ta + 16 * s4 * t5.R + p5, t5.Ha = t5.qa, t5.Ia = t5.ra + 8 * s4 * t5.B + p5, t5.$c = 0, f5 += u5, t5.mb = h5 ? l5 : null, t5.nb = h5 ? f5 : null, e2(f5 + h5 <= t5.Fc + t5.Vb), $t2(t5), i3(t5.Ac, t5.Bc, 0, c6), s4 = 1;
+                l5 = t5.Ec, f6 = t5.Fc, t5.Ac = l5, t5.Bc = f6, f6 += c6, t5.Gd = o3(p5, Ht2), t5.Hd = 0, t5.rb = o3(g4 + 1, Rt2), t5.sb = 1, t5.wa = m6 ? o3(m6, Dt2) : null, t5.Y = 0, t5.D.Nb = 0, t5.D.wa = t5.wa, t5.D.Y = t5.Y, 0 < t5.Aa && (t5.D.Y += d4), e2(true), t5.oc = l5, t5.pc = f6, f6 += 832, t5.ya = o3(v8, Ut2), t5.aa = 0, t5.D.ya = t5.ya, t5.D.aa = t5.aa, t5.Aa == 2 && (t5.D.aa += d4), t5.R = 16 * d4, t5.B = 8 * d4, d4 = (p5 = Ri[t5.L]) * t5.R, p5 = p5 / 2 * t5.B, t5.sa = l5, t5.ta = f6 + d4, t5.qa = t5.sa, t5.ra = t5.ta + 16 * s4 * t5.R + p5, t5.Ha = t5.qa, t5.Ia = t5.ra + 8 * s4 * t5.B + p5, t5.$c = 0, f6 += u5, t5.mb = h5 ? l5 : null, t5.nb = h5 ? f6 : null, e2(f6 + h5 <= t5.Fc + t5.Vb), $t2(t5), i3(t5.Ac, t5.Bc, 0, c6), s4 = 1;
               }
             }
             if (s4) {
@@ -26159,37 +26773,37 @@
             for (t6.M = 0; t6.M < t6.Va; ++t6.M) {
               var o4, s5 = t6.Jc[t6.M & t6.Xb], c7 = t6.m, u6 = t6;
               for (o4 = 0; o4 < u6.za; ++o4) {
-                var h6 = c7, l6 = u6, f6 = l6.Ac, d5 = l6.Bc + 4 * o4, p6 = l6.zc, g5 = l6.ya[l6.aa + o4];
+                var h6 = c7, l6 = u6, f7 = l6.Ac, d5 = l6.Bc + 4 * o4, p6 = l6.zc, g5 = l6.ya[l6.aa + o4];
                 if (l6.Qa.Bb ? g5.$b = k2(h6, l6.Pa.jb[0]) ? 2 + k2(h6, l6.Pa.jb[2]) : k2(h6, l6.Pa.jb[1]) : g5.$b = 0, l6.kc && (g5.Ad = k2(h6, l6.Bd)), g5.Za = !k2(h6, 145) + 0, g5.Za) {
-                  var m7 = g5.Ob, v7 = 0;
+                  var m7 = g5.Ob, v9 = 0;
                   for (l6 = 0; 4 > l6; ++l6) {
                     var b4, y5 = p6[0 + l6];
                     for (b4 = 0; 4 > b4; ++b4) {
-                      y5 = ci[f6[d5 + b4]][y5];
+                      y5 = ci[f7[d5 + b4]][y5];
                       for (var w4 = oi[k2(h6, y5[0])]; 0 < w4; )
                         w4 = oi[2 * w4 + k2(h6, y5[w4])];
-                      y5 = -w4, f6[d5 + b4] = y5;
+                      y5 = -w4, f7[d5 + b4] = y5;
                     }
-                    n3(m7, v7, f6, d5, 4), v7 += 4, p6[0 + l6] = y5;
+                    n3(m7, v9, f7, d5, 4), v9 += 4, p6[0 + l6] = y5;
                   }
                 } else
-                  y5 = k2(h6, 156) ? k2(h6, 128) ? 1 : 3 : k2(h6, 163) ? 2 : 0, g5.Ob[0] = y5, i3(f6, d5, y5, 4), i3(p6, 0, y5, 4);
+                  y5 = k2(h6, 156) ? k2(h6, 128) ? 1 : 3 : k2(h6, 163) ? 2 : 0, g5.Ob[0] = y5, i3(f7, d5, y5, 4), i3(p6, 0, y5, 4);
                 g5.Dd = k2(h6, 142) ? k2(h6, 114) ? k2(h6, 183) ? 1 : 3 : 2 : 0;
               }
               if (u6.m.Ka)
                 return Jt2(t6, 7, "Premature end-of-partition0 encountered.");
               for (; t6.ja < t6.za; ++t6.ja) {
-                if (u6 = s5, h6 = (c7 = t6).rb[c7.sb - 1], f6 = c7.rb[c7.sb + c7.ja], o4 = c7.ya[c7.aa + c7.ja], d5 = c7.kc ? o4.Ad : 0)
-                  h6.la = f6.la = 0, o4.Za || (h6.Na = f6.Na = 0), o4.Hc = 0, o4.Gc = 0, o4.ia = 0;
+                if (u6 = s5, h6 = (c7 = t6).rb[c7.sb - 1], f7 = c7.rb[c7.sb + c7.ja], o4 = c7.ya[c7.aa + c7.ja], d5 = c7.kc ? o4.Ad : 0)
+                  h6.la = f7.la = 0, o4.Za || (h6.Na = f7.Na = 0), o4.Hc = 0, o4.Gc = 0, o4.ia = 0;
                 else {
                   var N5, L4;
-                  h6 = f6, f6 = u6, d5 = c7.Pa.Xc, p6 = c7.ya[c7.aa + c7.ja], g5 = c7.pb[p6.$b];
-                  if (l6 = p6.ad, m7 = 0, v7 = c7.rb[c7.sb - 1], y5 = b4 = 0, i3(l6, m7, 0, 384), p6.Za)
+                  h6 = f7, f7 = u6, d5 = c7.Pa.Xc, p6 = c7.ya[c7.aa + c7.ja], g5 = c7.pb[p6.$b];
+                  if (l6 = p6.ad, m7 = 0, v9 = c7.rb[c7.sb - 1], y5 = b4 = 0, i3(l6, m7, 0, 384), p6.Za)
                     var A4 = 0, x3 = d5[3];
                   else {
                     w4 = a3(16);
-                    var S3 = h6.Na + v7.Na;
-                    if (S3 = ni(f6, d5[1], S3, g5.Eb, 0, w4, 0), h6.Na = v7.Na = (0 < S3) + 0, 1 < S3)
+                    var S3 = h6.Na + v9.Na;
+                    if (S3 = ni(f7, d5[1], S3, g5.Eb, 0, w4, 0), h6.Na = v9.Na = (0 < S3) + 0, 1 < S3)
                       an(w4, 0, l6, m7);
                     else {
                       var _4 = w4[0] + 3 >> 3;
@@ -26198,29 +26812,29 @@
                     }
                     A4 = 1, x3 = d5[0];
                   }
-                  var P3 = 15 & h6.la, I3 = 15 & v7.la;
+                  var P3 = 15 & h6.la, I3 = 15 & v9.la;
                   for (w4 = 0; 4 > w4; ++w4) {
                     var F3 = 1 & I3;
                     for (_4 = L4 = 0; 4 > _4; ++_4)
-                      P3 = P3 >> 1 | (F3 = (S3 = ni(f6, x3, S3 = F3 + (1 & P3), g5.Sc, A4, l6, m7)) > A4) << 7, L4 = L4 << 2 | (3 < S3 ? 3 : 1 < S3 ? 2 : l6[m7 + 0] != 0), m7 += 16;
+                      P3 = P3 >> 1 | (F3 = (S3 = ni(f7, x3, S3 = F3 + (1 & P3), g5.Sc, A4, l6, m7)) > A4) << 7, L4 = L4 << 2 | (3 < S3 ? 3 : 1 < S3 ? 2 : l6[m7 + 0] != 0), m7 += 16;
                     P3 >>= 4, I3 = I3 >> 1 | F3 << 7, b4 = (b4 << 8 | L4) >>> 0;
                   }
                   for (x3 = P3, A4 = I3 >> 4, N5 = 0; 4 > N5; N5 += 2) {
-                    for (L4 = 0, P3 = h6.la >> 4 + N5, I3 = v7.la >> 4 + N5, w4 = 0; 2 > w4; ++w4) {
+                    for (L4 = 0, P3 = h6.la >> 4 + N5, I3 = v9.la >> 4 + N5, w4 = 0; 2 > w4; ++w4) {
                       for (F3 = 1 & I3, _4 = 0; 2 > _4; ++_4)
-                        S3 = F3 + (1 & P3), P3 = P3 >> 1 | (F3 = 0 < (S3 = ni(f6, d5[2], S3, g5.Qc, 0, l6, m7))) << 3, L4 = L4 << 2 | (3 < S3 ? 3 : 1 < S3 ? 2 : l6[m7 + 0] != 0), m7 += 16;
+                        S3 = F3 + (1 & P3), P3 = P3 >> 1 | (F3 = 0 < (S3 = ni(f7, d5[2], S3, g5.Qc, 0, l6, m7))) << 3, L4 = L4 << 2 | (3 < S3 ? 3 : 1 < S3 ? 2 : l6[m7 + 0] != 0), m7 += 16;
                       P3 >>= 2, I3 = I3 >> 1 | F3 << 5;
                     }
                     y5 |= L4 << 4 * N5, x3 |= P3 << 4 << N5, A4 |= (240 & I3) << N5;
                   }
-                  h6.la = x3, v7.la = A4, p6.Hc = b4, p6.Gc = y5, p6.ia = 43690 & y5 ? 0 : g5.ia, d5 = !(b4 | y5);
+                  h6.la = x3, v9.la = A4, p6.Hc = b4, p6.Gc = y5, p6.ia = 43690 & y5 ? 0 : g5.ia, d5 = !(b4 | y5);
                 }
                 if (0 < c7.L && (c7.wa[c7.Y + c7.ja] = c7.gd[o4.$b][o4.Za], c7.wa[c7.Y + c7.ja].La |= !d5), u6.Ka)
                   return Jt2(t6, 7, "Premature end-of-file encountered.");
               }
               if ($t2(t6), c7 = r4, u6 = 1, o4 = (s5 = t6).D, h6 = 0 < s5.L && s5.M >= s5.zb && s5.M <= s5.Va, s5.Aa == 0)
                 t: {
-                  if (o4.M = s5.M, o4.uc = h6, Or(s5, o4), u6 = 1, o4 = (L4 = s5.D).Nb, h6 = (y5 = Ri[s5.L]) * s5.R, f6 = y5 / 2 * s5.B, w4 = 16 * o4 * s5.R, _4 = 8 * o4 * s5.B, d5 = s5.sa, p6 = s5.ta - h6 + w4, g5 = s5.qa, l6 = s5.ra - f6 + _4, m7 = s5.Ha, v7 = s5.Ia - f6 + _4, I3 = (P3 = L4.M) == 0, b4 = P3 >= s5.Va - 1, s5.Aa == 2 && Or(s5, L4), L4.uc)
+                  if (o4.M = s5.M, o4.uc = h6, Or(s5, o4), u6 = 1, o4 = (L4 = s5.D).Nb, h6 = (y5 = Ri[s5.L]) * s5.R, f7 = y5 / 2 * s5.B, w4 = 16 * o4 * s5.R, _4 = 8 * o4 * s5.B, d5 = s5.sa, p6 = s5.ta - h6 + w4, g5 = s5.qa, l6 = s5.ra - f7 + _4, m7 = s5.Ha, v9 = s5.Ia - f7 + _4, I3 = (P3 = L4.M) == 0, b4 = P3 >= s5.Va - 1, s5.Aa == 2 && Or(s5, L4), L4.uc)
                     for (F3 = (S3 = s5).D.M, e2(S3.D.uc), L4 = S3.yb; L4 < S3.Hb; ++L4) {
                       A4 = L4, x3 = F3;
                       var C3 = (j3 = (U3 = S3).D).Nb;
@@ -26236,13 +26850,13 @@
                         }
                     }
                   if (s5.ia && alert("todo:DitherRow"), c7.put != null) {
-                    if (L4 = 16 * P3, P3 = 16 * (P3 + 1), I3 ? (c7.y = s5.sa, c7.O = s5.ta + w4, c7.f = s5.qa, c7.N = s5.ra + _4, c7.ea = s5.Ha, c7.W = s5.Ia + _4) : (L4 -= y5, c7.y = d5, c7.O = p6, c7.f = g5, c7.N = l6, c7.ea = m7, c7.W = v7), b4 || (P3 -= y5), P3 > c7.o && (P3 = c7.o), c7.F = null, c7.J = null, s5.Fa != null && 0 < s5.Fa.length && L4 < P3 && (c7.J = lr(s5, c7, L4, P3 - L4), c7.F = s5.mb, c7.F == null && c7.F.length == 0)) {
+                    if (L4 = 16 * P3, P3 = 16 * (P3 + 1), I3 ? (c7.y = s5.sa, c7.O = s5.ta + w4, c7.f = s5.qa, c7.N = s5.ra + _4, c7.ea = s5.Ha, c7.W = s5.Ia + _4) : (L4 -= y5, c7.y = d5, c7.O = p6, c7.f = g5, c7.N = l6, c7.ea = m7, c7.W = v9), b4 || (P3 -= y5), P3 > c7.o && (P3 = c7.o), c7.F = null, c7.J = null, s5.Fa != null && 0 < s5.Fa.length && L4 < P3 && (c7.J = lr(s5, c7, L4, P3 - L4), c7.F = s5.mb, c7.F == null && c7.F.length == 0)) {
                       u6 = Jt2(s5, 3, "Could not decode alpha data.");
                       break t;
                     }
                     L4 < c7.j && (y5 = c7.j - L4, L4 = c7.j, e2(!(1 & y5)), c7.O += s5.R * y5, c7.N += s5.B * (y5 >> 1), c7.W += s5.B * (y5 >> 1), c7.F != null && (c7.J += c7.width * y5)), L4 < P3 && (c7.O += c7.v, c7.N += c7.v >> 1, c7.W += c7.v >> 1, c7.F != null && (c7.J += c7.v), c7.ka = L4 - c7.j, c7.U = c7.va - c7.v, c7.T = P3 - L4, u6 = c7.put(c7));
                   }
-                  o4 + 1 != s5.Ic || b4 || (n3(s5.sa, s5.ta - h6, d5, p6 + 16 * s5.R, h6), n3(s5.qa, s5.ra - f6, g5, l6 + 8 * s5.B, f6), n3(s5.Ha, s5.Ia - f6, m7, v7 + 8 * s5.B, f6));
+                  o4 + 1 != s5.Ic || b4 || (n3(s5.sa, s5.ta - h6, d5, p6 + 16 * s5.R, h6), n3(s5.qa, s5.ra - f7, g5, l6 + 8 * s5.B, f7), n3(s5.Ha, s5.Ia - f7, m7, v9 + 8 * s5.B, f7));
                 }
               if (!u6)
                 return Jt2(t6, 6, "Output aborted.");
@@ -26473,8 +27087,8 @@
             if (Re(t5, e3, r3, s4))
               De(t5, e3, r3);
             else {
-              var c6 = t5, u5 = e3, h5 = r3, l5 = c6[u5 - 2 * h5], f5 = c6[u5 - h5], d4 = c6[u5 + 0], p5 = c6[u5 + h5], g4 = c6[u5 + 2 * h5], m6 = 27 * (b4 = jn[1020 + 3 * (d4 - f5) + jn[1020 + l5 - p5]]) + 63 >> 7, v6 = 18 * b4 + 63 >> 7, b4 = 9 * b4 + 63 >> 7;
-              c6[u5 - 3 * h5] = Bn[255 + c6[u5 - 3 * h5] + b4], c6[u5 - 2 * h5] = Bn[255 + l5 + v6], c6[u5 - h5] = Bn[255 + f5 + m6], c6[u5 + 0] = Bn[255 + d4 - m6], c6[u5 + h5] = Bn[255 + p5 - v6], c6[u5 + 2 * h5] = Bn[255 + g4 - b4];
+              var c6 = t5, u5 = e3, h5 = r3, l5 = c6[u5 - 2 * h5], f6 = c6[u5 - h5], d4 = c6[u5 + 0], p5 = c6[u5 + h5], g4 = c6[u5 + 2 * h5], m6 = 27 * (b4 = jn[1020 + 3 * (d4 - f6) + jn[1020 + l5 - p5]]) + 63 >> 7, v8 = 18 * b4 + 63 >> 7, b4 = 9 * b4 + 63 >> 7;
+              c6[u5 - 3 * h5] = Bn[255 + c6[u5 - 3 * h5] + b4], c6[u5 - 2 * h5] = Bn[255 + l5 + v8], c6[u5 - h5] = Bn[255 + f6 + m6], c6[u5 + 0] = Bn[255 + d4 - m6], c6[u5 + h5] = Bn[255 + p5 - v8], c6[u5 + 2 * h5] = Bn[255 + g4 - b4];
             }
           e3 += n4;
         }
@@ -26485,8 +27099,8 @@
             if (Re(t5, e3, r3, s4))
               De(t5, e3, r3);
             else {
-              var c6 = t5, u5 = e3, h5 = r3, l5 = c6[u5 - h5], f5 = c6[u5 + 0], d4 = c6[u5 + h5], p5 = On[112 + ((g4 = 3 * (f5 - l5)) + 4 >> 3)], g4 = On[112 + (g4 + 3 >> 3)], m6 = p5 + 1 >> 1;
-              c6[u5 - 2 * h5] = Bn[255 + c6[u5 - 2 * h5] + m6], c6[u5 - h5] = Bn[255 + l5 + g4], c6[u5 + 0] = Bn[255 + f5 - p5], c6[u5 + h5] = Bn[255 + d4 - m6];
+              var c6 = t5, u5 = e3, h5 = r3, l5 = c6[u5 - h5], f6 = c6[u5 + 0], d4 = c6[u5 + h5], p5 = On[112 + ((g4 = 3 * (f6 - l5)) + 4 >> 3)], g4 = On[112 + (g4 + 3 >> 3)], m6 = p5 + 1 >> 1;
+              c6[u5 - 2 * h5] = Bn[255 + c6[u5 - 2 * h5] + m6], c6[u5 - h5] = Bn[255 + l5 + g4], c6[u5 + 0] = Bn[255 + f6 - p5], c6[u5 + h5] = Bn[255 + d4 - m6];
             }
           e3 += n4;
         }
@@ -26567,8 +27181,8 @@
             var u5;
             if (t5.ga = new sr(), (u5 = t5.ga == null) || (u5 = r3.width * r3.o, e2(t5.Gb.length == 0), t5.Gb = a3(u5), t5.Uc = 0, t5.Gb == null ? u5 = 0 : (t5.mb = t5.Gb, t5.nb = t5.Uc, t5.rc = null, u5 = 1), u5 = !u5), !u5) {
               u5 = t5.ga;
-              var h5 = t5.Fa, l5 = t5.P, f5 = t5.qc, d4 = t5.mb, p5 = t5.nb, g4 = l5 + 1, m6 = f5 - 1, b4 = u5.l;
-              if (e2(h5 != null && d4 != null && r3 != null), mi[0] = null, mi[1] = cr, mi[2] = ur, mi[3] = hr, u5.ca = d4, u5.tb = p5, u5.c = r3.width, u5.i = r3.height, e2(0 < u5.c && 0 < u5.i), 1 >= f5)
+              var h5 = t5.Fa, l5 = t5.P, f6 = t5.qc, d4 = t5.mb, p5 = t5.nb, g4 = l5 + 1, m6 = f6 - 1, b4 = u5.l;
+              if (e2(h5 != null && d4 != null && r3 != null), mi[0] = null, mi[1] = cr, mi[2] = ur, mi[3] = hr, u5.ca = d4, u5.tb = p5, u5.c = r3.width, u5.i = r3.height, e2(0 < u5.c && 0 < u5.i), 1 >= f6)
                 r3 = 0;
               else if (u5.$a = h5[l5 + 0] >> 0 & 3, u5.Z = h5[l5 + 0] >> 2 & 3, u5.Lc = h5[l5 + 0] >> 4 & 3, l5 = h5[l5 + 0] >> 6 & 3, 0 > u5.$a || 1 < u5.$a || 4 <= u5.Z || 1 < u5.Lc || l5)
                 r3 = 0;
@@ -26581,7 +27195,7 @@
                         r3 = 0;
                         break t;
                       }
-                      if (e2(u5 != null), u5.mc = r3, r3.c = u5.c, r3.i = u5.i, r3.l = u5.l, r3.l.ma = u5, r3.l.width = u5.c, r3.l.height = u5.i, r3.a = 0, v5(r3.m, h5, g4, m6), !It2(u5.c, u5.i, 1, r3, null))
+                      if (e2(u5 != null), u5.mc = r3, r3.c = u5.c, r3.i = u5.i, r3.l = u5.l, r3.l.ma = u5, r3.l.width = u5.c, r3.l.height = u5.i, r3.a = 0, v7(r3.m, h5, g4, m6), !It2(u5.c, u5.i, 1, r3, null))
                         break e;
                       if (r3.ab == 1 && r3.gc[0].hc == 3 && At2(r3.s) ? (u5.ic = 1, h5 = r3.c * r3.i, r3.Ta = null, r3.Ua = 0, r3.V = a3(h5), r3.Ba = 0, r3.V == null ? (r3.a = 1, r3 = 0) : r3 = 1) : (u5.ic = 0, r3 = Ft2(r3, u5.c)), !r3)
                         break e;
@@ -26601,25 +27215,25 @@
           e2(t5.ga != null), e2(i4 + o4 <= c6);
           t: {
             if (r3 = (h5 = t5.ga).c, c6 = h5.l.o, h5.$a == 0) {
-              if (g4 = t5.rc, m6 = t5.Vc, b4 = t5.Fa, l5 = t5.P + 1 + i4 * r3, f5 = t5.mb, d4 = t5.nb + i4 * r3, e2(l5 <= t5.P + t5.qc), h5.Z != 0)
+              if (g4 = t5.rc, m6 = t5.Vc, b4 = t5.Fa, l5 = t5.P + 1 + i4 * r3, f6 = t5.mb, d4 = t5.nb + i4 * r3, e2(l5 <= t5.P + t5.qc), h5.Z != 0)
                 for (e2(mi[h5.Z] != null), u5 = 0; u5 < o4; ++u5)
-                  mi[h5.Z](g4, m6, b4, l5, f5, d4, r3), g4 = f5, m6 = d4, d4 += r3, l5 += r3;
+                  mi[h5.Z](g4, m6, b4, l5, f6, d4, r3), g4 = f6, m6 = d4, d4 += r3, l5 += r3;
               else
                 for (u5 = 0; u5 < o4; ++u5)
-                  n3(f5, d4, b4, l5, r3), g4 = f5, m6 = d4, d4 += r3, l5 += r3;
+                  n3(f6, d4, b4, l5, r3), g4 = f6, m6 = d4, d4 += r3, l5 += r3;
               t5.rc = g4, t5.Vc = m6;
             } else {
               if (e2(h5.mc != null), r3 = i4 + o4, e2((u5 = h5.mc) != null), e2(r3 <= u5.i), u5.C >= r3)
                 r3 = 1;
               else if (h5.ic || mr(), h5.ic) {
                 h5 = u5.V, g4 = u5.Ba, m6 = u5.c;
-                var y5 = u5.i, w4 = (b4 = 1, l5 = u5.$ / m6, f5 = u5.$ % m6, d4 = u5.m, p5 = u5.s, u5.$), N5 = m6 * y5, L4 = m6 * r3, x3 = p5.wc, _4 = w4 < L4 ? wt2(p5, f5, l5) : null;
+                var y5 = u5.i, w4 = (b4 = 1, l5 = u5.$ / m6, f6 = u5.$ % m6, d4 = u5.m, p5 = u5.s, u5.$), N5 = m6 * y5, L4 = m6 * r3, x3 = p5.wc, _4 = w4 < L4 ? wt2(p5, f6, l5) : null;
                 e2(w4 <= N5), e2(r3 <= y5), e2(At2(p5));
                 e:
                   for (; ; ) {
                     for (; !d4.h && w4 < L4; ) {
-                      if (f5 & x3 || (_4 = wt2(p5, f5, l5)), e2(_4 != null), S2(d4), 256 > (y5 = bt2(_4.G[0], _4.H[0], d4)))
-                        h5[g4 + w4] = y5, ++w4, ++f5 >= m6 && (f5 = 0, ++l5 <= r3 && !(l5 % 16) && St2(u5, l5));
+                      if (f6 & x3 || (_4 = wt2(p5, f6, l5)), e2(_4 != null), S2(d4), 256 > (y5 = bt2(_4.G[0], _4.H[0], d4)))
+                        h5[g4 + w4] = y5, ++w4, ++f6 >= m6 && (f6 = 0, ++l5 <= r3 && !(l5 % 16) && St2(u5, l5));
                       else {
                         if (!(280 > y5)) {
                           b4 = 0;
@@ -26633,9 +27247,9 @@
                         }
                         for (P3 = 0; P3 < y5; ++P3)
                           h5[g4 + w4 + P3] = h5[g4 + w4 + P3 - k3];
-                        for (w4 += y5, f5 += y5; f5 >= m6; )
-                          f5 -= m6, ++l5 <= r3 && !(l5 % 16) && St2(u5, l5);
-                        w4 < L4 && f5 & x3 && (_4 = wt2(p5, f5, l5));
+                        for (w4 += y5, f6 += y5; f6 >= m6; )
+                          f6 -= m6, ++l5 <= r3 && !(l5 % 16) && St2(u5, l5);
+                        w4 < L4 && f6 & x3 && (_4 = wt2(p5, f6, l5));
                       }
                       e2(d4.h == A3(d4));
                     }
@@ -26699,15 +27313,15 @@
         An = fr, xn = dr, Sn = pr, _n = gr;
       }
       function vr(r3, n4, i4) {
-        t4[r3] = function(t5, r4, a4, o4, s4, c6, u5, h5, l5, f5, d4, p5, g4, m6, v6, b4, y5) {
-          var w4, N5 = y5 - 1 >> 1, L4 = s4[c6 + 0] | u5[h5 + 0] << 16, A4 = l5[f5 + 0] | d4[p5 + 0] << 16;
+        t4[r3] = function(t5, r4, a4, o4, s4, c6, u5, h5, l5, f6, d4, p5, g4, m6, v8, b4, y5) {
+          var w4, N5 = y5 - 1 >> 1, L4 = s4[c6 + 0] | u5[h5 + 0] << 16, A4 = l5[f6 + 0] | d4[p5 + 0] << 16;
           e2(t5 != null);
           var x3 = 3 * L4 + A4 + 131074 >> 2;
-          for (n4(t5[r4 + 0], 255 & x3, x3 >> 16, g4, m6), a4 != null && (x3 = 3 * A4 + L4 + 131074 >> 2, n4(a4[o4 + 0], 255 & x3, x3 >> 16, v6, b4)), w4 = 1; w4 <= N5; ++w4) {
-            var S3 = s4[c6 + w4] | u5[h5 + w4] << 16, _4 = l5[f5 + w4] | d4[p5 + w4] << 16, P3 = L4 + S3 + A4 + _4 + 524296, k3 = P3 + 2 * (S3 + A4) >> 3;
-            x3 = k3 + L4 >> 1, L4 = (P3 = P3 + 2 * (L4 + _4) >> 3) + S3 >> 1, n4(t5[r4 + 2 * w4 - 1], 255 & x3, x3 >> 16, g4, m6 + (2 * w4 - 1) * i4), n4(t5[r4 + 2 * w4 - 0], 255 & L4, L4 >> 16, g4, m6 + (2 * w4 - 0) * i4), a4 != null && (x3 = P3 + A4 >> 1, L4 = k3 + _4 >> 1, n4(a4[o4 + 2 * w4 - 1], 255 & x3, x3 >> 16, v6, b4 + (2 * w4 - 1) * i4), n4(a4[o4 + 2 * w4 + 0], 255 & L4, L4 >> 16, v6, b4 + (2 * w4 + 0) * i4)), L4 = S3, A4 = _4;
+          for (n4(t5[r4 + 0], 255 & x3, x3 >> 16, g4, m6), a4 != null && (x3 = 3 * A4 + L4 + 131074 >> 2, n4(a4[o4 + 0], 255 & x3, x3 >> 16, v8, b4)), w4 = 1; w4 <= N5; ++w4) {
+            var S3 = s4[c6 + w4] | u5[h5 + w4] << 16, _4 = l5[f6 + w4] | d4[p5 + w4] << 16, P3 = L4 + S3 + A4 + _4 + 524296, k3 = P3 + 2 * (S3 + A4) >> 3;
+            x3 = k3 + L4 >> 1, L4 = (P3 = P3 + 2 * (L4 + _4) >> 3) + S3 >> 1, n4(t5[r4 + 2 * w4 - 1], 255 & x3, x3 >> 16, g4, m6 + (2 * w4 - 1) * i4), n4(t5[r4 + 2 * w4 - 0], 255 & L4, L4 >> 16, g4, m6 + (2 * w4 - 0) * i4), a4 != null && (x3 = P3 + A4 >> 1, L4 = k3 + _4 >> 1, n4(a4[o4 + 2 * w4 - 1], 255 & x3, x3 >> 16, v8, b4 + (2 * w4 - 1) * i4), n4(a4[o4 + 2 * w4 + 0], 255 & L4, L4 >> 16, v8, b4 + (2 * w4 + 0) * i4)), L4 = S3, A4 = _4;
           }
-          1 & y5 || (x3 = 3 * L4 + A4 + 131074 >> 2, n4(t5[r4 + y5 - 1], 255 & x3, x3 >> 16, g4, m6 + (y5 - 1) * i4), a4 != null && (x3 = 3 * A4 + L4 + 131074 >> 2, n4(a4[o4 + y5 - 1], 255 & x3, x3 >> 16, v6, b4 + (y5 - 1) * i4)));
+          1 & y5 || (x3 = 3 * L4 + A4 + 131074 >> 2, n4(t5[r4 + y5 - 1], 255 & x3, x3 >> 16, g4, m6 + (y5 - 1) * i4), a4 != null && (x3 = 3 * A4 + L4 + 131074 >> 2, n4(a4[o4 + y5 - 1], 255 & x3, x3 >> 16, v8, b4 + (y5 - 1) * i4)));
         };
       }
       function br() {
@@ -26774,37 +27388,37 @@
         }
       }
       function Or(t5, e3) {
-        var r3, a4, o4 = e3.M, s4 = e3.Nb, c6 = t5.oc, u5 = t5.pc + 40, h5 = t5.oc, l5 = t5.pc + 584, f5 = t5.oc, d4 = t5.pc + 600;
+        var r3, a4, o4 = e3.M, s4 = e3.Nb, c6 = t5.oc, u5 = t5.pc + 40, h5 = t5.oc, l5 = t5.pc + 584, f6 = t5.oc, d4 = t5.pc + 600;
         for (r3 = 0; 16 > r3; ++r3)
           c6[u5 + 32 * r3 - 1] = 129;
         for (r3 = 0; 8 > r3; ++r3)
-          h5[l5 + 32 * r3 - 1] = 129, f5[d4 + 32 * r3 - 1] = 129;
-        for (0 < o4 ? c6[u5 - 1 - 32] = h5[l5 - 1 - 32] = f5[d4 - 1 - 32] = 129 : (i3(c6, u5 - 32 - 1, 127, 21), i3(h5, l5 - 32 - 1, 127, 9), i3(f5, d4 - 32 - 1, 127, 9)), a4 = 0; a4 < t5.za; ++a4) {
+          h5[l5 + 32 * r3 - 1] = 129, f6[d4 + 32 * r3 - 1] = 129;
+        for (0 < o4 ? c6[u5 - 1 - 32] = h5[l5 - 1 - 32] = f6[d4 - 1 - 32] = 129 : (i3(c6, u5 - 32 - 1, 127, 21), i3(h5, l5 - 32 - 1, 127, 9), i3(f6, d4 - 32 - 1, 127, 9)), a4 = 0; a4 < t5.za; ++a4) {
           var p5 = e3.ya[e3.aa + a4];
           if (0 < a4) {
             for (r3 = -1; 16 > r3; ++r3)
               n3(c6, u5 + 32 * r3 - 4, c6, u5 + 32 * r3 + 12, 4);
             for (r3 = -1; 8 > r3; ++r3)
-              n3(h5, l5 + 32 * r3 - 4, h5, l5 + 32 * r3 + 4, 4), n3(f5, d4 + 32 * r3 - 4, f5, d4 + 32 * r3 + 4, 4);
+              n3(h5, l5 + 32 * r3 - 4, h5, l5 + 32 * r3 + 4, 4), n3(f6, d4 + 32 * r3 - 4, f6, d4 + 32 * r3 + 4, 4);
           }
-          var g4 = t5.Gd, m6 = t5.Hd + a4, v6 = p5.ad, b4 = p5.Hc;
-          if (0 < o4 && (n3(c6, u5 - 32, g4[m6].y, 0, 16), n3(h5, l5 - 32, g4[m6].f, 0, 8), n3(f5, d4 - 32, g4[m6].ea, 0, 8)), p5.Za) {
+          var g4 = t5.Gd, m6 = t5.Hd + a4, v8 = p5.ad, b4 = p5.Hc;
+          if (0 < o4 && (n3(c6, u5 - 32, g4[m6].y, 0, 16), n3(h5, l5 - 32, g4[m6].f, 0, 8), n3(f6, d4 - 32, g4[m6].ea, 0, 8)), p5.Za) {
             var y5 = c6, w4 = u5 - 32 + 16;
             for (0 < o4 && (a4 >= t5.za - 1 ? i3(y5, w4, g4[m6].y[15], 4) : n3(y5, w4, g4[m6 + 1].y, 0, 4)), r3 = 0; 4 > r3; r3++)
               y5[w4 + 128 + r3] = y5[w4 + 256 + r3] = y5[w4 + 384 + r3] = y5[w4 + 0 + r3];
             for (r3 = 0; 16 > r3; ++r3, b4 <<= 2)
-              y5 = c6, w4 = u5 + Di[r3], fi[p5.Ob[r3]](y5, w4), jr(b4, v6, 16 * +r3, y5, w4);
+              y5 = c6, w4 = u5 + Di[r3], fi[p5.Ob[r3]](y5, w4), jr(b4, v8, 16 * +r3, y5, w4);
           } else if (y5 = Cr(a4, o4, p5.Ob[0]), li[y5](c6, u5), b4 != 0)
             for (r3 = 0; 16 > r3; ++r3, b4 <<= 2)
-              jr(b4, v6, 16 * +r3, c6, u5 + Di[r3]);
-          for (r3 = p5.Gc, y5 = Cr(a4, o4, p5.Dd), di[y5](h5, l5), di[y5](f5, d4), b4 = v6, y5 = h5, w4 = l5, 255 & (p5 = r3 >> 0) && (170 & p5 ? cn(b4, 256, y5, w4) : hn(b4, 256, y5, w4)), p5 = f5, b4 = d4, 255 & (r3 >>= 8) && (170 & r3 ? cn(v6, 320, p5, b4) : hn(v6, 320, p5, b4)), o4 < t5.Ub - 1 && (n3(g4[m6].y, 0, c6, u5 + 480, 16), n3(g4[m6].f, 0, h5, l5 + 224, 8), n3(g4[m6].ea, 0, f5, d4 + 224, 8)), r3 = 8 * s4 * t5.B, g4 = t5.sa, m6 = t5.ta + 16 * a4 + 16 * s4 * t5.R, v6 = t5.qa, p5 = t5.ra + 8 * a4 + r3, b4 = t5.Ha, y5 = t5.Ia + 8 * a4 + r3, r3 = 0; 16 > r3; ++r3)
+              jr(b4, v8, 16 * +r3, c6, u5 + Di[r3]);
+          for (r3 = p5.Gc, y5 = Cr(a4, o4, p5.Dd), di[y5](h5, l5), di[y5](f6, d4), b4 = v8, y5 = h5, w4 = l5, 255 & (p5 = r3 >> 0) && (170 & p5 ? cn(b4, 256, y5, w4) : hn(b4, 256, y5, w4)), p5 = f6, b4 = d4, 255 & (r3 >>= 8) && (170 & r3 ? cn(v8, 320, p5, b4) : hn(v8, 320, p5, b4)), o4 < t5.Ub - 1 && (n3(g4[m6].y, 0, c6, u5 + 480, 16), n3(g4[m6].f, 0, h5, l5 + 224, 8), n3(g4[m6].ea, 0, f6, d4 + 224, 8)), r3 = 8 * s4 * t5.B, g4 = t5.sa, m6 = t5.ta + 16 * a4 + 16 * s4 * t5.R, v8 = t5.qa, p5 = t5.ra + 8 * a4 + r3, b4 = t5.Ha, y5 = t5.Ia + 8 * a4 + r3, r3 = 0; 16 > r3; ++r3)
             n3(g4, m6 + r3 * t5.R, c6, u5 + 32 * r3, 16);
           for (r3 = 0; 8 > r3; ++r3)
-            n3(v6, p5 + r3 * t5.B, h5, l5 + 32 * r3, 8), n3(b4, y5 + r3 * t5.B, f5, d4 + 32 * r3, 8);
+            n3(v8, p5 + r3 * t5.B, h5, l5 + 32 * r3, 8), n3(b4, y5 + r3 * t5.B, f6, d4 + 32 * r3, 8);
         }
       }
       function Br(t5, n4, i4, a4, o4, s4, c6, u5, h5) {
-        var l5 = [0], f5 = [0], d4 = 0, p5 = h5 != null ? h5.kd : 0, g4 = h5 != null ? h5 : new nr();
+        var l5 = [0], f6 = [0], d4 = 0, p5 = h5 != null ? h5.kd : 0, g4 = h5 != null ? h5 : new nr();
         if (t5 == null || 12 > i4)
           return 7;
         g4.data = t5, g4.w = n4, g4.ha = i4, n4 = [n4], i4 = [i4], g4.gb = [g4.gb];
@@ -26834,7 +27448,7 @@
           t: {
             var L4 = t5;
             b4 = n4, y5 = i4;
-            var A4 = l5, x3 = f5, S3 = m6 = [0];
+            var A4 = l5, x3 = f6, S3 = m6 = [0];
             if ((k3 = d4 = [d4])[0] = 0, 8 > y5[0])
               y5 = 7;
             else {
@@ -26861,7 +27475,7 @@
             return y5;
           if (b4 = !!(2 & m6), !w4 && d4)
             return 3;
-          if (s4 != null && (s4[0] = !!(16 & m6)), c6 != null && (c6[0] = b4), u5 != null && (u5[0] = 0), c6 = l5[0], m6 = f5[0], d4 && b4 && h5 == null) {
+          if (s4 != null && (s4[0] = !!(16 & m6)), c6 != null && (c6[0] = b4), u5 != null && (u5[0] = 0), c6 = l5[0], m6 = f6[0], d4 && b4 && h5 == null) {
             y5 = 0;
             break;
           }
@@ -26934,7 +27548,7 @@
               y5 = 7;
               break;
             }
-            u5 = c6, p5 = m6, b4 = s4, t5 == null || 5 > i4 ? t5 = 0 : 5 <= i4 && t5[n4 + 0] == 47 && !(t5[n4 + 4] >> 5) ? (w4 = [0], k3 = [0], A4 = [0], v5(x3 = new N4(), t5, n4, i4), gt2(x3, w4, k3, A4) ? (u5 != null && (u5[0] = w4[0]), p5 != null && (p5[0] = k3[0]), b4 != null && (b4[0] = A4[0]), t5 = 1) : t5 = 0) : t5 = 0;
+            u5 = c6, p5 = m6, b4 = s4, t5 == null || 5 > i4 ? t5 = 0 : 5 <= i4 && t5[n4 + 0] == 47 && !(t5[n4 + 4] >> 5) ? (w4 = [0], k3 = [0], A4 = [0], v7(x3 = new N4(), t5, n4, i4), gt2(x3, w4, k3, A4) ? (u5 != null && (u5[0] = w4[0]), p5 != null && (p5[0] = k3[0]), b4 != null && (b4[0] = A4[0]), t5 = 1) : t5 = 0) : t5 = 0;
           } else {
             if (10 > i4) {
               y5 = 7;
@@ -26944,7 +27558,7 @@
           }
           if (!t5)
             return 3;
-          if (c6 = c6[0], m6 = m6[0], d4 && (l5[0] != c6 || f5[0] != m6))
+          if (c6 = c6[0], m6 = m6[0], d4 && (l5[0] != c6 || f6[0] != m6))
             return 3;
           h5 != null && (h5[0] = g4, h5.offset = n4 - h5.w, e2(4294967286 > n4 - h5.w), e2(h5.offset == h5.ha - i4));
           break;
@@ -27009,8 +27623,8 @@
               else {
                 t5 = n4.f.kb, c6 = (o4 + 1) / 2, l5 = (s4 + 1) / 2, u5 = Math.abs(t5.fa);
                 h5 = Math.abs(t5.Ab);
-                var f5 = Math.abs(t5.Db), d4 = Math.abs(t5.lb), p5 = d4 * (s4 - 1) + o4;
-                e3 &= u5 * (s4 - 1) + o4 <= t5.Fd, e3 &= h5 * (l5 - 1) + c6 <= t5.Cd, e3 = (e3 &= f5 * (l5 - 1) + c6 <= t5.Ed) & u5 >= o4 & h5 >= c6 & f5 >= c6, e3 &= t5.y != null, e3 &= t5.f != null, e3 &= t5.ea != null, i4 == 12 && (e3 &= d4 >= o4, e3 &= p5 <= t5.Tc, e3 &= t5.F != null);
+                var f6 = Math.abs(t5.Db), d4 = Math.abs(t5.lb), p5 = d4 * (s4 - 1) + o4;
+                e3 &= u5 * (s4 - 1) + o4 <= t5.Fd, e3 &= h5 * (l5 - 1) + c6 <= t5.Cd, e3 = (e3 &= f6 * (l5 - 1) + c6 <= t5.Ed) & u5 >= o4 & h5 >= c6 & f6 >= c6, e3 &= t5.y != null, e3 &= t5.f != null, e3 &= t5.ea != null, i4 == 12 && (e3 &= d4 >= o4, e3 &= p5 <= t5.Tc, e3 &= t5.F != null);
               }
             else
               e3 = 0;
@@ -27076,10 +27690,10 @@
         s4.ba = c6, c6.S = o4, c6.width = [c6.width], c6.height = [c6.height];
         var u5 = c6.width, h5 = c6.height, l5 = new st2();
         if (l5 == null || t5 == null)
-          var f5 = 2;
+          var f6 = 2;
         else
-          e2(l5 != null), f5 = Br(t5, r3, n4, l5.width, l5.height, l5.Pd, l5.Qd, l5.format, null);
-        if (f5 != 0 ? u5 = 0 : (u5 != null && (u5[0] = l5.width[0]), h5 != null && (h5[0] = l5.height[0]), u5 = 1), u5) {
+          e2(l5 != null), f6 = Br(t5, r3, n4, l5.width, l5.height, l5.Pd, l5.Qd, l5.format, null);
+        if (f6 != 0 ? u5 = 0 : (u5 != null && (u5[0] = l5.width[0]), h5 != null && (h5[0] = l5.height[0]), u5 = 1), u5) {
           c6.width = c6.width[0], c6.height = c6.height[0], i4 != null && (i4[0] = c6.width), a4 != null && (a4[0] = c6.height);
           t: {
             if (i4 = new Gt2(), (a4 = new nr()).data = t5, a4.w = r3, a4.ha = n4, a4.kd = 1, r3 = [0], e2(a4 != null), ((t5 = Br(a4.data, a4.w, a4.ha, null, null, null, r3, null, a4)) == 0 || t5 == 7) && r3[0] && (t5 = 4), (r3 = t5) == 0) {
@@ -27096,7 +27710,7 @@
                         return 0;
                       if (r4 == null)
                         return t6.a = 2, 0;
-                      if (t6.l = r4, t6.a = 0, v5(t6.m, r4.data, r4.w, r4.ha), !gt2(t6.m, n5, i5, a5)) {
+                      if (t6.l = r4, t6.a = 0, v7(t6.m, r4.data, r4.w, r4.ha), !gt2(t6.m, n5, i5, a5)) {
                         t6.a = 3;
                         break e;
                       }
@@ -27152,7 +27766,7 @@
                     if (t5.Aa = 0, n4 = s4.Oa, e2((a4 = t5) != null), n4 != null) {
                       if (0 < (u5 = 0 > (u5 = n4.Md) ? 0 : 100 < u5 ? 255 : 255 * u5 / 100)) {
                         for (h5 = l5 = 0; 4 > h5; ++h5)
-                          12 > (f5 = a4.pb[h5]).lc && (f5.ia = u5 * Ti[0 > f5.lc ? 0 : f5.lc] >> 3), l5 |= f5.ia;
+                          12 > (f6 = a4.pb[h5]).lc && (f6.ia = u5 * Ti[0 > f6.lc ? 0 : f6.lc] >> 3), l5 |= f6.ia;
                         l5 && (alert("todo:VP8InitRandom"), a4.ia = 1);
                       }
                       a4.Ga = n4.Id, 100 < a4.Ga ? a4.Ga = 100 : 0 > a4.Ga && (a4.Ga = 0);
@@ -27185,7 +27799,7 @@
       return (t4[e3 + 0] << 0 | t4[e3 + 1] << 8 | t4[e3 + 2] << 16 | t4[e3 + 3] << 24) >>> 0;
     }
     new c4();
-    var f3 = [0], d2 = [0], p3 = [], g2 = new c4(), m4 = t3, v3 = function(t4, e3) {
+    var f4 = [0], d2 = [0], p3 = [], g2 = new c4(), m4 = t3, v6 = function(t4, e3) {
       var r3 = {}, n4 = 0, i4 = false, a4 = 0, o4 = 0;
       if (r3.frames = [], !function(t5, e4, r4, n5) {
         for (var i5 = 0; i5 < n5; i5++)
@@ -27196,70 +27810,70 @@
         var s4, c5;
         l3(t4, e3 += 4);
         for (e3 += 8; e3 < t4.length; ) {
-          var f4 = u3(t4, e3), d3 = l3(t4, e3 += 4);
+          var f5 = u3(t4, e3), d3 = l3(t4, e3 += 4);
           e3 += 4;
           var p4 = d3 + (1 & d3);
-          switch (f4) {
+          switch (f5) {
             case "VP8 ":
             case "VP8L":
               r3.frames[n4] === void 0 && (r3.frames[n4] = {});
-              (v5 = r3.frames[n4]).src_off = i4 ? o4 : e3 - 8, v5.src_size = a4 + d3 + 8, n4++, i4 && (i4 = false, a4 = 0, o4 = 0);
+              (v7 = r3.frames[n4]).src_off = i4 ? o4 : e3 - 8, v7.src_size = a4 + d3 + 8, n4++, i4 && (i4 = false, a4 = 0, o4 = 0);
               break;
             case "VP8X":
-              (v5 = r3.header = {}).feature_flags = t4[e3];
+              (v7 = r3.header = {}).feature_flags = t4[e3];
               var g3 = e3 + 4;
-              v5.canvas_width = 1 + h3(t4, g3);
+              v7.canvas_width = 1 + h3(t4, g3);
               g3 += 3;
-              v5.canvas_height = 1 + h3(t4, g3);
+              v7.canvas_height = 1 + h3(t4, g3);
               g3 += 3;
               break;
             case "ALPH":
               i4 = true, a4 = p4 + 8, o4 = e3 - 8;
               break;
             case "ANIM":
-              (v5 = r3.header).bgcolor = l3(t4, e3);
+              (v7 = r3.header).bgcolor = l3(t4, e3);
               g3 = e3 + 4;
-              v5.loop_count = (s4 = t4)[(c5 = g3) + 0] << 0 | s4[c5 + 1] << 8;
+              v7.loop_count = (s4 = t4)[(c5 = g3) + 0] << 0 | s4[c5 + 1] << 8;
               g3 += 2;
               break;
             case "ANMF":
-              var m5, v5;
-              (v5 = r3.frames[n4] = {}).offset_x = 2 * h3(t4, e3), e3 += 3, v5.offset_y = 2 * h3(t4, e3), e3 += 3, v5.width = 1 + h3(t4, e3), e3 += 3, v5.height = 1 + h3(t4, e3), e3 += 3, v5.duration = h3(t4, e3), e3 += 3, m5 = t4[e3++], v5.dispose = 1 & m5, v5.blend = m5 >> 1 & 1;
+              var m5, v7;
+              (v7 = r3.frames[n4] = {}).offset_x = 2 * h3(t4, e3), e3 += 3, v7.offset_y = 2 * h3(t4, e3), e3 += 3, v7.width = 1 + h3(t4, e3), e3 += 3, v7.height = 1 + h3(t4, e3), e3 += 3, v7.duration = h3(t4, e3), e3 += 3, m5 = t4[e3++], v7.dispose = 1 & m5, v7.blend = m5 >> 1 & 1;
           }
-          f4 != "ANMF" && (e3 += p4);
+          f5 != "ANMF" && (e3 += p4);
         }
         return r3;
       }
     }(m4, 0);
-    v3.response = m4, v3.rgbaoutput = true, v3.dataurl = false;
-    var b2 = v3.header ? v3.header : null, y3 = v3.frames ? v3.frames : null;
+    v6.response = m4, v6.rgbaoutput = true, v6.dataurl = false;
+    var b2 = v6.header ? v6.header : null, y3 = v6.frames ? v6.frames : null;
     if (b2) {
-      b2.loop_counter = b2.loop_count, f3 = [b2.canvas_height], d2 = [b2.canvas_width];
+      b2.loop_counter = b2.loop_count, f4 = [b2.canvas_height], d2 = [b2.canvas_width];
       for (var w2 = 0; w2 < y3.length && y3[w2].blend != 0; w2++)
         ;
     }
-    var N3 = y3[0], L2 = g2.WebPDecodeRGBA(m4, N3.src_off, N3.src_size, d2, f3);
-    N3.rgba = L2, N3.imgwidth = d2[0], N3.imgheight = f3[0];
-    for (var A2 = 0; A2 < d2[0] * f3[0] * 4; A2++)
+    var N3 = y3[0], L2 = g2.WebPDecodeRGBA(m4, N3.src_off, N3.src_size, d2, f4);
+    N3.rgba = L2, N3.imgwidth = d2[0], N3.imgheight = f4[0];
+    for (var A2 = 0; A2 < d2[0] * f4[0] * 4; A2++)
       p3[A2] = L2[A2];
-    return this.width = d2, this.height = f3, this.data = p3, this;
+    return this.width = d2, this.height = f4, this.data = p3, this;
   }
   !function(t3) {
     var r2 = function() {
       return typeof zlibSync == "function";
     }, n3 = function(r3, n4, a4, h4) {
-      var l4 = 4, f4 = s3;
+      var l4 = 4, f5 = s3;
       switch (h4) {
         case t3.image_compression.FAST:
-          l4 = 1, f4 = o3;
+          l4 = 1, f5 = o3;
           break;
         case t3.image_compression.MEDIUM:
-          l4 = 6, f4 = c4;
+          l4 = 6, f5 = c4;
           break;
         case t3.image_compression.SLOW:
-          l4 = 9, f4 = u3;
+          l4 = 9, f5 = u3;
       }
-      r3 = i3(r3, n4, a4, f4);
+      r3 = i3(r3, n4, a4, f5);
       var d2 = zlibSync(r3, { level: l4 });
       return t3.__addimage__.arrayBufferToBinaryString(d2);
     }, i3 = function(t4, e2, r3, n4) {
@@ -27269,7 +27883,7 @@
         else {
           for (var d2, p3 = u4.length, g2 = []; d2 < p3; d2 += 1)
             g2[d2] = u4[d2](i4, r3, a4);
-          var m4 = f3(g2.concat());
+          var m4 = f4(g2.concat());
           c5.set(g2[m4], o4 + h4);
         }
         a4 = i4;
@@ -27309,7 +27923,7 @@
       return n4 <= i4 && n4 <= a4 ? t4 : i4 <= a4 ? e2 : r3;
     }, l3 = function() {
       return [a3, o3, s3, c4, u3];
-    }, f3 = function(t4) {
+    }, f4 = function(t4) {
       var e2 = t4.map(function(t5) {
         return t5.reduce(function(t6, e3) {
           return t6 + Math.abs(e3);
@@ -27318,27 +27932,27 @@
       return e2.indexOf(Math.min.apply(null, e2));
     };
     t3.processPNG = function(e2, i4, a4, o4) {
-      var s4, c5, u4, h4, l4, f4, d2, p3, g2, m4, v3, b2, y3, w2, N3, L2 = this.decode.FLATE_DECODE, A2 = "";
+      var s4, c5, u4, h4, l4, f5, d2, p3, g2, m4, v6, b2, y3, w2, N3, L2 = this.decode.FLATE_DECODE, A2 = "";
       if (this.__addimage__.isArrayBuffer(e2) && (e2 = new Uint8Array(e2)), this.__addimage__.isArrayBufferView(e2)) {
         if (e2 = (u4 = new Kt(e2)).imgData, c5 = u4.bits, s4 = u4.colorSpace, l4 = u4.colors, [4, 6].indexOf(u4.colorType) !== -1) {
           if (u4.bits === 8) {
-            g2 = (p3 = u4.pixelBitlength == 32 ? new Uint32Array(u4.decodePixels().buffer) : u4.pixelBitlength == 16 ? new Uint16Array(u4.decodePixels().buffer) : new Uint8Array(u4.decodePixels().buffer)).length, v3 = new Uint8Array(g2 * u4.colors), m4 = new Uint8Array(g2);
+            g2 = (p3 = u4.pixelBitlength == 32 ? new Uint32Array(u4.decodePixels().buffer) : u4.pixelBitlength == 16 ? new Uint16Array(u4.decodePixels().buffer) : new Uint8Array(u4.decodePixels().buffer)).length, v6 = new Uint8Array(g2 * u4.colors), m4 = new Uint8Array(g2);
             var x2, S2 = u4.pixelBitlength - u4.bits;
             for (w2 = 0, N3 = 0; w2 < g2; w2++) {
               for (y3 = p3[w2], x2 = 0; x2 < S2; )
-                v3[N3++] = y3 >>> x2 & 255, x2 += u4.bits;
+                v6[N3++] = y3 >>> x2 & 255, x2 += u4.bits;
               m4[w2] = y3 >>> x2 & 255;
             }
           }
           if (u4.bits === 16) {
-            g2 = (p3 = new Uint32Array(u4.decodePixels().buffer)).length, v3 = new Uint8Array(g2 * (32 / u4.pixelBitlength) * u4.colors), m4 = new Uint8Array(g2 * (32 / u4.pixelBitlength)), b2 = u4.colors > 1, w2 = 0, N3 = 0;
+            g2 = (p3 = new Uint32Array(u4.decodePixels().buffer)).length, v6 = new Uint8Array(g2 * (32 / u4.pixelBitlength) * u4.colors), m4 = new Uint8Array(g2 * (32 / u4.pixelBitlength)), b2 = u4.colors > 1, w2 = 0, N3 = 0;
             for (var _3 = 0; w2 < g2; )
-              y3 = p3[w2++], v3[N3++] = y3 >>> 0 & 255, b2 && (v3[N3++] = y3 >>> 16 & 255, y3 = p3[w2++], v3[N3++] = y3 >>> 0 & 255), m4[_3++] = y3 >>> 16 & 255;
+              y3 = p3[w2++], v6[N3++] = y3 >>> 0 & 255, b2 && (v6[N3++] = y3 >>> 16 & 255, y3 = p3[w2++], v6[N3++] = y3 >>> 0 & 255), m4[_3++] = y3 >>> 16 & 255;
             c5 = 8;
           }
-          o4 !== t3.image_compression.NONE && r2() ? (e2 = n3(v3, u4.width * u4.colors, u4.colors, o4), d2 = n3(m4, u4.width, 1, o4)) : (e2 = v3, d2 = m4, L2 = void 0);
+          o4 !== t3.image_compression.NONE && r2() ? (e2 = n3(v6, u4.width * u4.colors, u4.colors, o4), d2 = n3(m4, u4.width, 1, o4)) : (e2 = v6, d2 = m4, L2 = void 0);
         }
-        if (u4.colorType === 3 && (s4 = this.color_spaces.INDEXED, f4 = u4.palette, u4.transparency.indexed)) {
+        if (u4.colorType === 3 && (s4 = this.color_spaces.INDEXED, f5 = u4.palette, u4.transparency.indexed)) {
           var P2 = u4.transparency.indexed, k2 = 0;
           for (w2 = 0, g2 = P2.length; w2 < g2; ++w2)
             k2 += P2[w2];
@@ -27367,7 +27981,7 @@
           }
           return r3;
         }(o4);
-        return L2 === this.decode.FLATE_DECODE && (A2 = "/Predictor " + I2 + " "), A2 += "/Colors " + l4 + " /BitsPerComponent " + c5 + " /Columns " + u4.width, (this.__addimage__.isArrayBuffer(e2) || this.__addimage__.isArrayBufferView(e2)) && (e2 = this.__addimage__.arrayBufferToBinaryString(e2)), (d2 && this.__addimage__.isArrayBuffer(d2) || this.__addimage__.isArrayBufferView(d2)) && (d2 = this.__addimage__.arrayBufferToBinaryString(d2)), { alias: a4, data: e2, index: i4, filter: L2, decodeParameters: A2, transparency: h4, palette: f4, sMask: d2, predictor: I2, width: u4.width, height: u4.height, bitsPerComponent: c5, colorSpace: s4 };
+        return L2 === this.decode.FLATE_DECODE && (A2 = "/Predictor " + I2 + " "), A2 += "/Colors " + l4 + " /BitsPerComponent " + c5 + " /Columns " + u4.width, (this.__addimage__.isArrayBuffer(e2) || this.__addimage__.isArrayBufferView(e2)) && (e2 = this.__addimage__.arrayBufferToBinaryString(e2)), (d2 && this.__addimage__.isArrayBuffer(d2) || this.__addimage__.isArrayBufferView(d2)) && (d2 = this.__addimage__.arrayBufferToBinaryString(d2)), { alias: a4, data: e2, index: i4, filter: L2, decodeParameters: A2, transparency: h4, palette: f5, sMask: d2, predictor: I2, width: u4.width, height: u4.height, bitsPerComponent: c5, colorSpace: s4 };
       }
     };
   }(E.API), function(t3) {
@@ -27477,8 +28091,8 @@
     };
   }(E.API), E.API.processRGBA = function(t3, e2, r2) {
     for (var n3 = t3.data, i3 = n3.length, a3 = new Uint8Array(i3 / 4 * 3), o3 = new Uint8Array(i3 / 4), s3 = 0, c4 = 0, u3 = 0; u3 < i3; u3 += 4) {
-      var h3 = n3[u3], l3 = n3[u3 + 1], f3 = n3[u3 + 2], d2 = n3[u3 + 3];
-      a3[s3++] = h3, a3[s3++] = l3, a3[s3++] = f3, o3[c4++] = d2;
+      var h3 = n3[u3], l3 = n3[u3 + 1], f4 = n3[u3 + 2], d2 = n3[u3 + 3];
+      a3[s3++] = h3, a3[s3++] = l3, a3[s3++] = f4, o3[c4++] = d2;
     }
     var p3 = this.__addimage__.arrayBufferToBinaryString(a3);
     return { alpha: this.__addimage__.arrayBufferToBinaryString(o3), data: p3, index: e2, alias: r2, colorSpace: "DeviceRGB", bitsPerComponent: 8, width: t3.width, height: t3.height };
@@ -27487,10 +28101,10 @@
       this.internal.write("/Lang (" + this.internal.languageSettings.languageCode + ")");
     }), this.internal.languageSettings.isSubscribed = true)), this;
   }, Vt = E.API, Gt = Vt.getCharWidthsArray = function(e2, r2) {
-    var n3, i3, a3 = (r2 = r2 || {}).font || this.internal.getFont(), o3 = r2.fontSize || this.internal.getFontSize(), s3 = r2.charSpace || this.internal.getCharSpace(), c4 = r2.widths ? r2.widths : a3.metadata.Unicode.widths, u3 = c4.fof ? c4.fof : 1, h3 = r2.kerning ? r2.kerning : a3.metadata.Unicode.kerning, l3 = h3.fof ? h3.fof : 1, f3 = r2.doKerning !== false, d2 = 0, p3 = e2.length, g2 = 0, m4 = c4[0] || u3, v3 = [];
+    var n3, i3, a3 = (r2 = r2 || {}).font || this.internal.getFont(), o3 = r2.fontSize || this.internal.getFontSize(), s3 = r2.charSpace || this.internal.getCharSpace(), c4 = r2.widths ? r2.widths : a3.metadata.Unicode.widths, u3 = c4.fof ? c4.fof : 1, h3 = r2.kerning ? r2.kerning : a3.metadata.Unicode.kerning, l3 = h3.fof ? h3.fof : 1, f4 = r2.doKerning !== false, d2 = 0, p3 = e2.length, g2 = 0, m4 = c4[0] || u3, v6 = [];
     for (n3 = 0; n3 < p3; n3++)
-      i3 = e2.charCodeAt(n3), typeof a3.metadata.widthOfString == "function" ? v3.push((a3.metadata.widthOfGlyph(a3.metadata.characterToGlyph(i3)) + s3 * (1e3 / o3) || 0) / 1e3) : (d2 = f3 && _typeof(h3[i3]) === "object" && !isNaN(parseInt(h3[i3][g2], 10)) ? h3[i3][g2] / l3 : 0, v3.push((c4[i3] || m4) / u3 + d2)), g2 = i3;
-    return v3;
+      i3 = e2.charCodeAt(n3), typeof a3.metadata.widthOfString == "function" ? v6.push((a3.metadata.widthOfGlyph(a3.metadata.characterToGlyph(i3)) + s3 * (1e3 / o3) || 0) / 1e3) : (d2 = f4 && _typeof(h3[i3]) === "object" && !isNaN(parseInt(h3[i3][g2], 10)) ? h3[i3][g2] / l3 : 0, v6.push((c4[i3] || m4) / u3 + d2)), g2 = i3;
+    return v6;
   }, Yt = Vt.getStringUnitWidth = function(t3, e2) {
     var r2 = (e2 = e2 || {}).fontSize || this.internal.getFontSize(), n3 = e2.font || this.internal.getFont(), i3 = e2.charSpace || this.internal.getCharSpace();
     return Vt.processArabic && (t3 = Vt.processArabic(t3)), typeof n3.metadata.widthOfString == "function" ? n3.metadata.widthOfString(t3, r2, i3) / r2 : Gt.apply(this, arguments).reduce(function(t4, e3) {
@@ -27506,34 +28120,34 @@
     return c4 !== a3 && i3.push(t3.slice(c4, a3)), i3;
   }, Xt = function(t3, e2, r2) {
     r2 || (r2 = {});
-    var n3, i3, a3, o3, s3, c4, u3, h3 = [], l3 = [h3], f3 = r2.textIndent || 0, d2 = 0, p3 = 0, g2 = t3.split(" "), m4 = Gt.apply(this, [" ", r2])[0];
+    var n3, i3, a3, o3, s3, c4, u3, h3 = [], l3 = [h3], f4 = r2.textIndent || 0, d2 = 0, p3 = 0, g2 = t3.split(" "), m4 = Gt.apply(this, [" ", r2])[0];
     if (c4 = r2.lineIndent === -1 ? g2[0].length + 2 : r2.lineIndent || 0) {
-      var v3 = Array(c4).join(" "), b2 = [];
+      var v6 = Array(c4).join(" "), b2 = [];
       g2.map(function(t4) {
         (t4 = t4.split(/\s*\n/)).length > 1 ? b2 = b2.concat(t4.map(function(t5, e3) {
           return (e3 && t5.length ? "\n" : "") + t5;
         })) : b2.push(t4[0]);
-      }), g2 = b2, c4 = Yt.apply(this, [v3, r2]);
+      }), g2 = b2, c4 = Yt.apply(this, [v6, r2]);
     }
     for (a3 = 0, o3 = g2.length; a3 < o3; a3++) {
       var y3 = 0;
-      if (n3 = g2[a3], c4 && n3[0] == "\n" && (n3 = n3.substr(1), y3 = 1), f3 + d2 + (p3 = (i3 = Gt.apply(this, [n3, r2])).reduce(function(t4, e3) {
+      if (n3 = g2[a3], c4 && n3[0] == "\n" && (n3 = n3.substr(1), y3 = 1), f4 + d2 + (p3 = (i3 = Gt.apply(this, [n3, r2])).reduce(function(t4, e3) {
         return t4 + e3;
       }, 0)) > e2 || y3) {
         if (p3 > e2) {
-          for (s3 = Jt.apply(this, [n3, i3, e2 - (f3 + d2), e2]), h3.push(s3.shift()), h3 = [s3.pop()]; s3.length; )
+          for (s3 = Jt.apply(this, [n3, i3, e2 - (f4 + d2), e2]), h3.push(s3.shift()), h3 = [s3.pop()]; s3.length; )
             l3.push([s3.shift()]);
           p3 = i3.slice(n3.length - (h3[0] ? h3[0].length : 0)).reduce(function(t4, e3) {
             return t4 + e3;
           }, 0);
         } else
           h3 = [n3];
-        l3.push(h3), f3 = p3 + c4, d2 = m4;
+        l3.push(h3), f4 = p3 + c4, d2 = m4;
       } else
-        h3.push(n3), f3 += d2 + p3, d2 = m4;
+        h3.push(n3), f4 += d2 + p3, d2 = m4;
     }
     return u3 = c4 ? function(t4, e3) {
-      return (e3 ? v3 : "") + t4.join(" ");
+      return (e3 ? v6 : "") + t4.join(" ");
     } : function(t4) {
       return t4.join(" ");
     }, l3.map(u3);
@@ -27573,7 +28187,7 @@
     }, c4 = e2.__fontmetrics__.uncompress = function(t3) {
       if (typeof t3 != "string")
         throw new Error("Invalid argument passed to uncompress.");
-      for (var e3, r3, i4, a4, o4 = {}, s4 = 1, c5 = o4, u4 = [], h4 = "", l4 = "", f3 = t3.length - 1, d2 = 1; d2 < f3; d2 += 1)
+      for (var e3, r3, i4, a4, o4 = {}, s4 = 1, c5 = o4, u4 = [], h4 = "", l4 = "", f4 = t3.length - 1, d2 = 1; d2 < f4; d2 += 1)
         (a4 = t3[d2]) == "'" ? e3 ? (i4 = e3.join(""), e3 = void 0) : e3 = [] : e3 ? e3.push(a4) : a4 == "{" ? (u4.push([c5, i4]), c5 = {}, i4 = void 0) : a4 == "}" ? ((r3 = u4.pop())[0][r3[1]] = c5, i4 = void 0, c5 = r3[0]) : a4 == "-" ? s4 = -1 : i4 === void 0 ? n3.hasOwnProperty(a4) ? (h4 += n3[a4], i4 = parseInt(h4, 16) * s4, s4 = 1, h4 = "") : h4 += a4 : n3.hasOwnProperty(a4) ? (l4 += n3[a4], c5[i4] = parseInt(l4, 16) * s4, s4 = 1, i4 = void 0, l4 = "") : l4 += a4;
       return o4;
     }, u3 = { codePages: ["WinAnsiEncoding"], WinAnsiEncoding: c4("{19m8n201n9q201o9r201s9l201t9m201u8m201w9n201x9o201y8o202k8q202l8r202m9p202q8p20aw8k203k8t203t8v203u9v2cq8s212m9t15m8w15n9w2dw9s16k8u16l9u17s9z17x8y17y9y}") }, h3 = { Unicode: { Courier: u3, "Courier-Bold": u3, "Courier-BoldOblique": u3, "Courier-Oblique": u3, Helvetica: u3, "Helvetica-Bold": u3, "Helvetica-BoldOblique": u3, "Helvetica-Oblique": u3, "Times-Roman": u3, "Times-Bold": u3, "Times-BoldItalic": u3, "Times-Italic": u3 } }, l3 = { Unicode: { "Courier-Oblique": c4("{'widths'{k3w'fof'6o}'kerning'{'fof'-6o}}"), "Times-BoldItalic": c4("{'widths'{k3o2q4ycx2r201n3m201o6o201s2l201t2l201u2l201w3m201x3m201y3m2k1t2l2r202m2n2n3m2o3m2p5n202q6o2r1w2s2l2t2l2u3m2v3t2w1t2x2l2y1t2z1w3k3m3l3m3m3m3n3m3o3m3p3m3q3m3r3m3s3m203t2l203u2l3v2l3w3t3x3t3y3t3z3m4k5n4l4m4m4m4n4m4o4s4p4m4q4m4r4s4s4y4t2r4u3m4v4m4w3x4x5t4y4s4z4s5k3x5l4s5m4m5n3r5o3x5p4s5q4m5r5t5s4m5t3x5u3x5v2l5w1w5x2l5y3t5z3m6k2l6l3m6m3m6n2w6o3m6p2w6q2l6r3m6s3r6t1w6u1w6v3m6w1w6x4y6y3r6z3m7k3m7l3m7m2r7n2r7o1w7p3r7q2w7r4m7s3m7t2w7u2r7v2n7w1q7x2n7y3t202l3mcl4mal2ram3man3mao3map3mar3mas2lat4uau1uav3maw3way4uaz2lbk2sbl3t'fof'6obo2lbp3tbq3mbr1tbs2lbu1ybv3mbz3mck4m202k3mcm4mcn4mco4mcp4mcq5ycr4mcs4mct4mcu4mcv4mcw2r2m3rcy2rcz2rdl4sdm4sdn4sdo4sdp4sdq4sds4sdt4sdu4sdv4sdw4sdz3mek3mel3mem3men3meo3mep3meq4ser2wes2wet2weu2wev2wew1wex1wey1wez1wfl3rfm3mfn3mfo3mfp3mfq3mfr3tfs3mft3rfu3rfv3rfw3rfz2w203k6o212m6o2dw2l2cq2l3t3m3u2l17s3x19m3m}'kerning'{cl{4qu5kt5qt5rs17ss5ts}201s{201ss}201t{cks4lscmscnscoscpscls2wu2yu201ts}201x{2wu2yu}2k{201ts}2w{4qx5kx5ou5qx5rs17su5tu}2x{17su5tu5ou}2y{4qx5kx5ou5qx5rs17ss5ts}'fof'-6ofn{17sw5tw5ou5qw5rs}7t{cksclscmscnscoscps4ls}3u{17su5tu5os5qs}3v{17su5tu5os5qs}7p{17su5tu}ck{4qu5kt5qt5rs17ss5ts}4l{4qu5kt5qt5rs17ss5ts}cm{4qu5kt5qt5rs17ss5ts}cn{4qu5kt5qt5rs17ss5ts}co{4qu5kt5qt5rs17ss5ts}cp{4qu5kt5qt5rs17ss5ts}6l{4qu5ou5qw5rt17su5tu}5q{ckuclucmucnucoucpu4lu}5r{ckuclucmucnucoucpu4lu}7q{cksclscmscnscoscps4ls}6p{4qu5ou5qw5rt17sw5tw}ek{4qu5ou5qw5rt17su5tu}el{4qu5ou5qw5rt17su5tu}em{4qu5ou5qw5rt17su5tu}en{4qu5ou5qw5rt17su5tu}eo{4qu5ou5qw5rt17su5tu}ep{4qu5ou5qw5rt17su5tu}es{17ss5ts5qs4qu}et{4qu5ou5qw5rt17sw5tw}eu{4qu5ou5qw5rt17ss5ts}ev{17ss5ts5qs4qu}6z{17sw5tw5ou5qw5rs}fm{17sw5tw5ou5qw5rs}7n{201ts}fo{17sw5tw5ou5qw5rs}fp{17sw5tw5ou5qw5rs}fq{17sw5tw5ou5qw5rs}7r{cksclscmscnscoscps4ls}fs{17sw5tw5ou5qw5rs}ft{17su5tu}fu{17su5tu}fv{17su5tu}fw{17su5tu}fz{cksclscmscnscoscps4ls}}}"), "Helvetica-Bold": c4("{'widths'{k3s2q4scx1w201n3r201o6o201s1w201t1w201u1w201w3m201x3m201y3m2k1w2l2l202m2n2n3r2o3r2p5t202q6o2r1s2s2l2t2l2u2r2v3u2w1w2x2l2y1w2z1w3k3r3l3r3m3r3n3r3o3r3p3r3q3r3r3r3s3r203t2l203u2l3v2l3w3u3x3u3y3u3z3x4k6l4l4s4m4s4n4s4o4s4p4m4q3x4r4y4s4s4t1w4u3r4v4s4w3x4x5n4y4s4z4y5k4m5l4y5m4s5n4m5o3x5p4s5q4m5r5y5s4m5t4m5u3x5v2l5w1w5x2l5y3u5z3r6k2l6l3r6m3x6n3r6o3x6p3r6q2l6r3x6s3x6t1w6u1w6v3r6w1w6x5t6y3x6z3x7k3x7l3x7m2r7n3r7o2l7p3x7q3r7r4y7s3r7t3r7u3m7v2r7w1w7x2r7y3u202l3rcl4sal2lam3ran3rao3rap3rar3ras2lat4tau2pav3raw3uay4taz2lbk2sbl3u'fof'6obo2lbp3xbq3rbr1wbs2lbu2obv3rbz3xck4s202k3rcm4scn4sco4scp4scq6ocr4scs4mct4mcu4mcv4mcw1w2m2zcy1wcz1wdl4sdm4ydn4ydo4ydp4ydq4yds4ydt4sdu4sdv4sdw4sdz3xek3rel3rem3ren3reo3rep3req5ter3res3ret3reu3rev3rew1wex1wey1wez1wfl3xfm3xfn3xfo3xfp3xfq3xfr3ufs3xft3xfu3xfv3xfw3xfz3r203k6o212m6o2dw2l2cq2l3t3r3u2l17s4m19m3r}'kerning'{cl{4qs5ku5ot5qs17sv5tv}201t{2ww4wy2yw}201w{2ks}201x{2ww4wy2yw}2k{201ts201xs}2w{7qs4qu5kw5os5qw5rs17su5tu7tsfzs}2x{5ow5qs}2y{7qs4qu5kw5os5qw5rs17su5tu7tsfzs}'fof'-6o7p{17su5tu5ot}ck{4qs5ku5ot5qs17sv5tv}4l{4qs5ku5ot5qs17sv5tv}cm{4qs5ku5ot5qs17sv5tv}cn{4qs5ku5ot5qs17sv5tv}co{4qs5ku5ot5qs17sv5tv}cp{4qs5ku5ot5qs17sv5tv}6l{17st5tt5os}17s{2kwclvcmvcnvcovcpv4lv4wwckv}5o{2kucltcmtcntcotcpt4lt4wtckt}5q{2ksclscmscnscoscps4ls4wvcks}5r{2ks4ws}5t{2kwclvcmvcnvcovcpv4lv4wwckv}eo{17st5tt5os}fu{17su5tu5ot}6p{17ss5ts}ek{17st5tt5os}el{17st5tt5os}em{17st5tt5os}en{17st5tt5os}6o{201ts}ep{17st5tt5os}es{17ss5ts}et{17ss5ts}eu{17ss5ts}ev{17ss5ts}6z{17su5tu5os5qt}fm{17su5tu5os5qt}fn{17su5tu5os5qt}fo{17su5tu5os5qt}fp{17su5tu5os5qt}fq{17su5tu5os5qt}fs{17su5tu5os5qt}ft{17su5tu5ot}7m{5os}fv{17su5tu5ot}fw{17su5tu5ot}}}"), Courier: c4("{'widths'{k3w'fof'6o}'kerning'{'fof'-6o}}"), "Courier-BoldOblique": c4("{'widths'{k3w'fof'6o}'kerning'{'fof'-6o}}"), "Times-Bold": c4("{'widths'{k3q2q5ncx2r201n3m201o6o201s2l201t2l201u2l201w3m201x3m201y3m2k1t2l2l202m2n2n3m2o3m2p6o202q6o2r1w2s2l2t2l2u3m2v3t2w1t2x2l2y1t2z1w3k3m3l3m3m3m3n3m3o3m3p3m3q3m3r3m3s3m203t2l203u2l3v2l3w3t3x3t3y3t3z3m4k5x4l4s4m4m4n4s4o4s4p4m4q3x4r4y4s4y4t2r4u3m4v4y4w4m4x5y4y4s4z4y5k3x5l4y5m4s5n3r5o4m5p4s5q4s5r6o5s4s5t4s5u4m5v2l5w1w5x2l5y3u5z3m6k2l6l3m6m3r6n2w6o3r6p2w6q2l6r3m6s3r6t1w6u2l6v3r6w1w6x5n6y3r6z3m7k3r7l3r7m2w7n2r7o2l7p3r7q3m7r4s7s3m7t3m7u2w7v2r7w1q7x2r7y3o202l3mcl4sal2lam3man3mao3map3mar3mas2lat4uau1yav3maw3tay4uaz2lbk2sbl3t'fof'6obo2lbp3rbr1tbs2lbu2lbv3mbz3mck4s202k3mcm4scn4sco4scp4scq6ocr4scs4mct4mcu4mcv4mcw2r2m3rcy2rcz2rdl4sdm4ydn4ydo4ydp4ydq4yds4ydt4sdu4sdv4sdw4sdz3rek3mel3mem3men3meo3mep3meq4ser2wes2wet2weu2wev2wew1wex1wey1wez1wfl3rfm3mfn3mfo3mfp3mfq3mfr3tfs3mft3rfu3rfv3rfw3rfz3m203k6o212m6o2dw2l2cq2l3t3m3u2l17s4s19m3m}'kerning'{cl{4qt5ks5ot5qy5rw17sv5tv}201t{cks4lscmscnscoscpscls4wv}2k{201ts}2w{4qu5ku7mu5os5qx5ru17su5tu}2x{17su5tu5ou5qs}2y{4qv5kv7mu5ot5qz5ru17su5tu}'fof'-6o7t{cksclscmscnscoscps4ls}3u{17su5tu5os5qu}3v{17su5tu5os5qu}fu{17su5tu5ou5qu}7p{17su5tu5ou5qu}ck{4qt5ks5ot5qy5rw17sv5tv}4l{4qt5ks5ot5qy5rw17sv5tv}cm{4qt5ks5ot5qy5rw17sv5tv}cn{4qt5ks5ot5qy5rw17sv5tv}co{4qt5ks5ot5qy5rw17sv5tv}cp{4qt5ks5ot5qy5rw17sv5tv}6l{17st5tt5ou5qu}17s{ckuclucmucnucoucpu4lu4wu}5o{ckuclucmucnucoucpu4lu4wu}5q{ckzclzcmzcnzcozcpz4lz4wu}5r{ckxclxcmxcnxcoxcpx4lx4wu}5t{ckuclucmucnucoucpu4lu4wu}7q{ckuclucmucnucoucpu4lu}6p{17sw5tw5ou5qu}ek{17st5tt5qu}el{17st5tt5ou5qu}em{17st5tt5qu}en{17st5tt5qu}eo{17st5tt5qu}ep{17st5tt5ou5qu}es{17ss5ts5qu}et{17sw5tw5ou5qu}eu{17sw5tw5ou5qu}ev{17ss5ts5qu}6z{17sw5tw5ou5qu5rs}fm{17sw5tw5ou5qu5rs}fn{17sw5tw5ou5qu5rs}fo{17sw5tw5ou5qu5rs}fp{17sw5tw5ou5qu5rs}fq{17sw5tw5ou5qu5rs}7r{cktcltcmtcntcotcpt4lt5os}fs{17sw5tw5ou5qu5rs}ft{17su5tu5ou5qu}7m{5os}fv{17su5tu5ou5qu}fw{17su5tu5ou5qu}fz{cksclscmscnscoscps4ls}}}"), Symbol: c4("{'widths'{k3uaw4r19m3m2k1t2l2l202m2y2n3m2p5n202q6o3k3m2s2l2t2l2v3r2w1t3m3m2y1t2z1wbk2sbl3r'fof'6o3n3m3o3m3p3m3q3m3r3m3s3m3t3m3u1w3v1w3w3r3x3r3y3r3z2wbp3t3l3m5v2l5x2l5z3m2q4yfr3r7v3k7w1o7x3k}'kerning'{'fof'-6o}}"), Helvetica: c4("{'widths'{k3p2q4mcx1w201n3r201o6o201s1q201t1q201u1q201w2l201x2l201y2l2k1w2l1w202m2n2n3r2o3r2p5t202q6o2r1n2s2l2t2l2u2r2v3u2w1w2x2l2y1w2z1w3k3r3l3r3m3r3n3r3o3r3p3r3q3r3r3r3s3r203t2l203u2l3v1w3w3u3x3u3y3u3z3r4k6p4l4m4m4m4n4s4o4s4p4m4q3x4r4y4s4s4t1w4u3m4v4m4w3r4x5n4y4s4z4y5k4m5l4y5m4s5n4m5o3x5p4s5q4m5r5y5s4m5t4m5u3x5v1w5w1w5x1w5y2z5z3r6k2l6l3r6m3r6n3m6o3r6p3r6q1w6r3r6s3r6t1q6u1q6v3m6w1q6x5n6y3r6z3r7k3r7l3r7m2l7n3m7o1w7p3r7q3m7r4s7s3m7t3m7u3m7v2l7w1u7x2l7y3u202l3rcl4mal2lam3ran3rao3rap3rar3ras2lat4tau2pav3raw3uay4taz2lbk2sbl3u'fof'6obo2lbp3rbr1wbs2lbu2obv3rbz3xck4m202k3rcm4mcn4mco4mcp4mcq6ocr4scs4mct4mcu4mcv4mcw1w2m2ncy1wcz1wdl4sdm4ydn4ydo4ydp4ydq4yds4ydt4sdu4sdv4sdw4sdz3xek3rel3rem3ren3reo3rep3req5ter3mes3ret3reu3rev3rew1wex1wey1wez1wfl3rfm3rfn3rfo3rfp3rfq3rfr3ufs3xft3rfu3rfv3rfw3rfz3m203k6o212m6o2dw2l2cq2l3t3r3u1w17s4m19m3r}'kerning'{5q{4wv}cl{4qs5kw5ow5qs17sv5tv}201t{2wu4w1k2yu}201x{2wu4wy2yu}17s{2ktclucmucnu4otcpu4lu4wycoucku}2w{7qs4qz5k1m17sy5ow5qx5rsfsu5ty7tufzu}2x{17sy5ty5oy5qs}2y{7qs4qz5k1m17sy5ow5qx5rsfsu5ty7tufzu}'fof'-6o7p{17sv5tv5ow}ck{4qs5kw5ow5qs17sv5tv}4l{4qs5kw5ow5qs17sv5tv}cm{4qs5kw5ow5qs17sv5tv}cn{4qs5kw5ow5qs17sv5tv}co{4qs5kw5ow5qs17sv5tv}cp{4qs5kw5ow5qs17sv5tv}6l{17sy5ty5ow}do{17st5tt}4z{17st5tt}7s{fst}dm{17st5tt}dn{17st5tt}5o{ckwclwcmwcnwcowcpw4lw4wv}dp{17st5tt}dq{17st5tt}7t{5ow}ds{17st5tt}5t{2ktclucmucnu4otcpu4lu4wycoucku}fu{17sv5tv5ow}6p{17sy5ty5ow5qs}ek{17sy5ty5ow}el{17sy5ty5ow}em{17sy5ty5ow}en{5ty}eo{17sy5ty5ow}ep{17sy5ty5ow}es{17sy5ty5qs}et{17sy5ty5ow5qs}eu{17sy5ty5ow5qs}ev{17sy5ty5ow5qs}6z{17sy5ty5ow5qs}fm{17sy5ty5ow5qs}fn{17sy5ty5ow5qs}fo{17sy5ty5ow5qs}fp{17sy5ty5qs}fq{17sy5ty5ow5qs}7r{5ow}fs{17sy5ty5ow5qs}ft{17sv5tv5ow}7m{5ow}fv{17sv5tv5ow}fw{17sv5tv5ow}}}"), "Helvetica-BoldOblique": c4("{'widths'{k3s2q4scx1w201n3r201o6o201s1w201t1w201u1w201w3m201x3m201y3m2k1w2l2l202m2n2n3r2o3r2p5t202q6o2r1s2s2l2t2l2u2r2v3u2w1w2x2l2y1w2z1w3k3r3l3r3m3r3n3r3o3r3p3r3q3r3r3r3s3r203t2l203u2l3v2l3w3u3x3u3y3u3z3x4k6l4l4s4m4s4n4s4o4s4p4m4q3x4r4y4s4s4t1w4u3r4v4s4w3x4x5n4y4s4z4y5k4m5l4y5m4s5n4m5o3x5p4s5q4m5r5y5s4m5t4m5u3x5v2l5w1w5x2l5y3u5z3r6k2l6l3r6m3x6n3r6o3x6p3r6q2l6r3x6s3x6t1w6u1w6v3r6w1w6x5t6y3x6z3x7k3x7l3x7m2r7n3r7o2l7p3x7q3r7r4y7s3r7t3r7u3m7v2r7w1w7x2r7y3u202l3rcl4sal2lam3ran3rao3rap3rar3ras2lat4tau2pav3raw3uay4taz2lbk2sbl3u'fof'6obo2lbp3xbq3rbr1wbs2lbu2obv3rbz3xck4s202k3rcm4scn4sco4scp4scq6ocr4scs4mct4mcu4mcv4mcw1w2m2zcy1wcz1wdl4sdm4ydn4ydo4ydp4ydq4yds4ydt4sdu4sdv4sdw4sdz3xek3rel3rem3ren3reo3rep3req5ter3res3ret3reu3rev3rew1wex1wey1wez1wfl3xfm3xfn3xfo3xfp3xfq3xfr3ufs3xft3xfu3xfv3xfw3xfz3r203k6o212m6o2dw2l2cq2l3t3r3u2l17s4m19m3r}'kerning'{cl{4qs5ku5ot5qs17sv5tv}201t{2ww4wy2yw}201w{2ks}201x{2ww4wy2yw}2k{201ts201xs}2w{7qs4qu5kw5os5qw5rs17su5tu7tsfzs}2x{5ow5qs}2y{7qs4qu5kw5os5qw5rs17su5tu7tsfzs}'fof'-6o7p{17su5tu5ot}ck{4qs5ku5ot5qs17sv5tv}4l{4qs5ku5ot5qs17sv5tv}cm{4qs5ku5ot5qs17sv5tv}cn{4qs5ku5ot5qs17sv5tv}co{4qs5ku5ot5qs17sv5tv}cp{4qs5ku5ot5qs17sv5tv}6l{17st5tt5os}17s{2kwclvcmvcnvcovcpv4lv4wwckv}5o{2kucltcmtcntcotcpt4lt4wtckt}5q{2ksclscmscnscoscps4ls4wvcks}5r{2ks4ws}5t{2kwclvcmvcnvcovcpv4lv4wwckv}eo{17st5tt5os}fu{17su5tu5ot}6p{17ss5ts}ek{17st5tt5os}el{17st5tt5os}em{17st5tt5os}en{17st5tt5os}6o{201ts}ep{17st5tt5os}es{17ss5ts}et{17ss5ts}eu{17ss5ts}ev{17ss5ts}6z{17su5tu5os5qt}fm{17su5tu5os5qt}fn{17su5tu5os5qt}fo{17su5tu5os5qt}fp{17su5tu5os5qt}fq{17su5tu5os5qt}fs{17su5tu5os5qt}ft{17su5tu5ot}7m{5os}fv{17su5tu5ot}fw{17su5tu5ot}}}"), ZapfDingbats: c4("{'widths'{k4u2k1w'fof'6o}'kerning'{'fof'-6o}}"), "Courier-Bold": c4("{'widths'{k3w'fof'6o}'kerning'{'fof'-6o}}"), "Times-Italic": c4("{'widths'{k3n2q4ycx2l201n3m201o5t201s2l201t2l201u2l201w3r201x3r201y3r2k1t2l2l202m2n2n3m2o3m2p5n202q5t2r1p2s2l2t2l2u3m2v4n2w1t2x2l2y1t2z1w3k3m3l3m3m3m3n3m3o3m3p3m3q3m3r3m3s3m203t2l203u2l3v2l3w4n3x4n3y4n3z3m4k5w4l3x4m3x4n4m4o4s4p3x4q3x4r4s4s4s4t2l4u2w4v4m4w3r4x5n4y4m4z4s5k3x5l4s5m3x5n3m5o3r5p4s5q3x5r5n5s3x5t3r5u3r5v2r5w1w5x2r5y2u5z3m6k2l6l3m6m3m6n2w6o3m6p2w6q1w6r3m6s3m6t1w6u1w6v2w6w1w6x4s6y3m6z3m7k3m7l3m7m2r7n2r7o1w7p3m7q2w7r4m7s2w7t2w7u2r7v2s7w1v7x2s7y3q202l3mcl3xal2ram3man3mao3map3mar3mas2lat4wau1vav3maw4nay4waz2lbk2sbl4n'fof'6obo2lbp3mbq3obr1tbs2lbu1zbv3mbz3mck3x202k3mcm3xcn3xco3xcp3xcq5tcr4mcs3xct3xcu3xcv3xcw2l2m2ucy2lcz2ldl4mdm4sdn4sdo4sdp4sdq4sds4sdt4sdu4sdv4sdw4sdz3mek3mel3mem3men3meo3mep3meq4mer2wes2wet2weu2wev2wew1wex1wey1wez1wfl3mfm3mfn3mfo3mfp3mfq3mfr4nfs3mft3mfu3mfv3mfw3mfz2w203k6o212m6m2dw2l2cq2l3t3m3u2l17s3r19m3m}'kerning'{cl{5kt4qw}201s{201sw}201t{201tw2wy2yy6q-t}201x{2wy2yy}2k{201tw}2w{7qs4qy7rs5ky7mw5os5qx5ru17su5tu}2x{17ss5ts5os}2y{7qs4qy7rs5ky7mw5os5qx5ru17su5tu}'fof'-6o6t{17ss5ts5qs}7t{5os}3v{5qs}7p{17su5tu5qs}ck{5kt4qw}4l{5kt4qw}cm{5kt4qw}cn{5kt4qw}co{5kt4qw}cp{5kt4qw}6l{4qs5ks5ou5qw5ru17su5tu}17s{2ks}5q{ckvclvcmvcnvcovcpv4lv}5r{ckuclucmucnucoucpu4lu}5t{2ks}6p{4qs5ks5ou5qw5ru17su5tu}ek{4qs5ks5ou5qw5ru17su5tu}el{4qs5ks5ou5qw5ru17su5tu}em{4qs5ks5ou5qw5ru17su5tu}en{4qs5ks5ou5qw5ru17su5tu}eo{4qs5ks5ou5qw5ru17su5tu}ep{4qs5ks5ou5qw5ru17su5tu}es{5ks5qs4qs}et{4qs5ks5ou5qw5ru17su5tu}eu{4qs5ks5qw5ru17su5tu}ev{5ks5qs4qs}ex{17ss5ts5qs}6z{4qv5ks5ou5qw5ru17su5tu}fm{4qv5ks5ou5qw5ru17su5tu}fn{4qv5ks5ou5qw5ru17su5tu}fo{4qv5ks5ou5qw5ru17su5tu}fp{4qv5ks5ou5qw5ru17su5tu}fq{4qv5ks5ou5qw5ru17su5tu}7r{5os}fs{4qv5ks5ou5qw5ru17su5tu}ft{17su5tu5qs}fu{17su5tu5qs}fv{17su5tu5qs}fw{17su5tu5qs}}}"), "Times-Roman": c4("{'widths'{k3n2q4ycx2l201n3m201o6o201s2l201t2l201u2l201w2w201x2w201y2w2k1t2l2l202m2n2n3m2o3m2p5n202q6o2r1m2s2l2t2l2u3m2v3s2w1t2x2l2y1t2z1w3k3m3l3m3m3m3n3m3o3m3p3m3q3m3r3m3s3m203t2l203u2l3v1w3w3s3x3s3y3s3z2w4k5w4l4s4m4m4n4m4o4s4p3x4q3r4r4s4s4s4t2l4u2r4v4s4w3x4x5t4y4s4z4s5k3r5l4s5m4m5n3r5o3x5p4s5q4s5r5y5s4s5t4s5u3x5v2l5w1w5x2l5y2z5z3m6k2l6l2w6m3m6n2w6o3m6p2w6q2l6r3m6s3m6t1w6u1w6v3m6w1w6x4y6y3m6z3m7k3m7l3m7m2l7n2r7o1w7p3m7q3m7r4s7s3m7t3m7u2w7v3k7w1o7x3k7y3q202l3mcl4sal2lam3man3mao3map3mar3mas2lat4wau1vav3maw3say4waz2lbk2sbl3s'fof'6obo2lbp3mbq2xbr1tbs2lbu1zbv3mbz2wck4s202k3mcm4scn4sco4scp4scq5tcr4mcs3xct3xcu3xcv3xcw2l2m2tcy2lcz2ldl4sdm4sdn4sdo4sdp4sdq4sds4sdt4sdu4sdv4sdw4sdz3mek2wel2wem2wen2weo2wep2weq4mer2wes2wet2weu2wev2wew1wex1wey1wez1wfl3mfm3mfn3mfo3mfp3mfq3mfr3sfs3mft3mfu3mfv3mfw3mfz3m203k6o212m6m2dw2l2cq2l3t3m3u1w17s4s19m3m}'kerning'{cl{4qs5ku17sw5ou5qy5rw201ss5tw201ws}201s{201ss}201t{ckw4lwcmwcnwcowcpwclw4wu201ts}2k{201ts}2w{4qs5kw5os5qx5ru17sx5tx}2x{17sw5tw5ou5qu}2y{4qs5kw5os5qx5ru17sx5tx}'fof'-6o7t{ckuclucmucnucoucpu4lu5os5rs}3u{17su5tu5qs}3v{17su5tu5qs}7p{17sw5tw5qs}ck{4qs5ku17sw5ou5qy5rw201ss5tw201ws}4l{4qs5ku17sw5ou5qy5rw201ss5tw201ws}cm{4qs5ku17sw5ou5qy5rw201ss5tw201ws}cn{4qs5ku17sw5ou5qy5rw201ss5tw201ws}co{4qs5ku17sw5ou5qy5rw201ss5tw201ws}cp{4qs5ku17sw5ou5qy5rw201ss5tw201ws}6l{17su5tu5os5qw5rs}17s{2ktclvcmvcnvcovcpv4lv4wuckv}5o{ckwclwcmwcnwcowcpw4lw4wu}5q{ckyclycmycnycoycpy4ly4wu5ms}5r{cktcltcmtcntcotcpt4lt4ws}5t{2ktclvcmvcnvcovcpv4lv4wuckv}7q{cksclscmscnscoscps4ls}6p{17su5tu5qw5rs}ek{5qs5rs}el{17su5tu5os5qw5rs}em{17su5tu5os5qs5rs}en{17su5qs5rs}eo{5qs5rs}ep{17su5tu5os5qw5rs}es{5qs}et{17su5tu5qw5rs}eu{17su5tu5qs5rs}ev{5qs}6z{17sv5tv5os5qx5rs}fm{5os5qt5rs}fn{17sv5tv5os5qx5rs}fo{17sv5tv5os5qx5rs}fp{5os5qt5rs}fq{5os5qt5rs}7r{ckuclucmucnucoucpu4lu5os}fs{17sv5tv5os5qx5rs}ft{17ss5ts5qs}fu{17sw5tw5qs}fv{17sw5tw5qs}fw{17ss5ts5qs}fz{ckuclucmucnucoucpu4lu5os5rs}}}"), "Helvetica-Oblique": c4("{'widths'{k3p2q4mcx1w201n3r201o6o201s1q201t1q201u1q201w2l201x2l201y2l2k1w2l1w202m2n2n3r2o3r2p5t202q6o2r1n2s2l2t2l2u2r2v3u2w1w2x2l2y1w2z1w3k3r3l3r3m3r3n3r3o3r3p3r3q3r3r3r3s3r203t2l203u2l3v1w3w3u3x3u3y3u3z3r4k6p4l4m4m4m4n4s4o4s4p4m4q3x4r4y4s4s4t1w4u3m4v4m4w3r4x5n4y4s4z4y5k4m5l4y5m4s5n4m5o3x5p4s5q4m5r5y5s4m5t4m5u3x5v1w5w1w5x1w5y2z5z3r6k2l6l3r6m3r6n3m6o3r6p3r6q1w6r3r6s3r6t1q6u1q6v3m6w1q6x5n6y3r6z3r7k3r7l3r7m2l7n3m7o1w7p3r7q3m7r4s7s3m7t3m7u3m7v2l7w1u7x2l7y3u202l3rcl4mal2lam3ran3rao3rap3rar3ras2lat4tau2pav3raw3uay4taz2lbk2sbl3u'fof'6obo2lbp3rbr1wbs2lbu2obv3rbz3xck4m202k3rcm4mcn4mco4mcp4mcq6ocr4scs4mct4mcu4mcv4mcw1w2m2ncy1wcz1wdl4sdm4ydn4ydo4ydp4ydq4yds4ydt4sdu4sdv4sdw4sdz3xek3rel3rem3ren3reo3rep3req5ter3mes3ret3reu3rev3rew1wex1wey1wez1wfl3rfm3rfn3rfo3rfp3rfq3rfr3ufs3xft3rfu3rfv3rfw3rfz3m203k6o212m6o2dw2l2cq2l3t3r3u1w17s4m19m3r}'kerning'{5q{4wv}cl{4qs5kw5ow5qs17sv5tv}201t{2wu4w1k2yu}201x{2wu4wy2yu}17s{2ktclucmucnu4otcpu4lu4wycoucku}2w{7qs4qz5k1m17sy5ow5qx5rsfsu5ty7tufzu}2x{17sy5ty5oy5qs}2y{7qs4qz5k1m17sy5ow5qx5rsfsu5ty7tufzu}'fof'-6o7p{17sv5tv5ow}ck{4qs5kw5ow5qs17sv5tv}4l{4qs5kw5ow5qs17sv5tv}cm{4qs5kw5ow5qs17sv5tv}cn{4qs5kw5ow5qs17sv5tv}co{4qs5kw5ow5qs17sv5tv}cp{4qs5kw5ow5qs17sv5tv}6l{17sy5ty5ow}do{17st5tt}4z{17st5tt}7s{fst}dm{17st5tt}dn{17st5tt}5o{ckwclwcmwcnwcowcpw4lw4wv}dp{17st5tt}dq{17st5tt}7t{5ow}ds{17st5tt}5t{2ktclucmucnu4otcpu4lu4wycoucku}fu{17sv5tv5ow}6p{17sy5ty5ow5qs}ek{17sy5ty5ow}el{17sy5ty5ow}em{17sy5ty5ow}en{5ty}eo{17sy5ty5ow}ep{17sy5ty5ow}es{17sy5ty5qs}et{17sy5ty5ow5qs}eu{17sy5ty5ow5qs}ev{17sy5ty5ow5qs}6z{17sy5ty5ow5qs}fm{17sy5ty5ow5qs}fn{17sy5ty5ow5qs}fo{17sy5ty5ow5qs}fp{17sy5ty5qs}fq{17sy5ty5ow5qs}7r{5ow}fs{17sy5ty5ow5qs}ft{17sv5tv5ow}7m{5ow}fv{17sv5tv5ow}fw{17sv5tv5ow}}}") } };
@@ -27618,13 +28232,13 @@
       h3.width = i3, h3.height = o3;
       var l3 = h3.getContext("2d");
       l3.fillStyle = "#fff", l3.fillRect(0, 0, h3.width, h3.height);
-      var f3 = { ignoreMouse: true, ignoreAnimation: true, ignoreDimensions: true }, d2 = this;
+      var f4 = { ignoreMouse: true, ignoreAnimation: true, ignoreDimensions: true }, d2 = this;
       return e2().then(function(e3) {
-        return e3.fromString(l3, t4, f3);
+        return e3.fromString(l3, t4, f4);
       }, function() {
         return Promise.reject(new Error("Could not load canvg."));
       }).then(function(t5) {
-        return t5.render(f3);
+        return t5.render(f4);
       }).then(function() {
         d2.addImage(h3.toDataURL("image/jpeg", 1), r2, n3, i3, o3, c4, u3);
       });
@@ -27639,7 +28253,7 @@
   }, E.API.viewerPreferences = function(e2, r2) {
     var n3;
     e2 = e2 || {}, r2 = r2 || false;
-    var i3, a3, o3, s3 = { HideToolbar: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.3 }, HideMenubar: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.3 }, HideWindowUI: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.3 }, FitWindow: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.3 }, CenterWindow: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.3 }, DisplayDocTitle: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.4 }, NonFullScreenPageMode: { defaultValue: "UseNone", value: "UseNone", type: "name", explicitSet: false, valueSet: ["UseNone", "UseOutlines", "UseThumbs", "UseOC"], pdfVersion: 1.3 }, Direction: { defaultValue: "L2R", value: "L2R", type: "name", explicitSet: false, valueSet: ["L2R", "R2L"], pdfVersion: 1.3 }, ViewArea: { defaultValue: "CropBox", value: "CropBox", type: "name", explicitSet: false, valueSet: ["MediaBox", "CropBox", "TrimBox", "BleedBox", "ArtBox"], pdfVersion: 1.4 }, ViewClip: { defaultValue: "CropBox", value: "CropBox", type: "name", explicitSet: false, valueSet: ["MediaBox", "CropBox", "TrimBox", "BleedBox", "ArtBox"], pdfVersion: 1.4 }, PrintArea: { defaultValue: "CropBox", value: "CropBox", type: "name", explicitSet: false, valueSet: ["MediaBox", "CropBox", "TrimBox", "BleedBox", "ArtBox"], pdfVersion: 1.4 }, PrintClip: { defaultValue: "CropBox", value: "CropBox", type: "name", explicitSet: false, valueSet: ["MediaBox", "CropBox", "TrimBox", "BleedBox", "ArtBox"], pdfVersion: 1.4 }, PrintScaling: { defaultValue: "AppDefault", value: "AppDefault", type: "name", explicitSet: false, valueSet: ["AppDefault", "None"], pdfVersion: 1.6 }, Duplex: { defaultValue: "", value: "none", type: "name", explicitSet: false, valueSet: ["Simplex", "DuplexFlipShortEdge", "DuplexFlipLongEdge", "none"], pdfVersion: 1.7 }, PickTrayByPDFSize: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.7 }, PrintPageRange: { defaultValue: "", value: "", type: "array", explicitSet: false, valueSet: null, pdfVersion: 1.7 }, NumCopies: { defaultValue: 1, value: 1, type: "integer", explicitSet: false, valueSet: null, pdfVersion: 1.7 } }, c4 = Object.keys(s3), u3 = [], h3 = 0, l3 = 0, f3 = 0;
+    var i3, a3, o3, s3 = { HideToolbar: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.3 }, HideMenubar: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.3 }, HideWindowUI: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.3 }, FitWindow: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.3 }, CenterWindow: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.3 }, DisplayDocTitle: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.4 }, NonFullScreenPageMode: { defaultValue: "UseNone", value: "UseNone", type: "name", explicitSet: false, valueSet: ["UseNone", "UseOutlines", "UseThumbs", "UseOC"], pdfVersion: 1.3 }, Direction: { defaultValue: "L2R", value: "L2R", type: "name", explicitSet: false, valueSet: ["L2R", "R2L"], pdfVersion: 1.3 }, ViewArea: { defaultValue: "CropBox", value: "CropBox", type: "name", explicitSet: false, valueSet: ["MediaBox", "CropBox", "TrimBox", "BleedBox", "ArtBox"], pdfVersion: 1.4 }, ViewClip: { defaultValue: "CropBox", value: "CropBox", type: "name", explicitSet: false, valueSet: ["MediaBox", "CropBox", "TrimBox", "BleedBox", "ArtBox"], pdfVersion: 1.4 }, PrintArea: { defaultValue: "CropBox", value: "CropBox", type: "name", explicitSet: false, valueSet: ["MediaBox", "CropBox", "TrimBox", "BleedBox", "ArtBox"], pdfVersion: 1.4 }, PrintClip: { defaultValue: "CropBox", value: "CropBox", type: "name", explicitSet: false, valueSet: ["MediaBox", "CropBox", "TrimBox", "BleedBox", "ArtBox"], pdfVersion: 1.4 }, PrintScaling: { defaultValue: "AppDefault", value: "AppDefault", type: "name", explicitSet: false, valueSet: ["AppDefault", "None"], pdfVersion: 1.6 }, Duplex: { defaultValue: "", value: "none", type: "name", explicitSet: false, valueSet: ["Simplex", "DuplexFlipShortEdge", "DuplexFlipLongEdge", "none"], pdfVersion: 1.7 }, PickTrayByPDFSize: { defaultValue: false, value: false, type: "boolean", explicitSet: false, valueSet: [true, false], pdfVersion: 1.7 }, PrintPageRange: { defaultValue: "", value: "", type: "array", explicitSet: false, valueSet: null, pdfVersion: 1.7 }, NumCopies: { defaultValue: 1, value: 1, type: "integer", explicitSet: false, valueSet: null, pdfVersion: 1.7 } }, c4 = Object.keys(s3), u3 = [], h3 = 0, l3 = 0, f4 = 0;
     function d2(t3, e3) {
       var r3, n4 = false;
       for (r3 = 0; r3 < t3.length; r3 += 1)
@@ -27648,8 +28262,8 @@
     }
     if (this.internal.viewerpreferences === void 0 && (this.internal.viewerpreferences = {}, this.internal.viewerpreferences.configuration = JSON.parse(JSON.stringify(s3)), this.internal.viewerpreferences.isSubscribed = false), n3 = this.internal.viewerpreferences.configuration, e2 === "reset" || r2 === true) {
       var p3 = c4.length;
-      for (f3 = 0; f3 < p3; f3 += 1)
-        n3[c4[f3]].value = n3[c4[f3]].defaultValue, n3[c4[f3]].explicitSet = false;
+      for (f4 = 0; f4 < p3; f4 += 1)
+        n3[c4[f4]].value = n3[c4[f4]].defaultValue, n3[c4[f4]].explicitSet = false;
     }
     if (_typeof(e2) === "object") {
       for (a3 in e2)
@@ -27715,12 +28329,12 @@
             u3 += String.fromCharCode(c4[h3]);
           var l3 = a3();
           o3({ data: u3, addLength1: true, objectId: l3 }), i4("endobj");
-          var f3 = a3();
-          o3({ data: n3(r3.metadata.toUnicode), addLength1: true, objectId: f3 }), i4("endobj");
+          var f4 = a3();
+          o3({ data: n3(r3.metadata.toUnicode), addLength1: true, objectId: f4 }), i4("endobj");
           var d2 = a3();
           i4("<<"), i4("/Type /FontDescriptor"), i4("/FontName /" + F(r3.fontName)), i4("/FontFile2 " + l3 + " 0 R"), i4("/FontBBox " + t3.API.PDFObject.convert(r3.metadata.bbox)), i4("/Flags " + r3.metadata.flags), i4("/StemV " + r3.metadata.stemV), i4("/ItalicAngle " + r3.metadata.italicAngle), i4("/Ascent " + r3.metadata.ascender), i4("/Descent " + r3.metadata.decender), i4("/CapHeight " + r3.metadata.capHeight), i4(">>"), i4("endobj");
           var p3 = a3();
-          i4("<<"), i4("/Type /Font"), i4("/BaseFont /" + F(r3.fontName)), i4("/FontDescriptor " + d2 + " 0 R"), i4("/W " + t3.API.PDFObject.convert(s3)), i4("/CIDToGIDMap /Identity"), i4("/DW 1000"), i4("/Subtype /CIDFontType2"), i4("/CIDSystemInfo"), i4("<<"), i4("/Supplement 0"), i4("/Registry (Adobe)"), i4("/Ordering (" + r3.encoding + ")"), i4(">>"), i4(">>"), i4("endobj"), r3.objectNumber = a3(), i4("<<"), i4("/Type /Font"), i4("/Subtype /Type0"), i4("/ToUnicode " + f3 + " 0 R"), i4("/BaseFont /" + F(r3.fontName)), i4("/Encoding /" + r3.encoding), i4("/DescendantFonts [" + p3 + " 0 R]"), i4(">>"), i4("endobj"), r3.isAlreadyPutted = true;
+          i4("<<"), i4("/Type /Font"), i4("/BaseFont /" + F(r3.fontName)), i4("/FontDescriptor " + d2 + " 0 R"), i4("/W " + t3.API.PDFObject.convert(s3)), i4("/CIDToGIDMap /Identity"), i4("/DW 1000"), i4("/Subtype /CIDFontType2"), i4("/CIDSystemInfo"), i4("<<"), i4("/Supplement 0"), i4("/Registry (Adobe)"), i4("/Ordering (" + r3.encoding + ")"), i4(">>"), i4(">>"), i4("endobj"), r3.objectNumber = a3(), i4("<<"), i4("/Type /Font"), i4("/Subtype /Type0"), i4("/ToUnicode " + f4 + " 0 R"), i4("/BaseFont /" + F(r3.fontName)), i4("/Encoding /" + r3.encoding), i4("/DescendantFonts [" + p3 + " 0 R]"), i4(">>"), i4("endobj"), r3.isAlreadyPutted = true;
         }
       }(e3);
     }]);
@@ -27734,24 +28348,24 @@
           o3({ data: c4, addLength1: true, objectId: h3 }), i4("endobj");
           var l3 = a3();
           o3({ data: n3(r3.metadata.toUnicode), addLength1: true, objectId: l3 }), i4("endobj");
-          var f3 = a3();
+          var f4 = a3();
           i4("<<"), i4("/Descent " + r3.metadata.decender), i4("/CapHeight " + r3.metadata.capHeight), i4("/StemV " + r3.metadata.stemV), i4("/Type /FontDescriptor"), i4("/FontFile2 " + h3 + " 0 R"), i4("/Flags 96"), i4("/FontBBox " + t3.API.PDFObject.convert(r3.metadata.bbox)), i4("/FontName /" + F(r3.fontName)), i4("/ItalicAngle " + r3.metadata.italicAngle), i4("/Ascent " + r3.metadata.ascender), i4(">>"), i4("endobj"), r3.objectNumber = a3();
           for (var d2 = 0; d2 < r3.metadata.hmtx.widths.length; d2++)
             r3.metadata.hmtx.widths[d2] = parseInt(r3.metadata.hmtx.widths[d2] * (1e3 / r3.metadata.head.unitsPerEm));
-          i4("<</Subtype/TrueType/Type/Font/ToUnicode " + l3 + " 0 R/BaseFont/" + F(r3.fontName) + "/FontDescriptor " + f3 + " 0 R/Encoding/" + r3.encoding + " /FirstChar 29 /LastChar 255 /Widths " + t3.API.PDFObject.convert(r3.metadata.hmtx.widths) + ">>"), i4("endobj"), r3.isAlreadyPutted = true;
+          i4("<</Subtype/TrueType/Type/Font/ToUnicode " + l3 + " 0 R/BaseFont/" + F(r3.fontName) + "/FontDescriptor " + f4 + " 0 R/Encoding/" + r3.encoding + " /FirstChar 29 /LastChar 255 /Widths " + t3.API.PDFObject.convert(r3.metadata.hmtx.widths) + ">>"), i4("endobj"), r3.isAlreadyPutted = true;
         }
       }(e3);
     }]);
     var i3 = function(t4) {
-      var e3, n4 = t4.text || "", i4 = t4.x, a3 = t4.y, o3 = t4.options || {}, s3 = t4.mutex || {}, c4 = s3.pdfEscape, u3 = s3.activeFontKey, h3 = s3.fonts, l3 = u3, f3 = "", d2 = 0, p3 = "", g2 = h3[l3].encoding;
+      var e3, n4 = t4.text || "", i4 = t4.x, a3 = t4.y, o3 = t4.options || {}, s3 = t4.mutex || {}, c4 = s3.pdfEscape, u3 = s3.activeFontKey, h3 = s3.fonts, l3 = u3, f4 = "", d2 = 0, p3 = "", g2 = h3[l3].encoding;
       if (h3[l3].encoding !== "Identity-H")
         return { text: n4, x: i4, y: a3, options: o3, mutex: s3 };
       for (p3 = n4, l3 = u3, Array.isArray(n4) && (p3 = n4[0]), d2 = 0; d2 < p3.length; d2 += 1)
-        h3[l3].metadata.hasOwnProperty("cmap") && (e3 = h3[l3].metadata.cmap.unicode.codeMap[p3[d2].charCodeAt(0)]), e3 || p3[d2].charCodeAt(0) < 256 && h3[l3].metadata.hasOwnProperty("Unicode") ? f3 += p3[d2] : f3 += "";
+        h3[l3].metadata.hasOwnProperty("cmap") && (e3 = h3[l3].metadata.cmap.unicode.codeMap[p3[d2].charCodeAt(0)]), e3 || p3[d2].charCodeAt(0) < 256 && h3[l3].metadata.hasOwnProperty("Unicode") ? f4 += p3[d2] : f4 += "";
       var m4 = "";
-      return parseInt(l3.slice(1)) < 14 || g2 === "WinAnsiEncoding" ? m4 = c4(f3, l3).split("").map(function(t5) {
+      return parseInt(l3.slice(1)) < 14 || g2 === "WinAnsiEncoding" ? m4 = c4(f4, l3).split("").map(function(t5) {
         return t5.charCodeAt(0).toString(16);
-      }).join("") : g2 === "Identity-H" && (m4 = r2(f3, h3[l3])), s3.isHex = true, { text: m4, x: i4, y: a3, options: o3, mutex: s3 };
+      }).join("") : g2 === "Identity-H" && (m4 = r2(f4, h3[l3])), s3.isHex = true, { text: m4, x: i4, y: a3, options: o3, mutex: s3 };
     };
     e2.events.push(["postProcessText", function(t4) {
       var e3 = t4.text || "", r3 = [], n4 = { text: e3, x: t4.x, y: t4.y, options: t4.options, mutex: t4.mutex };
@@ -27776,7 +28390,7 @@
     };
   }(E.API), function(t3) {
     t3.__bidiEngine__ = t3.prototype.__bidiEngine__ = function(t4) {
-      var r3, n3, i3, a3, o3, s3, c4, u3 = e2, h3 = [[0, 3, 0, 1, 0, 0, 0], [0, 3, 0, 1, 2, 2, 0], [0, 3, 0, 17, 2, 0, 1], [0, 3, 5, 5, 4, 1, 0], [0, 3, 21, 21, 4, 0, 1], [0, 3, 5, 5, 4, 2, 0]], l3 = [[2, 0, 1, 1, 0, 1, 0], [2, 0, 1, 1, 0, 2, 0], [2, 0, 2, 1, 3, 2, 0], [2, 0, 2, 33, 3, 1, 1]], f3 = { L: 0, R: 1, EN: 2, AN: 3, N: 4, B: 5, S: 6 }, d2 = { 0: 0, 5: 1, 6: 2, 7: 3, 32: 4, 251: 5, 254: 6, 255: 7 }, p3 = ["(", ")", "(", "<", ">", "<", "[", "]", "[", "{", "}", "{", "\xAB", "\xBB", "\xAB", "\u2039", "\u203A", "\u2039", "\u2045", "\u2046", "\u2045", "\u207D", "\u207E", "\u207D", "\u208D", "\u208E", "\u208D", "\u2264", "\u2265", "\u2264", "\u2329", "\u232A", "\u2329", "\uFE59", "\uFE5A", "\uFE59", "\uFE5B", "\uFE5C", "\uFE5B", "\uFE5D", "\uFE5E", "\uFE5D", "\uFE64", "\uFE65", "\uFE64"], g2 = new RegExp(/^([1-4|9]|1[0-9]|2[0-9]|3[0168]|4[04589]|5[012]|7[78]|159|16[0-9]|17[0-2]|21[569]|22[03489]|250)$/), m4 = false, v3 = 0;
+      var r3, n3, i3, a3, o3, s3, c4, u3 = e2, h3 = [[0, 3, 0, 1, 0, 0, 0], [0, 3, 0, 1, 2, 2, 0], [0, 3, 0, 17, 2, 0, 1], [0, 3, 5, 5, 4, 1, 0], [0, 3, 21, 21, 4, 0, 1], [0, 3, 5, 5, 4, 2, 0]], l3 = [[2, 0, 1, 1, 0, 1, 0], [2, 0, 1, 1, 0, 2, 0], [2, 0, 2, 1, 3, 2, 0], [2, 0, 2, 33, 3, 1, 1]], f4 = { L: 0, R: 1, EN: 2, AN: 3, N: 4, B: 5, S: 6 }, d2 = { 0: 0, 5: 1, 6: 2, 7: 3, 32: 4, 251: 5, 254: 6, 255: 7 }, p3 = ["(", ")", "(", "<", ">", "<", "[", "]", "[", "{", "}", "{", "\xAB", "\xBB", "\xAB", "\u2039", "\u203A", "\u2039", "\u2045", "\u2046", "\u2045", "\u207D", "\u207E", "\u207D", "\u208D", "\u208E", "\u208D", "\u2264", "\u2265", "\u2264", "\u2329", "\u232A", "\u2329", "\uFE59", "\uFE5A", "\uFE59", "\uFE5B", "\uFE5C", "\uFE5B", "\uFE5D", "\uFE5E", "\uFE5D", "\uFE64", "\uFE65", "\uFE64"], g2 = new RegExp(/^([1-4|9]|1[0-9]|2[0-9]|3[0168]|4[04589]|5[012]|7[78]|159|16[0-9]|17[0-2]|21[569]|22[03489]|250)$/), m4 = false, v6 = 0;
       this.__bidiEngine__ = {};
       var b2 = function(t5) {
         var e3 = t5.charCodeAt(), r4 = e3 >> 8, n4 = d2[r4];
@@ -27790,8 +28404,8 @@
         }
         return false;
       }, w2 = function(t5, e3, o4, s4) {
-        var c5, u4, h4, l4, f4 = e3[s4];
-        switch (f4) {
+        var c5, u4, h4, l4, f5 = e3[s4];
+        switch (f5) {
           case "L":
           case "R":
             m4 = false;
@@ -27800,32 +28414,32 @@
           case "AN":
             break;
           case "EN":
-            m4 && (f4 = "AN");
+            m4 && (f5 = "AN");
             break;
           case "AL":
-            m4 = true, f4 = "R";
+            m4 = true, f5 = "R";
             break;
           case "WS":
-            f4 = "N";
+            f5 = "N";
             break;
           case "CS":
-            s4 < 1 || s4 + 1 >= e3.length || (c5 = o4[s4 - 1]) !== "EN" && c5 !== "AN" || (u4 = e3[s4 + 1]) !== "EN" && u4 !== "AN" ? f4 = "N" : m4 && (u4 = "AN"), f4 = u4 === c5 ? u4 : "N";
+            s4 < 1 || s4 + 1 >= e3.length || (c5 = o4[s4 - 1]) !== "EN" && c5 !== "AN" || (u4 = e3[s4 + 1]) !== "EN" && u4 !== "AN" ? f5 = "N" : m4 && (u4 = "AN"), f5 = u4 === c5 ? u4 : "N";
             break;
           case "ES":
-            f4 = (c5 = s4 > 0 ? o4[s4 - 1] : "B") === "EN" && s4 + 1 < e3.length && e3[s4 + 1] === "EN" ? "EN" : "N";
+            f5 = (c5 = s4 > 0 ? o4[s4 - 1] : "B") === "EN" && s4 + 1 < e3.length && e3[s4 + 1] === "EN" ? "EN" : "N";
             break;
           case "ET":
             if (s4 > 0 && o4[s4 - 1] === "EN") {
-              f4 = "EN";
+              f5 = "EN";
               break;
             }
             if (m4) {
-              f4 = "N";
+              f5 = "N";
               break;
             }
             for (h4 = s4 + 1, l4 = e3.length; h4 < l4 && e3[h4] === "ET"; )
               h4++;
-            f4 = h4 < l4 && e3[h4] === "EN" ? "EN" : "N";
+            f5 = h4 < l4 && e3[h4] === "EN" ? "EN" : "N";
             break;
           case "NSM":
             if (i3 && !a3) {
@@ -27834,18 +28448,18 @@
               if (h4 < l4) {
                 var d3 = t5[s4], p4 = d3 >= 1425 && d3 <= 2303 || d3 === 64286;
                 if (c5 = e3[h4], p4 && (c5 === "R" || c5 === "AL")) {
-                  f4 = "R";
+                  f5 = "R";
                   break;
                 }
               }
             }
-            f4 = s4 < 1 || (c5 = e3[s4 - 1]) === "B" ? "N" : o4[s4 - 1];
+            f5 = s4 < 1 || (c5 = e3[s4 - 1]) === "B" ? "N" : o4[s4 - 1];
             break;
           case "B":
-            m4 = false, r3 = true, f4 = v3;
+            m4 = false, r3 = true, f5 = v6;
             break;
           case "S":
-            n3 = true, f4 = "N";
+            n3 = true, f5 = "N";
             break;
           case "LRE":
           case "RLE":
@@ -27855,18 +28469,18 @@
             m4 = false;
             break;
           case "BN":
-            f4 = "N";
+            f5 = "N";
         }
-        return f4;
+        return f5;
       }, N3 = function(t5, e3, r4) {
         var n4 = t5.split("");
-        return r4 && L2(n4, r4, { hiLevel: v3 }), n4.reverse(), e3 && e3.reverse(), n4.join("");
+        return r4 && L2(n4, r4, { hiLevel: v6 }), n4.reverse(), e3 && e3.reverse(), n4.join("");
       }, L2 = function(t5, e3, i4) {
-        var a4, o4, s4, c5, u4, d3 = -1, p4 = t5.length, g3 = 0, y4 = [], N4 = v3 ? l3 : h3, L3 = [];
+        var a4, o4, s4, c5, u4, d3 = -1, p4 = t5.length, g3 = 0, y4 = [], N4 = v6 ? l3 : h3, L3 = [];
         for (m4 = false, r3 = false, n3 = false, o4 = 0; o4 < p4; o4++)
           L3[o4] = b2(t5[o4]);
         for (s4 = 0; s4 < p4; s4++) {
-          if (u4 = g3, y4[s4] = w2(t5, L3, y4, s4), a4 = 240 & (g3 = N4[u4][f3[y4[s4]]]), g3 &= 15, e3[s4] = c5 = N4[g3][5], a4 > 0)
+          if (u4 = g3, y4[s4] = w2(t5, L3, y4, s4), a4 = 240 & (g3 = N4[u4][f4[y4[s4]]]), g3 &= 15, e3[s4] = c5 = N4[g3][5], a4 > 0)
             if (a4 === 16) {
               for (o4 = d3; o4 < s4; o4++)
                 e3[o4] = 1;
@@ -27885,14 +28499,14 @@
         n3 && function(t6, e4, r4) {
           for (var n4 = 0; n4 < r4; n4++)
             if (t6[n4] === "S") {
-              e4[n4] = v3;
+              e4[n4] = v6;
               for (var i5 = n4 - 1; i5 >= 0 && t6[i5] === "WS"; i5--)
-                e4[i5] = v3;
+                e4[i5] = v6;
             }
         }(L3, e3, p4);
       }, A2 = function(t5, e3, n4, i4, a4) {
         if (!(a4.hiLevel < t5)) {
-          if (t5 === 1 && v3 === 1 && !r3)
+          if (t5 === 1 && v6 === 1 && !r3)
             return e3.reverse(), void (n4 && n4.reverse());
           for (var o4, s4, c5, u4, h4 = e3.length, l4 = 0; l4 < h4; ) {
             if (i4[l4] >= t5) {
@@ -27906,7 +28520,7 @@
           }
         }
       }, x2 = function(t5, e3, r4) {
-        var n4 = t5.split(""), i4 = { hiLevel: v3 };
+        var n4 = t5.split(""), i4 = { hiLevel: v6 };
         return r4 || (r4 = []), L2(n4, r4, i4), function(t6, e4, r5) {
           if (r5.hiLevel !== 0 && c4)
             for (var n5, i5 = 0; i5 < t6.length; i5++)
@@ -27921,22 +28535,22 @@
           a3 === void 0 && (a3 = y3(t6)), s3 === void 0 && (s3 = y3(t6));
         }(t5, e3), i3 || !o3 || s3)
           if (i3 && o3 && a3 ^ s3)
-            v3 = a3 ? 1 : 0, t5 = N3(t5, e3, r4);
+            v6 = a3 ? 1 : 0, t5 = N3(t5, e3, r4);
           else if (!i3 && o3 && s3)
-            v3 = a3 ? 1 : 0, t5 = x2(t5, e3, r4), t5 = N3(t5, e3);
+            v6 = a3 ? 1 : 0, t5 = x2(t5, e3, r4), t5 = N3(t5, e3);
           else if (!i3 || a3 || o3 || s3) {
             if (i3 && !o3 && a3 ^ s3)
-              t5 = N3(t5, e3), a3 ? (v3 = 0, t5 = x2(t5, e3, r4)) : (v3 = 1, t5 = x2(t5, e3, r4), t5 = N3(t5, e3));
+              t5 = N3(t5, e3), a3 ? (v6 = 0, t5 = x2(t5, e3, r4)) : (v6 = 1, t5 = x2(t5, e3, r4), t5 = N3(t5, e3));
             else if (i3 && a3 && !o3 && s3)
-              v3 = 1, t5 = x2(t5, e3, r4), t5 = N3(t5, e3);
+              v6 = 1, t5 = x2(t5, e3, r4), t5 = N3(t5, e3);
             else if (!i3 && !o3 && a3 ^ s3) {
               var n4 = c4;
-              a3 ? (v3 = 1, t5 = x2(t5, e3, r4), v3 = 0, c4 = false, t5 = x2(t5, e3, r4), c4 = n4) : (v3 = 0, t5 = x2(t5, e3, r4), t5 = N3(t5, e3), v3 = 1, c4 = false, t5 = x2(t5, e3, r4), c4 = n4, t5 = N3(t5, e3));
+              a3 ? (v6 = 1, t5 = x2(t5, e3, r4), v6 = 0, c4 = false, t5 = x2(t5, e3, r4), c4 = n4) : (v6 = 0, t5 = x2(t5, e3, r4), t5 = N3(t5, e3), v6 = 1, c4 = false, t5 = x2(t5, e3, r4), c4 = n4, t5 = N3(t5, e3));
             }
           } else
-            v3 = 0, t5 = x2(t5, e3, r4);
+            v6 = 0, t5 = x2(t5, e3, r4);
         else
-          v3 = a3 ? 1 : 0, t5 = x2(t5, e3, r4);
+          v6 = a3 ? 1 : 0, t5 = x2(t5, e3, r4);
         return t5;
       }, this.__bidiEngine__.setOptions = function(t5) {
         t5 && (i3 = t5.isInputVisual, o3 = t5.isOutputVisual, a3 = t5.isInputRtl, s3 = t5.isOutputRtl, c4 = t5.isSymmetricSwapping);
@@ -28061,8 +28675,8 @@
         e3 = { tag: t4.readString(4), checksum: t4.readInt(), offset: t4.readInt(), length: t4.readInt() }, this.tables[e3.tag] = e3;
     }
     return e2.prototype.encode = function(e3) {
-      var r2, n3, i3, a3, o3, s3, c4, u3, h3, l3, f3, d2, p3;
-      for (p3 in f3 = Object.keys(e3).length, s3 = Math.log(2), h3 = 16 * Math.floor(Math.log(f3) / s3), a3 = Math.floor(h3 / s3), u3 = 16 * f3 - h3, (n3 = new ne()).writeInt(this.scalarType), n3.writeShort(f3), n3.writeShort(h3), n3.writeShort(a3), n3.writeShort(u3), i3 = 16 * f3, c4 = n3.pos + i3, o3 = null, d2 = [], e3)
+      var r2, n3, i3, a3, o3, s3, c4, u3, h3, l3, f4, d2, p3;
+      for (p3 in f4 = Object.keys(e3).length, s3 = Math.log(2), h3 = 16 * Math.floor(Math.log(f4) / s3), a3 = Math.floor(h3 / s3), u3 = 16 * f4 - h3, (n3 = new ne()).writeInt(this.scalarType), n3.writeShort(f4), n3.writeShort(h3), n3.writeShort(a3), n3.writeShort(u3), i3 = 16 * f4, c4 = n3.pos + i3, o3 = null, d2 = [], e3)
         for (l3 = e3[p3], n3.writeString(p3), n3.writeInt(t3(l3)), n3.writeInt(c4), n3.writeInt(l3.length), d2 = d2.concat(l3), p3 === "head" && (o3 = c4), c4 += l3.length; c4 % 4; )
           d2.push(0), c4++;
       return n3.write(d2), r2 = 2981146554 - t3(n3.data), n3.pos = o3 + 8, n3.writeUInt32(r2), n3.data;
@@ -28108,14 +28722,14 @@
   }();
   var ce = function() {
     function t3(t4, e2) {
-      var r2, n3, i3, a3, o3, s3, c4, u3, h3, l3, f3, d2, p3, g2, m4, v3, b2;
+      var r2, n3, i3, a3, o3, s3, c4, u3, h3, l3, f4, d2, p3, g2, m4, v6, b2;
       switch (this.platformID = t4.readUInt16(), this.encodingID = t4.readShort(), this.offset = e2 + t4.readInt(), h3 = t4.pos, t4.pos = this.offset, this.format = t4.readUInt16(), this.length = t4.readUInt16(), this.language = t4.readUInt16(), this.isUnicode = this.platformID === 3 && this.encodingID === 1 && this.format === 4 || this.platformID === 0 && this.format === 4, this.codeMap = {}, this.format) {
         case 0:
           for (s3 = 0; s3 < 256; ++s3)
             this.codeMap[s3] = t4.readByte();
           break;
         case 4:
-          for (f3 = t4.readUInt16(), l3 = f3 / 2, t4.pos += 6, i3 = function() {
+          for (f4 = t4.readUInt16(), l3 = f4 / 2, t4.pos += 6, i3 = function() {
             var e3, r3;
             for (r3 = [], s3 = e3 = 0; 0 <= l3 ? e3 < l3 : e3 > l3; s3 = 0 <= l3 ? ++e3 : --e3)
               r3.push(t4.readUInt16());
@@ -28141,13 +28755,13 @@
               r3.push(t4.readUInt16());
             return r3;
           }(), s3 = m4 = 0, b2 = i3.length; m4 < b2; s3 = ++m4)
-            for (g2 = i3[s3], r2 = v3 = d2 = p3[s3]; d2 <= g2 ? v3 <= g2 : v3 >= g2; r2 = d2 <= g2 ? ++v3 : --v3)
+            for (g2 = i3[s3], r2 = v6 = d2 = p3[s3]; d2 <= g2 ? v6 <= g2 : v6 >= g2; r2 = d2 <= g2 ? ++v6 : --v6)
               u3[s3] === 0 ? a3 = r2 + c4[s3] : (a3 = o3[u3[s3] / 2 + (r2 - d2) - (l3 - s3)] || 0) !== 0 && (a3 += c4[s3]), this.codeMap[r2] = 65535 & a3;
       }
       t4.pos = h3;
     }
     return t3.encode = function(t4, e2) {
-      var r2, n3, i3, a3, o3, s3, c4, u3, h3, l3, f3, d2, p3, g2, m4, v3, b2, y3, w2, N3, L2, A2, x2, S2, _3, P2, k2, I2, F2, C2, j2, O3, B2, M2, E2, q2, D2, R2, T3, U2, z2, H2, W2, V2, G2, Y2;
+      var r2, n3, i3, a3, o3, s3, c4, u3, h3, l3, f4, d2, p3, g2, m4, v6, b2, y3, w2, N3, L2, A2, x2, S2, _3, P2, k2, I2, F2, C2, j2, O3, B2, M2, E2, q2, D2, R2, T3, U2, z2, H2, W2, V2, G2, Y2;
       switch (I2 = new ne(), a3 = Object.keys(t4).sort(function(t5, e3) {
         return t5 - e3;
       }), e2) {
@@ -28157,24 +28771,24 @@
             for (d2 = 0; d2 < 256; ++d2)
               t5.push(0);
             return t5;
-          }(), v3 = { 0: 0 }, i3 = {}, F2 = 0, B2 = a3.length; F2 < B2; F2++)
-            v3[W2 = t4[n3 = a3[F2]]] == null && (v3[W2] = ++p3), i3[n3] = { old: t4[n3], new: v3[t4[n3]] }, g2[n3] = v3[t4[n3]];
+          }(), v6 = { 0: 0 }, i3 = {}, F2 = 0, B2 = a3.length; F2 < B2; F2++)
+            v6[W2 = t4[n3 = a3[F2]]] == null && (v6[W2] = ++p3), i3[n3] = { old: t4[n3], new: v6[t4[n3]] }, g2[n3] = v6[t4[n3]];
           return I2.writeUInt16(1), I2.writeUInt16(0), I2.writeUInt32(12), I2.writeUInt16(0), I2.writeUInt16(262), I2.writeUInt16(0), I2.write(g2), { charMap: i3, subtable: I2.data, maxGlyphID: p3 + 1 };
         case "unicode":
-          for (P2 = [], h3 = [], b2 = 0, v3 = {}, r2 = {}, m4 = c4 = null, C2 = 0, M2 = a3.length; C2 < M2; C2++)
-            v3[w2 = t4[n3 = a3[C2]]] == null && (v3[w2] = ++b2), r2[n3] = { old: w2, new: v3[w2] }, o3 = v3[w2] - n3, m4 != null && o3 === c4 || (m4 && h3.push(m4), P2.push(n3), c4 = o3), m4 = n3;
-          for (m4 && h3.push(m4), h3.push(65535), P2.push(65535), S2 = 2 * (x2 = P2.length), A2 = 2 * Math.pow(Math.log(x2) / Math.LN2, 2), l3 = Math.log(A2 / 2) / Math.LN2, L2 = 2 * x2 - A2, s3 = [], N3 = [], f3 = [], d2 = j2 = 0, E2 = P2.length; j2 < E2; d2 = ++j2) {
+          for (P2 = [], h3 = [], b2 = 0, v6 = {}, r2 = {}, m4 = c4 = null, C2 = 0, M2 = a3.length; C2 < M2; C2++)
+            v6[w2 = t4[n3 = a3[C2]]] == null && (v6[w2] = ++b2), r2[n3] = { old: w2, new: v6[w2] }, o3 = v6[w2] - n3, m4 != null && o3 === c4 || (m4 && h3.push(m4), P2.push(n3), c4 = o3), m4 = n3;
+          for (m4 && h3.push(m4), h3.push(65535), P2.push(65535), S2 = 2 * (x2 = P2.length), A2 = 2 * Math.pow(Math.log(x2) / Math.LN2, 2), l3 = Math.log(A2 / 2) / Math.LN2, L2 = 2 * x2 - A2, s3 = [], N3 = [], f4 = [], d2 = j2 = 0, E2 = P2.length; j2 < E2; d2 = ++j2) {
             if (_3 = P2[d2], u3 = h3[d2], _3 === 65535) {
               s3.push(0), N3.push(0);
               break;
             }
             if (_3 - (k2 = r2[_3].new) >= 32768)
-              for (s3.push(0), N3.push(2 * (f3.length + x2 - d2)), n3 = O3 = _3; _3 <= u3 ? O3 <= u3 : O3 >= u3; n3 = _3 <= u3 ? ++O3 : --O3)
-                f3.push(r2[n3].new);
+              for (s3.push(0), N3.push(2 * (f4.length + x2 - d2)), n3 = O3 = _3; _3 <= u3 ? O3 <= u3 : O3 >= u3; n3 = _3 <= u3 ? ++O3 : --O3)
+                f4.push(r2[n3].new);
             else
               s3.push(k2 - _3), N3.push(0);
           }
-          for (I2.writeUInt16(3), I2.writeUInt16(1), I2.writeUInt32(12), I2.writeUInt16(4), I2.writeUInt16(16 + 8 * x2 + 2 * f3.length), I2.writeUInt16(0), I2.writeUInt16(S2), I2.writeUInt16(A2), I2.writeUInt16(l3), I2.writeUInt16(L2), z2 = 0, q2 = h3.length; z2 < q2; z2++)
+          for (I2.writeUInt16(3), I2.writeUInt16(1), I2.writeUInt32(12), I2.writeUInt16(4), I2.writeUInt16(16 + 8 * x2 + 2 * f4.length), I2.writeUInt16(0), I2.writeUInt16(S2), I2.writeUInt16(A2), I2.writeUInt16(l3), I2.writeUInt16(L2), z2 = 0, q2 = h3.length; z2 < q2; z2++)
             n3 = h3[z2], I2.writeUInt16(n3);
           for (I2.writeUInt16(0), H2 = 0, D2 = P2.length; H2 < D2; H2++)
             n3 = P2[H2], I2.writeUInt16(n3);
@@ -28182,8 +28796,8 @@
             o3 = s3[V2], I2.writeUInt16(o3);
           for (G2 = 0, T3 = N3.length; G2 < T3; G2++)
             y3 = N3[G2], I2.writeUInt16(y3);
-          for (Y2 = 0, U2 = f3.length; Y2 < U2; Y2++)
-            p3 = f3[Y2], I2.writeUInt16(p3);
+          for (Y2 = 0, U2 = f4.length; Y2 < U2; Y2++)
+            p3 = f4[Y2], I2.writeUInt16(p3);
           return { charMap: r2, subtable: I2.data, maxGlyphID: b2 + 1 };
       }
     }, t3;
@@ -28410,24 +29024,24 @@
           r2 = s3[i3], n3[i3] = r2;
       return n3;
     }, t3.prototype.encode = function(t4, e2) {
-      var r2, n3, i3, a3, o3, s3, c4, u3, h3, l3, f3, d2, p3, g2, m4;
-      for (n3 in r2 = ue.encode(this.generateCmap(), "unicode"), a3 = this.glyphsFor(t4), f3 = { 0: 0 }, m4 = r2.charMap)
-        f3[(s3 = m4[n3]).old] = s3.new;
+      var r2, n3, i3, a3, o3, s3, c4, u3, h3, l3, f4, d2, p3, g2, m4;
+      for (n3 in r2 = ue.encode(this.generateCmap(), "unicode"), a3 = this.glyphsFor(t4), f4 = { 0: 0 }, m4 = r2.charMap)
+        f4[(s3 = m4[n3]).old] = s3.new;
       for (d2 in l3 = r2.maxGlyphID, a3)
-        d2 in f3 || (f3[d2] = l3++);
+        d2 in f4 || (f4[d2] = l3++);
       return u3 = function(t5) {
         var e3, r3;
         for (e3 in r3 = {}, t5)
           r3[t5[e3]] = e3;
         return r3;
-      }(f3), h3 = Object.keys(u3).sort(function(t5, e3) {
+      }(f4), h3 = Object.keys(u3).sort(function(t5, e3) {
         return t5 - e3;
       }), p3 = function() {
         var t5, e3, r3;
         for (r3 = [], t5 = 0, e3 = h3.length; t5 < e3; t5++)
           o3 = h3[t5], r3.push(u3[o3]);
         return r3;
-      }(), i3 = this.font.glyf.encode(a3, p3, f3), c4 = this.font.loca.encode(i3.offsets, p3), g2 = { cmap: this.font.cmap.raw(), glyf: i3.table, loca: c4, hmtx: this.font.hmtx.raw(), hhea: this.font.hhea.raw(), maxp: this.font.maxp.raw(), post: this.font.post.raw(), name: this.font.name.raw(), head: this.font.head.encode(e2) }, this.font.os2.exists && (g2["OS/2"] = this.font.os2.raw()), this.font.directory.encode(g2);
+      }(), i3 = this.font.glyf.encode(a3, p3, f4), c4 = this.font.loca.encode(i3.offsets, p3), g2 = { cmap: this.font.cmap.raw(), glyf: i3.table, loca: c4, hmtx: this.font.hmtx.raw(), hhea: this.font.hhea.raw(), maxp: this.font.maxp.raw(), post: this.font.post.raw(), name: this.font.name.raw(), head: this.font.head.encode(e2) }, this.font.os2.exists && (g2["OS/2"] = this.font.os2.raw()), this.font.directory.encode(g2);
     }, t3;
   }();
   E.API.PDFObject = function() {
@@ -28489,7 +29103,7 @@
     return __async(this, null, function* () {
       const containers = [];
       for (let i3 = 0; i3 < numContainers; i3++) {
-        containers.push(v4_default().toUpperCase());
+        containers.push(uuid.generate().toUpperCase());
       }
       yield renderAndDownload(googleFormURL, containers);
       downloadCSV(containers);
@@ -28510,7 +29124,7 @@
   function renderAndDownload(googleFormURL, codeUuids) {
     return __async(this, null, function* () {
       const doc = new E();
-      doc.setFontSize(7);
+      doc.setFontSize(9);
       const pageWidth = 210;
       const pageHeight = 297;
       const codePadding = 10;
@@ -28530,8 +29144,8 @@
         const y3 = Math.floor(pageIndex / 3);
         const posX = x2 * cellWidth;
         const posY = y3 * cellHeight;
-        const uuid = codeUuids[i3];
-        const qrCode = yield createQRCode(googleFormURL + uuid);
+        const uuid2 = codeUuids[i3];
+        const qrCode = yield createQRCode(googleFormURL + uuid2);
         doc.addImage({
           imageData: qrCode,
           x: posX + codePadding,
@@ -28539,7 +29153,7 @@
           width: cellWidth - codePadding * 2,
           height: cellHeight - codePadding * 2
         });
-        doc.text(uuid, posX + cellWidth / 2, posY + cellHeight - textOffset, { align: "center" });
+        doc.text(uuid2, posX + cellWidth / 2, posY + cellHeight - textOffset, { align: "center" });
       }
       doc.save("qrcodes.pdf");
     });
