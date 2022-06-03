@@ -34,7 +34,7 @@ make serve
 python3 -m http.serve 8080
 ```
 
-and navigate to [localhost:8080](https://localhost:8080).
+and navigate to [localhost:8080](http://localhost:8080).
 
 ## Support
 If you have problems with this application: reach out to:
