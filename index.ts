@@ -28,7 +28,7 @@ async function createContainers(numContainers: number): Promise<void> {
 }
 
 function downloadCSV(uuids: string[]): void {
-    const csvData = uuids.join('\n');
+    const csvData = ['id', ...uuids].join('\n');
     const blob = new Blob([csvData], {type: 'text/csv'});
     const url = URL.createObjectURL(blob);
 
