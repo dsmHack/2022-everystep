@@ -47,18 +47,27 @@ async function renderAndDownload(containers: string[]): Promise<void> {
     const height = 200;
 
     const columns = 3;
+
     const textHeight = 5;
     const cellWidth = width / columns;
     const cellHeight = cellWidth + textHeight;
 
-    // TODO: this should paginate somehow
     const rows = height / cellHeight;
+
+    const containersPerPage = rows * columns;
 
     doc.setFontSize(8);
 
     for (let i = 0; i < containers.length; i++) {
-        const x = i % 3;
-        const y = Math.floor(i / 3);
+        let z = i % containersPerPage;
+
+        const shouldPaginate = z % containersPerPage === 0;
+        if (shouldPaginate) {
+            doc.addPage();
+        }
+
+        const x = z % 3;
+        const y = Math.floor(z / 3);
 
         const posX = x * cellWidth;
         const posY = y * cellHeight;
