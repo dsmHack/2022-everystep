@@ -47,6 +47,8 @@ async function renderAndDownload(containers: string[]): Promise<void> {
     const width = 210;
     const height = 280;
 
+    const padding = 10;
+
     const columns = 3;
 
     const textHeight = 5;
@@ -78,14 +80,13 @@ async function renderAndDownload(containers: string[]): Promise<void> {
 
         doc.addImage({
             imageData: qrCode,
-            x: posX,
-            y: posY,
-            width: cellWidth,
-            height: cellHeight - textHeight,
+            x: posX + padding,
+            y: posY + padding,
+            width: cellWidth - (padding * 2),
+            height: cellHeight - textHeight - (padding * 2),
         });
 
-        // TODO: magic offset; can we center?
-        doc.text(uuid, posX + 10, posY + cellHeight - textHeight);
+        doc.text(uuid, posX + padding, posY + cellHeight - textHeight);
     }
 
     doc.save("qrcodes.pdf");
