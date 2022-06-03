@@ -15,13 +15,15 @@ function main() {
     }
 }
 
-function createContainers(numContainers: number): void {
+// @ts-ignore
+async function createContainers(numContainers: number): Promise<void> {
     const uuids: string[] = [];
     for (let i = 0; i < numContainers; i++) {
         uuids.push(uuid().toUpperCase());
     }
 
     downloadCSV(uuids);
+    await renderAndDownload(uuids);
 }
 
 function downloadCSV(uuids: string[]): void {
@@ -39,7 +41,7 @@ function downloadCSV(uuids: string[]): void {
 }
 
 // @ts-ignore
-const renderAndDownload = async (containers: string[]) => {
+async function renderAndDownload(containers: string[]): Promise<void> {
     const doc = new jsPDF();
 
     // TODO: these are random; the fit could be much better. determine the unit, and convert A4 to it. add padding.
@@ -81,13 +83,4 @@ const renderAndDownload = async (containers: string[]) => {
     }
 
     doc.save("qrcodes.pdf");
-};
-
-renderAndDownload([
-    'f7b8d034-cc5b-4cd7-8447-c82df012677a',
-    'f7b8d034-cc5b-4cd7-8447-c82df012677a',
-    'f7b8d034-cc5b-4cd7-8447-c82df012677a',
-    'f7b8d034-cc5b-4cd7-8447-c82df012677a',
-    'f7b8d034-cc5b-4cd7-8447-c82df012677a',
-    'f7b8d034-cc5b-4cd7-8447-c82df012677a',
-]).then();
+}
