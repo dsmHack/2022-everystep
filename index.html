@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QR Code Generator</title>
+    <script type="module" src="out.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-header">
+                Create Cheer Box Labels
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <p class="col">This generator will create IDs and QR codes for Cheer Boxes. The IDs will also be downloaded into CSV format and need to be manually added to the main spreadsheet of Cheer Boxes.</p>
+                </div>
+                <div class="row mb-3">
+                    <label for="googleFormURL" class="col-sm-5 col-form-label">Google Form URL:</label>
+                    <div class="col-sm-5">
+                        <input type="text" class="form-control" id="googleFormURL">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="numberOfContainers" class="col-sm-5 col-form-label">Number of Labels:</label>
+                    <div class="col-sm-5">
+                        <input type="number" class="form-control" id="numberOfContainers">
+                    </div>
+                </div>
+                <button disabled type="submit" id="createContainers" class="btn btn-primary">Create Cheer Box Labels</button>
+            </div>
+        </div>
+    </div>
+    <div id="renderOutputContainer" style="display: none">
+    </div>
+</body>
+<footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+</footer>
+</html>
