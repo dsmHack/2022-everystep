@@ -40,50 +40,46 @@ function downloadCSV(containers: string[]): void {
     URL.revokeObjectURL(url);
 }
 
-async function renderAndDownload(containers: string[]): Promise<void> {
+async function renderAndDownload(codeUuids: string[]): Promise<void> {
     const doc = new jsPDF();
-
-    // TODO: these are random; the fit could be much better. determine the unit, and convert A4 to it. add padding.
-    const width = 210;
-    const height = 280;
-
-    const padding = 10;
-
-    const columns = 3;
-
-    const textOffset = 5;
-    const cellWidth = width / columns;
-    const cellHeight = cellWidth + textOffset;
-
-    const rows = Math.floor(height / cellHeight);
-
-    const containersPerPage = rows * columns;
-
     doc.setFontSize(7);
 
-    for (let i = 0; i < containers.length; i++) {
-        let z = i % containersPerPage;
+    // TODO: these are random; the fit could be much better. determine the unit, and convert A4 to it. add padding.
+    const pageWidth = 210;
+    const pageHeight = 280;
 
-        const shouldPaginate = i !== 0 && z % containersPerPage === 0;
+    const codePadding = 10;
+    const textOffset = 5;
+
+    const columns = 3;
+    const cellWidth = pageWidth / columns;
+    const cellHeight = cellWidth + textOffset;
+    const rows = Math.floor(pageHeight / cellHeight);
+    const codesPerPage = rows * columns;
+
+    for (let codeIndex = 0; codeIndex < codeUuids.length; codeIndex++) {
+        let pageIndex = codeIndex % codesPerPage;
+
+        const shouldPaginate = codeIndex !== 0 && pageIndex % codesPerPage === 0;
         if (shouldPaginate) {
             doc.addPage();
         }
 
-        const x = z % 3;
-        const y = Math.floor(z / 3);
+        const x = pageIndex % 3;
+        const y = Math.floor(pageIndex / 3);
 
         const posX = x * cellWidth;
         const posY = y * cellHeight;
 
-        const uuid = containers[i];
+        const uuid = codeUuids[codeIndex];
         const qrCode = await createQRCode(uuid);
 
         doc.addImage({
             imageData: qrCode,
-            x: posX + padding,
-            y: posY + padding,
-            width: cellWidth - (padding * 2),
-            height: cellHeight - (padding * 2),
+            x: posX + codePadding,
+            y: posY + codePadding,
+            width: cellWidth - (codePadding * 2),
+            height: cellHeight - (codePadding * 2),
         });
 
         doc.text(uuid, posX + (cellWidth / 2), posY + cellHeight - textOffset, { align: 'center' });
