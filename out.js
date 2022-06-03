@@ -29078,11 +29078,11 @@
   var qrcode = __toESM(require_qr(), 1);
   window.onload = main;
   function main() {
+    const labelExportFileInput = document.getElementById("labelExportFile");
     const googleFormURLInput = document.getElementById("googleFormURL");
-    const numberOfContainerInput = document.getElementById("numberOfContainers");
     const createContainersButton = document.getElementById("createContainers");
-    numberOfContainerInput.oninput = () => {
-      createContainersButton.disabled = !numberOfContainerInput.value;
+    labelExportFileInput.onchange = (event) => {
+      console.log("Upload: ", event);
     };
     const googleFormURLKey = "google-form-url";
     googleFormURLInput.value = localStorage.getItem(googleFormURLKey);
@@ -29090,17 +29090,18 @@
       localStorage.setItem(googleFormURLKey, googleFormURLInput.value);
     };
     createContainersButton.onclick = () => __async(this, null, function* () {
-      numberOfContainerInput.disabled = true;
+      labelExportFileInput.disabled = true;
       createContainersButton.disabled = true;
       googleFormURLInput.disabled = true;
-      yield createContainers(googleFormURLInput.value, parseFloat(numberOfContainerInput.value));
-      numberOfContainerInput.disabled = false;
+      yield createContainers(googleFormURLInput.value);
+      labelExportFileInput.disabled = false;
       createContainersButton.disabled = false;
       googleFormURLInput.disabled = false;
     });
   }
-  function createContainers(googleFormURL, numContainers) {
+  function createContainers(googleFormURL) {
     return __async(this, null, function* () {
+      const numContainers = 5;
       const containers = [];
       for (let i3 = 0; i3 < numContainers; i3++) {
         containers.push(uuid.generate().toUpperCase());

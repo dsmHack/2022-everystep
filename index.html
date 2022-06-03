@@ -17,21 +17,15 @@
                     <p class="col">This generator will create IDs and QR codes for Cheer Boxes. The IDs will also be downloaded into CSV format and need to be manually added to the main spreadsheet of Cheer Boxes.</p>
                 </div>
                 <div class="row mb-3">
-                    <label for="importFile" class="col-sm-5 col-form-label">Label Export File:</label>
+                    <label for="labelExportFile" class="col-sm-5 col-form-label">Label Export File:</label>
                     <div class="col-sm-7">
-                        <input class="form-control" type="file" id="importFile">
+                        <input class="form-control" type="file" id="labelExportFile">
                     </div>
                 </div>
                 <div class="row mb-3">
                     <label for="googleFormURL" class="col-sm-5 col-form-label">Google Form URL:</label>
                     <div class="col-sm-7">
                         <input type="text" class="form-control" id="googleFormURL">
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <label for="numberOfContainers" class="col-sm-5 col-form-label">Number of Labels:</label>
-                    <div class="col-sm-7">
-                        <input type="number" class="form-control" id="numberOfContainers">
                     </div>
                 </div>
                 <button disabled type="submit" id="createContainers" class="btn btn-primary">Create Cheer Box Labels</button>
