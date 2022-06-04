@@ -5,6 +5,9 @@ import { read } from 'xlsx';
 const EXPORT_SHEET_NAME = 'qr_export';
 const EXPORT_FILE_NAME = 'qrcodes.pdf';
 
+const DEFAULT_LABEL_WIDTH = '4';
+const DEFAULT_LABEL_HEIGHT = '6';
+
 const COL_CHEERBOX_ID = 'cheerboxid';
 const COL_LAST_NAME = 'recipient last name';
 const COL_FIRST_NAME = 'recipient first name';
@@ -13,10 +16,11 @@ const COL_CITY = 'recipient city';
 const COL_STATE = 'recipient state';
 const COL_ZIPCODE = 'recipient zip code';
 const COL_PHASE = 'wrapping phase';
+const COL_URL = 'qr url';
 
 const createLabelsButton = document.getElementById('createLabels') as HTMLInputElement;
-const labelExportFileInput = document.getElementById('labelExportFile') as HTMLInputElement;
-const formUrlPrefixInput = document.getElementById('formUrlPrefix') as HTMLInputElement;
+const exportFileInput = document.getElementById('exportFileInput') as HTMLInputElement;
+const exportPasteInput = document.getElementById('exportPasteInput') as HTMLInputElement;
 const labelWidthInput = document.getElementById('labelWidth') as HTMLInputElement;
 const labelHeightInput = document.getElementById('labelHeight') as HTMLInputElement;
 
@@ -27,16 +31,24 @@ window.onload = main;
 function main() {
     // Helper for [en/dis]abling all inputs during PDF-export
     const setFormEnabled = (enabled: boolean) => {
-        labelExportFileInput.disabled = !enabled;
+        exportFileInput.disabled = !enabled;
+        exportPasteInput.disabled = !enabled;
         createLabelsButton.disabled = !enabled;
-        formUrlPrefixInput.disabled = !enabled;
         labelWidthInput.disabled = !enabled;
         labelHeightInput.disabled = !enabled;
     };
 
     // Helper for binding a text field to `localStorage` to persist values between sessions
-    const setupInputLocalStorage = (input: HTMLInputElement, key: string) => {
+    const setupInputLocalStorage = (input: HTMLInputElement, key: string, initial: string = null) => {
+        // Default the key value
+        if (initial !== null && localStorage[key] === null) {
+            localStorage.setItem(key, initial);
+        }
+
+        // Grab the key's value
         input.value = localStorage.getItem(key);
+
+        // When the associated field's value changes, update the stored value
         input.oninput = async () => {
             localStorage.setItem(key, input.value);
             await updateUI();
@@ -44,9 +56,9 @@ function main() {
     };
 
     // Processes XLSX files when selected in the file-picker
-    labelExportFileInput.onchange = async (_) => {
-        if (labelExportFileInput.files.length > 0) {
-            await loadExportFile(labelExportFileInput.files[0]);
+    exportFileInput.onchange = async (_) => {
+        if (exportFileInput.files.length > 0) {
+            await loadExportFile(exportFileInput.files[0]);
         } else {
             boxInfos = null;
         }
@@ -55,7 +67,7 @@ function main() {
     };
 
     // Processes paste actions and attempts to load spreadsheet data
-    document.onpaste = async (event) => {
+    exportPasteInput.onpaste = async (event) => {
         // Do not process the paste action if we're actively exporting
         if (performingExport) {
             return false;
@@ -64,7 +76,7 @@ function main() {
         const pastedText = event.clipboardData.getData('text/plain');
 
         // Clear any previous file selection
-        labelExportFileInput.value = '';
+        exportFileInput.value = '';
 
         if (pastedText != null && pastedText.length > 0) {
             loadExportPaste(pastedText);
@@ -74,14 +86,16 @@ function main() {
 
         await updateUI();
 
-        // Stop event propagation
+        // Stop event propagation and clear the input's value
         return false;
     };
 
+    // Always clear the paste input
+    exportPasteInput.onchange = () => exportPasteInput.value = '';
+
     // Configure text inputs with `localStorage` persistence between sessions
-    setupInputLocalStorage(formUrlPrefixInput, 'form-url-prefix');
-    setupInputLocalStorage(labelWidthInput, 'label-width');
-    setupInputLocalStorage(labelHeightInput, 'label-height');
+    setupInputLocalStorage(labelWidthInput, 'label-width', DEFAULT_LABEL_WIDTH);
+    setupInputLocalStorage(labelHeightInput, 'label-height', DEFAULT_LABEL_HEIGHT);
 
     // Handle export requests
     createLabelsButton.onclick = async () => {
@@ -92,7 +106,6 @@ function main() {
         const doc = await createShippingPDF(
             parseFloat(labelHeightInput.value),
             parseFloat(labelWidthInput.value),
-            formUrlPrefixInput.value,
         );
 
         // Download the shipping labels
@@ -189,13 +202,11 @@ async function updateUI() {
     const table = document.getElementById('previewTable');
     const tableBody = document.getElementById('previewTableBody');
     const text = document.getElementById('previewTableText');
-    const previewEmbed = document.getElementById('pdfPreviewEmbed') as HTMLEmbedElement;
 
     // Disable the submission button if the form is in an invalid state
     createLabelsButton.disabled = boxInfos === null
         || labelWidthInput.value === null || labelWidthInput.value.length === 0
-        || labelHeightInput.value === null || labelHeightInput.value.length === 0
-        || formUrlPrefixInput.value === null || formUrlPrefixInput.value.length === 0;
+        || labelHeightInput.value === null || labelHeightInput.value.length === 0;
 
     // Clear the previous table preview contents
     [...tableBody.children].forEach(child => tableBody.removeChild(child));
@@ -204,12 +215,10 @@ async function updateUI() {
     if (boxInfos === null) {
         table.style.display = 'none';
         text.style.display = 'block';
-        previewEmbed.style.display = 'none';
         return;
     } else {
         table.style.display = 'table';
         text.style.display = 'none';
-        previewEmbed.style.display = 'block';
     }
 
     // Populate the preview table with the loaded boxes
@@ -233,23 +242,10 @@ async function updateUI() {
 
         tableBody.appendChild(row);
     });
-
-    // Populate the preview
-
-    const doc = await createShippingPDF(
-        parseFloat(labelHeightInput.value),
-        parseFloat(labelWidthInput.value),
-        formUrlPrefixInput.value,
-    );
-
-    const buffer = await doc.output('arraybuffer');
-    const file = new Blob([buffer], { type: 'application/pdf' });
-    const fileUrl = URL.createObjectURL(file);
-    previewEmbed.src = fileUrl;
 }
 
 /// Given a label's dimensions, renders QR codes and associated metadata into a PDF.
-async function createShippingPDF(height: number, width: number, formUrlPrefix: string): Promise<jsPDF> {
+async function createShippingPDF(height: number, width: number): Promise<jsPDF> {
     const format = [width, height];
     const doc = new jsPDF({ unit: 'in', format });
 
@@ -265,7 +261,7 @@ async function createShippingPDF(height: number, width: number, formUrlPrefix: s
         }
 
         // Generate a QR code by concatenating the form URL and cheerbox ID
-        const qrCode = await createQRCode(formUrlPrefix + cheerboxId);
+        const qrCode = await createQRCode(boxInfo[COL_URL]);
 
         // Locate the image in the PDF
         doc.addImage({
