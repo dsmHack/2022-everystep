@@ -13,94 +13,99 @@
                 Create Cheer Box Labels
             </div>
             <div class="card-body">
+                <p class="col text-center" style="font-size: 14px;">
+                    This webpage generates printable QR code labels for Cheer Boxes. Box details can be provided by
+                    exporting the "cheerbox_master" spreadsheet or by copying and pasting specific rows (note: the
+                    header <em>must</em> be included in your selection when you copy, so consider using filters to
+                    limit the rows included in your selection).
+                </p>
+
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="row mb-3">
-                            <label for="labelExportFile" class="col-sm-4 col-form-label">Label Export File:</label>
-                            <div class="col-sm-8">
-                                <input class="form-control" type="file" accept=".xlsx" id="labelExportFile">
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <label class="col-sm-4 col-form-label">Label Dimensions:</label>
-                            <div class="col-sm-4">
-                                <div class="input-group">
-                                    <input id="labelWidth" type="text" class="form-control" placeholder="Width (inches)">
-                                    <span class="input-group-text">inches</span>
-                                </div>
-                            </div>
-                            <div class="col-sm-4">
-                                <div class="input-group">
-                                    <input id="labelHeight" type="text" class="form-control" placeholder="Height (inches)">
-                                    <span class="input-group-text">inches</span>
+                    <div class="col-md-6 p-3">
+                        <h4 class="text-center">Upload <small class="text-muted">from Excel</small></h4>
+                        <div class="mb-3 mt-4 row">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="p-3">
+                                        <input class="form-control form-control-lg" id="exportFileInput" type="file" accept=".xlsx">
+                                    </div>
+                                    <ol>
+                                        <li>Open the "cheerbox_master" Excel spreadsheet</li>
+                                        <li>Navigate to "File" > "Save As" > "Download a Copy"</li>
+                                        <li>Click the file upload above and select the just-downloaded ".xlsx" file</li>
+                                    </ol>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="row mb-3">
-                            <label for="formUrlPrefix" class="col-sm-4 col-form-label">Form URL Prefix:</label>
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control" id="formUrlPrefix">
+                    </div>
+                    <div class="col-md-6 p-3">
+                        <h4 class="text-center">Paste <small class="text-muted">from Excel</small></h4>
+                        <div class="mb-3 mt-4 row">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="p-3">
+                                        <div class="input-group input-group-lg">
+                                            <input id="exportPasteInput" type="text" class="form-control" placeholder="Click here and paste rows">
+                                        </div>
+                                    </div>
+                                    <ol>
+                                        <li>Open the "cheerbox_master" spreadsheet and "qr_export" sheet</li>
+                                        <li>Select one or more rows in the spreadsheet and copy them with CTRL+C</li>
+                                        <li>Click anywhere on this webpage and paste with CTRL+V</li>
+                                    </ol>
+                                </div>
                             </div>
                         </div>
-
-                        <button type="submit" id="createLabels" class="btn btn-primary">Create Cheer Box Labels</button>
                     </div>
+                </div>
 
-                    <div class="col-md-6">
-                        <embed id="pdfPreviewEmbed" src="" width="100%" height="375" type="application/pdf" />
-                    </div>
+                <div class="d-flex justify-content-center">
+                    <button type="submit" id="createLabels" class="btn btn-primary">Create Cheer Box Labels</button>
                 </div>
 
                 <hr />
 
                 <div class="container" style="max-height: 200px; overflow-y: auto;">
-                            <table class="table table-sm" id="previewTable">
-                                <thead>
-                                <tr>
-                                    <th>Code</th>
-                                    <th>Phase</th>
-                                    <th>Last Name</th>
-                                    <th>First Name</th>
-                                    <th>Address</th>
-                                    <th>City</th>
-                                    <th>State</th>
-                                    <th>Zip Code</th>
-                                </tr>
-                                </thead>
-                                <tbody id="previewTableBody"></tbody>
-                            </table>
-                            <div id="previewTableText" class="text-muted " style="text-align: center;">
-                                <em>A preview of your export data will appear here.</em>
-                            </div>
-                        </div>
+                    <table class="table table-sm" id="previewTable">
+                        <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Phase</th>
+                            <th>Last Name</th>
+                            <th>First Name</th>
+                            <th>Address</th>
+                            <th>City</th>
+                            <th>State</th>
+                            <th>Zip Code</th>
+                        </tr>
+                        </thead>
+                        <tbody id="previewTableBody"></tbody>
+                    </table>
+                    <div id="previewTableText" class="text-muted " style="text-align: center;">
+                        <em>A preview of your export data will appear here.</em>
+                    </div>
+                </div>
 
                 <hr />
 
-                <div class="row">
-                    <p class="col">
-                        This webpage generates printable QR code labels for Cheer Boxes. Box details can be provided by
-                        exporting the "cheerbox_master" spreadsheet or by copying and pasting specific rows (note: the
-                        header <em>must</em> be included in your selection when you copy, so consider using filters to
-                        limit the rows included in your selection).
-                    </p>
+                <p class="col text-center" style="font-size: 14px;">
+                    This webpage will generate labels for the dimensions specified below.
+                </p>
+
+                <div class="d-flex justify-content-center">
                     <div class="row">
-                        <div class="col-md-6">
-                            <b>Exporting from Excel</b>
-                            <ol>
-                                <li>Open the "cheerbox_master" Excel spreadsheet</li>
-                                <li>Navigate to "File" > "Save As" > "Download a Copy"</li>
-                                <li>Click the file upload below and select the just-downloaded ".xlsx" file</li>
-                            </ol>
+                        <label class="col-sm-4 col-form-label">Label Dimensions:</label>
+                        <div class="col-sm-4">
+                            <div class="input-group">
+                                <input id="labelWidth" type="text" class="form-control" placeholder="Width (inches)">
+                                <span class="input-group-text">inches</span>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <b>Copy/pasting from Excel</b>
-                            <ol>
-                                <li>Open the "cheerbox_master" spreadsheet and "qr_export" sheet</li>
-                                <li>Select one or more rows in the spreadsheet and copy them with CTRL+C</li>
-                                <li>Click anywhere on this webpage and paste with CTRL+V</li>
-                            </ol>
+                        <div class="col-sm-4">
+                            <div class="input-group">
+                                <input id="labelHeight" type="text" class="form-control" placeholder="Height (inches)">
+                                <span class="input-group-text">inches</span>
+                            </div>
                         </div>
                     </div>
                 </div>

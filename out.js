@@ -50379,6 +50379,8 @@
   // index.ts
   var EXPORT_SHEET_NAME = "qr_export";
   var EXPORT_FILE_NAME = "qrcodes.pdf";
+  var DEFAULT_LABEL_WIDTH = "4";
+  var DEFAULT_LABEL_HEIGHT = "6";
   var COL_CHEERBOX_ID = "cheerboxid";
   var COL_LAST_NAME = "recipient last name";
   var COL_FIRST_NAME = "recipient first name";
@@ -50387,9 +50389,10 @@
   var COL_STATE = "recipient state";
   var COL_ZIPCODE = "recipient zip code";
   var COL_PHASE = "wrapping phase";
+  var COL_URL = "qr url";
   var createLabelsButton = document.getElementById("createLabels");
-  var labelExportFileInput = document.getElementById("labelExportFile");
-  var formUrlPrefixInput = document.getElementById("formUrlPrefix");
+  var exportFileInput = document.getElementById("exportFileInput");
+  var exportPasteInput = document.getElementById("exportPasteInput");
   var labelWidthInput = document.getElementById("labelWidth");
   var labelHeightInput = document.getElementById("labelHeight");
   var boxInfos = null;
@@ -50397,33 +50400,36 @@
   window.onload = main;
   function main() {
     const setFormEnabled = (enabled) => {
-      labelExportFileInput.disabled = !enabled;
+      exportFileInput.disabled = !enabled;
+      exportPasteInput.disabled = !enabled;
       createLabelsButton.disabled = !enabled;
-      formUrlPrefixInput.disabled = !enabled;
       labelWidthInput.disabled = !enabled;
       labelHeightInput.disabled = !enabled;
     };
-    const setupInputLocalStorage = (input, key) => {
+    const setupInputLocalStorage = (input, key, initial = null) => {
+      if (initial !== null && localStorage[key] === null) {
+        localStorage.setItem(key, initial);
+      }
       input.value = localStorage.getItem(key);
       input.oninput = () => __async(this, null, function* () {
         localStorage.setItem(key, input.value);
         yield updateUI();
       });
     };
-    labelExportFileInput.onchange = (_3) => __async(this, null, function* () {
-      if (labelExportFileInput.files.length > 0) {
-        yield loadExportFile(labelExportFileInput.files[0]);
+    exportFileInput.onchange = (_3) => __async(this, null, function* () {
+      if (exportFileInput.files.length > 0) {
+        yield loadExportFile(exportFileInput.files[0]);
       } else {
         boxInfos = null;
       }
       yield updateUI();
     });
-    document.onpaste = (event) => __async(this, null, function* () {
+    exportPasteInput.onpaste = (event) => __async(this, null, function* () {
       if (performingExport) {
         return false;
       }
       const pastedText = event.clipboardData.getData("text/plain");
-      labelExportFileInput.value = "";
+      exportFileInput.value = "";
       if (pastedText != null && pastedText.length > 0) {
         loadExportPaste(pastedText);
       } else {
@@ -50432,13 +50438,13 @@
       yield updateUI();
       return false;
     });
-    setupInputLocalStorage(formUrlPrefixInput, "form-url-prefix");
-    setupInputLocalStorage(labelWidthInput, "label-width");
-    setupInputLocalStorage(labelHeightInput, "label-height");
+    exportPasteInput.onchange = () => exportPasteInput.value = "";
+    setupInputLocalStorage(labelWidthInput, "label-width", DEFAULT_LABEL_WIDTH);
+    setupInputLocalStorage(labelHeightInput, "label-height", DEFAULT_LABEL_HEIGHT);
     createLabelsButton.onclick = () => __async(this, null, function* () {
       performingExport = true;
       setFormEnabled(false);
-      const doc = yield createShippingPDF(parseFloat(labelHeightInput.value), parseFloat(labelWidthInput.value), formUrlPrefixInput.value);
+      const doc = yield createShippingPDF(parseFloat(labelHeightInput.value), parseFloat(labelWidthInput.value));
       doc.save(EXPORT_FILE_NAME);
       performingExport = false;
       setFormEnabled(true);
@@ -50499,18 +50505,15 @@
       const table = document.getElementById("previewTable");
       const tableBody = document.getElementById("previewTableBody");
       const text = document.getElementById("previewTableText");
-      const previewEmbed = document.getElementById("pdfPreviewEmbed");
-      createLabelsButton.disabled = boxInfos === null || labelWidthInput.value === null || labelWidthInput.value.length === 0 || labelHeightInput.value === null || labelHeightInput.value.length === 0 || formUrlPrefixInput.value === null || formUrlPrefixInput.value.length === 0;
+      createLabelsButton.disabled = boxInfos === null || labelWidthInput.value === null || labelWidthInput.value.length === 0 || labelHeightInput.value === null || labelHeightInput.value.length === 0;
       [...tableBody.children].forEach((child) => tableBody.removeChild(child));
       if (boxInfos === null) {
         table.style.display = "none";
         text.style.display = "block";
-        previewEmbed.style.display = "none";
         return;
       } else {
         table.style.display = "table";
         text.style.display = "none";
-        previewEmbed.style.display = "block";
       }
       boxInfos.forEach((boxInfo) => {
         const row = document.createElement("tr");
@@ -50529,14 +50532,9 @@
         addCell(boxInfo[COL_ZIPCODE]);
         tableBody.appendChild(row);
       });
-      const doc = yield createShippingPDF(parseFloat(labelHeightInput.value), parseFloat(labelWidthInput.value), formUrlPrefixInput.value);
-      const buffer = yield doc.output("arraybuffer");
-      const file = new Blob([buffer], { type: "application/pdf" });
-      const fileUrl = URL.createObjectURL(file);
-      previewEmbed.src = fileUrl;
     });
   }
-  function createShippingPDF(height, width, formUrlPrefix) {
+  function createShippingPDF(height, width) {
     return __async(this, null, function* () {
       const format = [width, height];
       const doc = new E({ unit: "in", format });
@@ -50547,7 +50545,7 @@
         if (i3 > 0) {
           doc.addPage(format);
         }
-        const qrCode = yield createQRCode(formUrlPrefix + cheerboxId);
+        const qrCode = yield createQRCode(boxInfo[COL_URL]);
         doc.addImage({
           imageData: qrCode,
           x: width * 0.15,
