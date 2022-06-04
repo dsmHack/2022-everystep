@@ -50377,125 +50377,181 @@
   var version = XLSX.version;
 
   // index.ts
+  var EXPORT_SHEET_NAME = "qr_export";
+  var EXPORT_FILE_NAME = "qrcodes.pdf";
+  var COL_CHEERBOX_ID = "cheerboxid";
+  var COL_LAST_NAME = "recipient last name";
+  var COL_FIRST_NAME = "recipient first name";
+  var COL_ADDRESS = "recipient street address";
+  var COL_CITY = "recipient city";
+  var COL_STATE = "recipient state";
+  var COL_ZIPCODE = "recipient zip code";
+  var COL_PHASE = "wrapping phase";
+  var createLabelsButton = document.getElementById("createLabels");
+  var labelExportFileInput = document.getElementById("labelExportFile");
+  var googleFormURLInput = document.getElementById("googleFormURL");
+  var labelWidthInput = document.getElementById("labelWidth");
+  var labelHeightInput = document.getElementById("labelHeight");
+  var boxInfos = null;
+  var performingExport = false;
   window.onload = main;
   function main() {
-    const labelExportFileInput = document.getElementById("labelExportFile");
-    const googleFormURLInput = document.getElementById("googleFormURL");
-    const createContainersButton = document.getElementById("createContainers");
-    const googleFormURLKey = "google-form-url";
-    googleFormURLInput.value = localStorage.getItem(googleFormURLKey);
-    googleFormURLInput.oninput = () => {
-      localStorage.setItem(googleFormURLKey, googleFormURLInput.value);
+    const setFormEnabled = (enabled) => {
+      labelExportFileInput.disabled = !enabled;
+      createLabelsButton.disabled = !enabled;
+      googleFormURLInput.disabled = !enabled;
+      labelWidthInput.disabled = !enabled;
+      labelHeightInput.disabled = !enabled;
     };
-    createContainersButton.onclick = () => __async(this, null, function* () {
-      labelExportFileInput.disabled = true;
-      createContainersButton.disabled = true;
-      googleFormURLInput.disabled = true;
-      yield createContainers(googleFormURLInput.value, labelExportFileInput.files[0]);
-      labelExportFileInput.disabled = false;
-      createContainersButton.disabled = false;
-      googleFormURLInput.disabled = false;
+    const setupInputLocalStorage = (input, key) => {
+      input.value = localStorage.getItem(key);
+      input.oninput = () => {
+        localStorage.setItem(key, input.value);
+        updateUI();
+      };
+    };
+    labelExportFileInput.onchange = (_3) => __async(this, null, function* () {
+      if (labelExportFileInput.files.length > 0) {
+        yield loadExportFile(labelExportFileInput.files[0]);
+      } else {
+        boxInfos = null;
+      }
+      updateUI();
     });
+    document.onpaste = (event) => {
+      if (performingExport) {
+        return false;
+      }
+      const pastedText = event.clipboardData.getData("text/plain");
+      labelExportFileInput.value = "";
+      if (pastedText != null && pastedText.length > 0) {
+        loadExportPaste(pastedText);
+      } else {
+        boxInfos = null;
+      }
+      updateUI();
+      return false;
+    };
+    setupInputLocalStorage(googleFormURLInput, "google-form-url");
+    setupInputLocalStorage(labelWidthInput, "label-width");
+    setupInputLocalStorage(labelHeightInput, "label-height");
+    createLabelsButton.onclick = () => __async(this, null, function* () {
+      performingExport = true;
+      setFormEnabled(false);
+      yield createShippingPDF(parseFloat(labelHeightInput.value), parseFloat(labelWidthInput.value), googleFormURLInput.value);
+      performingExport = false;
+      setFormEnabled(true);
+    });
+    updateUI();
   }
-  function createContainers(googleFormURL, exportFile) {
+  function loadExportFile(exportFile) {
     return __async(this, null, function* () {
       const contents = yield exportFile.arrayBuffer();
       const workbook = readSync(contents);
-      const worksheet = workbook.Sheets["qr_export"];
-      let updateMap = /* @__PURE__ */ new Map();
-      const boxInfos = /* @__PURE__ */ new Map();
+      const worksheet = workbook.Sheets[EXPORT_SHEET_NAME];
+      const headers = /* @__PURE__ */ new Map();
+      const boxes = /* @__PURE__ */ new Map();
       for (const cell in worksheet) {
         const col = cell.substring(0, 1);
         const row = cell.substring(1);
-        if (row === "ref" || row == "margins") {
+        if (row === "ref" || row == "margins" || row == "autofilter") {
           continue;
         }
         const cellValue = worksheet[cell].v.toString();
         if (row === "1") {
-          switch (cellValue.toLowerCase().trim()) {
-            case "cheerboxid":
-              updateMap[col] = (info, val) => info.code = val;
-              break;
-            case "recipient first name":
-              updateMap[col] = (info, val) => info.firstName = val;
-              break;
-            case "recipient last name":
-              updateMap[col] = (info, val) => info.lastName = val;
-              break;
-            case "recipient street address":
-              updateMap[col] = (info, val) => info.address = val;
-              break;
-            case "recipient city":
-              updateMap[col] = (info, val) => info.city = val;
-              break;
-            case "recipient state":
-              updateMap[col] = (info, val) => info.state = val;
-              break;
-            case "recipient zip code":
-              updateMap[col] = (info, val) => info.zipcode = val;
-              break;
-          }
+          const cleanedHeaderKey = cellValue.toLowerCase().trim();
+          headers.set(col, cleanedHeaderKey);
           continue;
         }
-        if (!boxInfos.has(row)) {
-          boxInfos.set(row, {
-            code: "N/A",
-            firstName: "N/A",
-            lastName: "N/A",
-            address: "N/A",
-            city: "N/A",
-            state: "N/A",
-            zipcode: "N/A",
-            phase: "N/A"
-          });
+        if (!boxes.has(row)) {
+          boxes.set(row, /* @__PURE__ */ new Map());
         }
-        const boxInfo = boxInfos.get(row);
-        updateMap[col](boxInfo, cellValue);
+        const headerKey = headers.get(col);
+        boxes.get(row)[headerKey] = cellValue;
       }
-      const boxInfosFlattened = Array.from(boxInfos.values());
-      yield createShippingPDF(6, 4, googleFormURL, boxInfosFlattened);
-      downloadCSV(boxInfosFlattened);
+      boxInfos = Array.from(boxes.values());
     });
   }
-  function downloadCSV(boxInfos) {
-    const csvData = ["id", ...boxInfos.map((b2) => b2.code)].join("\n");
-    const blob = new Blob([csvData], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const downloadLink = document.createElement("a");
-    downloadLink.href = url;
-    downloadLink.download = "containers.csv";
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    URL.revokeObjectURL(url);
+  function loadExportPaste(tabDelimited) {
+    const lines = tabDelimited.split("\n");
+    if (lines.length < 2) {
+      boxInfos = null;
+      return;
+    }
+    const headerRow = lines[0].split("	");
+    const boxes = /* @__PURE__ */ new Map();
+    for (let i3 = 1; i3 < lines.length; i3++) {
+      const line = lines[i3];
+      const fields = line.split("	");
+      const box = /* @__PURE__ */ new Map();
+      for (let j2 = 0; j2 < fields.length; j2++) {
+        const cellValue = fields[j2];
+        const cleanedHeaderKey = headerRow[j2].toLowerCase().trim();
+        box[cleanedHeaderKey] = cellValue;
+      }
+      boxes.set(i3, box);
+    }
+    boxInfos = Array.from(boxes.values());
   }
-  function createShippingPDF(lengthInches, widthInches, googleFormURL, boxInfos) {
+  function updateUI() {
+    const table = document.getElementById("previewTable");
+    const tableBody = document.getElementById("previewTableBody");
+    const text = document.getElementById("previewTableText");
+    createLabelsButton.disabled = boxInfos === null || labelWidthInput.value === null || labelWidthInput.value.length === 0 || labelHeightInput.value === null || labelHeightInput.value.length === 0 || googleFormURLInput.value === null || googleFormURLInput.value.length === 0;
+    [...tableBody.children].forEach((child) => tableBody.removeChild(child));
+    if (boxInfos === null) {
+      table.style.display = "none";
+      text.style.display = "block";
+      return;
+    } else {
+      table.style.display = "table";
+      text.style.display = "none";
+    }
+    boxInfos.forEach((boxInfo) => {
+      const row = document.createElement("tr");
+      const addCell = (data) => {
+        const cell = document.createElement("td");
+        cell.textContent = data;
+        row.appendChild(cell);
+      };
+      addCell(boxInfo[COL_CHEERBOX_ID]);
+      addCell(boxInfo[COL_PHASE]);
+      addCell(boxInfo[COL_FIRST_NAME]);
+      addCell(boxInfo[COL_LAST_NAME]);
+      addCell(boxInfo[COL_ADDRESS]);
+      addCell(boxInfo[COL_CITY]);
+      addCell(boxInfo[COL_STATE]);
+      addCell(boxInfo[COL_ZIPCODE]);
+      tableBody.appendChild(row);
+    });
+  }
+  function createShippingPDF(height, width, googleFormURL) {
     return __async(this, null, function* () {
-      const format = [widthInches, lengthInches];
+      const format = [width, height];
       const doc = new E({ unit: "in", format });
       for (let i3 = 0; i3 < boxInfos.length; i3++) {
         const boxInfo = boxInfos[i3];
+        const cheerboxId = boxInfo[COL_CHEERBOX_ID];
         if (i3 > 0) {
           doc.addPage(format);
         }
-        const uuid = boxInfo.code;
-        const qrCode = yield createQRCode(googleFormURL + uuid);
+        const qrCode = yield createQRCode(googleFormURL + cheerboxId);
         doc.addImage({
           imageData: qrCode,
-          x: widthInches * 0.15,
-          y: widthInches * 0.2,
-          width: widthInches * 0.7,
-          height: widthInches * 0.7
+          x: width * 0.15,
+          y: width * 0.2,
+          width: width * 0.7,
+          height: width * 0.7
         });
         doc.setFontSize(26);
-        doc.text(boxInfo.code, widthInches / 2, widthInches * 0.15, { align: "center" });
+        doc.text(cheerboxId, width / 2, width * 0.15, { align: "center" });
         doc.setFontSize(18);
-        doc.text(`${boxInfo.lastName}, ${boxInfo.firstName} - ${boxInfo.phase}`, widthInches / 2, widthInches, { align: "center" });
+        doc.text(`${boxInfo[COL_LAST_NAME]}, ${boxInfo[COL_FIRST_NAME]} - ${boxInfo[COL_PHASE]}`, width / 2, width, { align: "center" });
         doc.setFontSize(16);
-        doc.text(boxInfo.address, widthInches / 2, widthInches * 1.1, { align: "center" });
-        doc.text(`${boxInfo.city}, ${boxInfo.state} ${boxInfo.zipcode}`, widthInches / 2, widthInches * 1.15, { align: "center" });
+        doc.text(boxInfo[COL_ADDRESS], width / 2, width * 1.1, { align: "center" });
+        doc.text(`${boxInfo[COL_CITY]}, ${boxInfo[COL_STATE]} ${boxInfo[COL_ZIPCODE]}`, width / 2, width * 1.15, { align: "center" });
       }
-      doc.save("qrcodes.pdf");
+      doc.save(EXPORT_FILE_NAME);
     });
   }
   function createQRCode(data) {
