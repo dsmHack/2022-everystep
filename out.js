@@ -50503,6 +50503,9 @@
         const cleanedHeaderKey = headerRow[j2].toLowerCase().trim();
         box[cleanedHeaderKey] = cellValue;
       }
+      if (box[COL_CHEERBOX_ID] === null || box[COL_CHEERBOX_ID].trim().length === 0) {
+        continue;
+      }
       boxes.set(i3, box);
     }
     boxInfos = Array.from(boxes.values());
@@ -50517,10 +50520,12 @@
       if (boxInfos === null) {
         table.style.display = "none";
         text.style.display = "block";
+        createLabelsButton.innerText = `Create Cheer Box Labels`;
         return;
       } else {
         table.style.display = "table";
         text.style.display = "none";
+        createLabelsButton.innerText = `Create ${boxInfos.length} Cheer Box Labels`;
       }
       boxInfos.forEach((boxInfo) => {
         var _a2, _b2;
