@@ -117,6 +117,7 @@ function main() {
             performingExport = false;
             setFormEnabled(true);
         } catch (e) {
+            console.log('Fatal error:', e);
             alert('Something went wrong, please reload the page and try again.');
         }
     }
