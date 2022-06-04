@@ -50452,6 +50452,7 @@
         performingExport = false;
         setFormEnabled(true);
       } catch (e2) {
+        console.log("Fatal error:", e2);
         alert("Something went wrong, please reload the page and try again.");
       }
     });
