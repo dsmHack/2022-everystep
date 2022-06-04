@@ -6,7 +6,7 @@ const EXPORT_SHEET_NAME = 'qr_export';
 const EXPORT_FILE_NAME = 'qrcodes.pdf';
 
 const DEFAULT_LABEL_WIDTH = '4';
-const DEFAULT_LABEL_HEIGHT = '6';
+const DEFAULT_LABEL_HEIGHT = '8';
 
 const COL_CHEERBOX_ID = 'cheerboxid';
 const COL_LAST_NAME = 'recipient last name';
@@ -17,6 +17,8 @@ const COL_STATE = 'recipient state';
 const COL_ZIPCODE = 'recipient zip code';
 const COL_PHASE = 'wrapping phase';
 const COL_URL = 'qr url';
+const COL_VOLUNTEER_LAST_NAME = 'volunteer last name';
+const COL_VOLUNTEER_FIRST_NAME = 'volunteer first name';
 
 const createLabelsButton = document.getElementById('createLabels') as HTMLInputElement;
 const exportFileInput = document.getElementById('exportFileInput') as HTMLInputElement;
@@ -237,6 +239,7 @@ async function updateUI() {
 
         addCell(boxInfo[COL_CHEERBOX_ID]);
         addCell(boxInfo[COL_PHASE]);
+        addCell((boxInfo[COL_VOLUNTEER_FIRST_NAME] ?? '') + ' ' + (boxInfo[COL_VOLUNTEER_LAST_NAME] ?? ''));
         addCell(boxInfo[COL_FIRST_NAME]);
         addCell(boxInfo[COL_LAST_NAME]);
         addCell(boxInfo[COL_ADDRESS]);
@@ -294,18 +297,47 @@ async function createShippingPDF(height: number, width: number): Promise<jsPDF> 
             { align: 'center' },
         );
 
+        const hasVolunteerName = boxInfo[COL_VOLUNTEER_FIRST_NAME] != null && boxInfo[COL_VOLUNTEER_FIRST_NAME].length > 0
+            || boxInfo[COL_VOLUNTEER_LAST_NAME] != null && boxInfo[COL_VOLUNTEER_LAST_NAME].length > 0;
+
+        // If available, render the volunteer's name
+        if (hasVolunteerName) {
+            doc.setFontSize(18 * textScale);
+            doc.text(
+                `${boxInfo[COL_VOLUNTEER_LAST_NAME]}, ${boxInfo[COL_VOLUNTEER_FIRST_NAME]}`,
+                width / 2,
+                width * 1.1,
+                { align: 'center' },
+            );
+        }
+
         // Then render the address information last and smallest
         doc.setFontSize(16 * textScale);
         doc.text(
             boxInfo[COL_ADDRESS],
             width / 2,
-            width * 1.1,
+            width * 1.2,
             { align: 'center' },
         );
         doc.text(
             `${boxInfo[COL_CITY]}, ${boxInfo[COL_STATE]} ${boxInfo[COL_ZIPCODE]}`,
             width / 2,
-            width * 1.15,
+            width * 1.25,
+            { align: 'center' },
+        );
+
+        // Lastly render the contact information
+        doc.setFontSize(12 * textScale);
+        doc.text(
+            `If you do not believe this box belongs to you,`,
+            width / 2,
+            width * 1.32,
+            { align: 'center' },
+        );
+        doc.text(
+            `contact Amanda the Panda at (515) 223-4847.`,
+            width / 2,
+            width * 1.37,
             { align: 'center' },
         );
     }
