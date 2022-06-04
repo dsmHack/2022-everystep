@@ -50389,7 +50389,7 @@
   var COL_PHASE = "wrapping phase";
   var createLabelsButton = document.getElementById("createLabels");
   var labelExportFileInput = document.getElementById("labelExportFile");
-  var googleFormURLInput = document.getElementById("googleFormURL");
+  var formUrlPrefixInput = document.getElementById("formUrlPrefix");
   var labelWidthInput = document.getElementById("labelWidth");
   var labelHeightInput = document.getElementById("labelHeight");
   var boxInfos = null;
@@ -50399,16 +50399,16 @@
     const setFormEnabled = (enabled) => {
       labelExportFileInput.disabled = !enabled;
       createLabelsButton.disabled = !enabled;
-      googleFormURLInput.disabled = !enabled;
+      formUrlPrefixInput.disabled = !enabled;
       labelWidthInput.disabled = !enabled;
       labelHeightInput.disabled = !enabled;
     };
     const setupInputLocalStorage = (input, key) => {
       input.value = localStorage.getItem(key);
-      input.oninput = () => {
+      input.oninput = () => __async(this, null, function* () {
         localStorage.setItem(key, input.value);
-        updateUI();
-      };
+        yield updateUI();
+      });
     };
     labelExportFileInput.onchange = (_3) => __async(this, null, function* () {
       if (labelExportFileInput.files.length > 0) {
@@ -50416,9 +50416,9 @@
       } else {
         boxInfos = null;
       }
-      updateUI();
+      yield updateUI();
     });
-    document.onpaste = (event) => {
+    document.onpaste = (event) => __async(this, null, function* () {
       if (performingExport) {
         return false;
       }
@@ -50429,20 +50429,21 @@
       } else {
         boxInfos = null;
       }
-      updateUI();
+      yield updateUI();
       return false;
-    };
-    setupInputLocalStorage(googleFormURLInput, "google-form-url");
+    });
+    setupInputLocalStorage(formUrlPrefixInput, "form-url-prefix");
     setupInputLocalStorage(labelWidthInput, "label-width");
     setupInputLocalStorage(labelHeightInput, "label-height");
     createLabelsButton.onclick = () => __async(this, null, function* () {
       performingExport = true;
       setFormEnabled(false);
-      yield createShippingPDF(parseFloat(labelHeightInput.value), parseFloat(labelWidthInput.value), googleFormURLInput.value);
+      const doc = yield createShippingPDF(parseFloat(labelHeightInput.value), parseFloat(labelWidthInput.value), formUrlPrefixInput.value);
+      doc.save(EXPORT_FILE_NAME);
       performingExport = false;
       setFormEnabled(true);
     });
-    updateUI();
+    updateUI().then();
   }
   function loadExportFile(exportFile) {
     return __async(this, null, function* () {
@@ -50494,48 +50495,59 @@
     boxInfos = Array.from(boxes.values());
   }
   function updateUI() {
-    const table = document.getElementById("previewTable");
-    const tableBody = document.getElementById("previewTableBody");
-    const text = document.getElementById("previewTableText");
-    createLabelsButton.disabled = boxInfos === null || labelWidthInput.value === null || labelWidthInput.value.length === 0 || labelHeightInput.value === null || labelHeightInput.value.length === 0 || googleFormURLInput.value === null || googleFormURLInput.value.length === 0;
-    [...tableBody.children].forEach((child) => tableBody.removeChild(child));
-    if (boxInfos === null) {
-      table.style.display = "none";
-      text.style.display = "block";
-      return;
-    } else {
-      table.style.display = "table";
-      text.style.display = "none";
-    }
-    boxInfos.forEach((boxInfo) => {
-      const row = document.createElement("tr");
-      const addCell = (data) => {
-        const cell = document.createElement("td");
-        cell.textContent = data;
-        row.appendChild(cell);
-      };
-      addCell(boxInfo[COL_CHEERBOX_ID]);
-      addCell(boxInfo[COL_PHASE]);
-      addCell(boxInfo[COL_FIRST_NAME]);
-      addCell(boxInfo[COL_LAST_NAME]);
-      addCell(boxInfo[COL_ADDRESS]);
-      addCell(boxInfo[COL_CITY]);
-      addCell(boxInfo[COL_STATE]);
-      addCell(boxInfo[COL_ZIPCODE]);
-      tableBody.appendChild(row);
+    return __async(this, null, function* () {
+      const table = document.getElementById("previewTable");
+      const tableBody = document.getElementById("previewTableBody");
+      const text = document.getElementById("previewTableText");
+      const previewEmbed = document.getElementById("pdfPreviewEmbed");
+      createLabelsButton.disabled = boxInfos === null || labelWidthInput.value === null || labelWidthInput.value.length === 0 || labelHeightInput.value === null || labelHeightInput.value.length === 0 || formUrlPrefixInput.value === null || formUrlPrefixInput.value.length === 0;
+      [...tableBody.children].forEach((child) => tableBody.removeChild(child));
+      if (boxInfos === null) {
+        table.style.display = "none";
+        text.style.display = "block";
+        previewEmbed.style.display = "none";
+        return;
+      } else {
+        table.style.display = "table";
+        text.style.display = "none";
+        previewEmbed.style.display = "block";
+      }
+      boxInfos.forEach((boxInfo) => {
+        const row = document.createElement("tr");
+        const addCell = (data) => {
+          const cell = document.createElement("td");
+          cell.textContent = data;
+          row.appendChild(cell);
+        };
+        addCell(boxInfo[COL_CHEERBOX_ID]);
+        addCell(boxInfo[COL_PHASE]);
+        addCell(boxInfo[COL_FIRST_NAME]);
+        addCell(boxInfo[COL_LAST_NAME]);
+        addCell(boxInfo[COL_ADDRESS]);
+        addCell(boxInfo[COL_CITY]);
+        addCell(boxInfo[COL_STATE]);
+        addCell(boxInfo[COL_ZIPCODE]);
+        tableBody.appendChild(row);
+      });
+      const doc = yield createShippingPDF(parseFloat(labelHeightInput.value), parseFloat(labelWidthInput.value), formUrlPrefixInput.value);
+      const buffer = yield doc.output("arraybuffer");
+      const file = new Blob([buffer], { type: "application/pdf" });
+      const fileUrl = URL.createObjectURL(file);
+      previewEmbed.src = fileUrl;
     });
   }
-  function createShippingPDF(height, width, googleFormURL) {
+  function createShippingPDF(height, width, formUrlPrefix) {
     return __async(this, null, function* () {
       const format = [width, height];
       const doc = new E({ unit: "in", format });
+      const textScale = width / 4;
       for (let i3 = 0; i3 < boxInfos.length; i3++) {
         const boxInfo = boxInfos[i3];
         const cheerboxId = boxInfo[COL_CHEERBOX_ID];
         if (i3 > 0) {
           doc.addPage(format);
         }
-        const qrCode = yield createQRCode(googleFormURL + cheerboxId);
+        const qrCode = yield createQRCode(formUrlPrefix + cheerboxId);
         doc.addImage({
           imageData: qrCode,
           x: width * 0.15,
@@ -50543,15 +50555,15 @@
           width: width * 0.7,
           height: width * 0.7
         });
-        doc.setFontSize(26);
+        doc.setFontSize(26 * textScale);
         doc.text(cheerboxId, width / 2, width * 0.15, { align: "center" });
-        doc.setFontSize(18);
+        doc.setFontSize(18 * textScale);
         doc.text(`${boxInfo[COL_LAST_NAME]}, ${boxInfo[COL_FIRST_NAME]} - ${boxInfo[COL_PHASE]}`, width / 2, width, { align: "center" });
-        doc.setFontSize(16);
+        doc.setFontSize(16 * textScale);
         doc.text(boxInfo[COL_ADDRESS], width / 2, width * 1.1, { align: "center" });
         doc.text(`${boxInfo[COL_CITY]}, ${boxInfo[COL_STATE]} ${boxInfo[COL_ZIPCODE]}`, width / 2, width * 1.15, { align: "center" });
       }
-      doc.save(EXPORT_FILE_NAME);
+      return doc;
     });
   }
   function createQRCode(data) {
