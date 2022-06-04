@@ -50380,7 +50380,7 @@
   var EXPORT_SHEET_NAME = "qr_export";
   var EXPORT_FILE_NAME = "qrcodes.pdf";
   var DEFAULT_LABEL_WIDTH = "4";
-  var DEFAULT_LABEL_HEIGHT = "6";
+  var DEFAULT_LABEL_HEIGHT = "8";
   var COL_CHEERBOX_ID = "cheerboxid";
   var COL_LAST_NAME = "recipient last name";
   var COL_FIRST_NAME = "recipient first name";
@@ -50390,6 +50390,8 @@
   var COL_ZIPCODE = "recipient zip code";
   var COL_PHASE = "wrapping phase";
   var COL_URL = "qr url";
+  var COL_VOLUNTEER_LAST_NAME = "volunteer last name";
+  var COL_VOLUNTEER_FIRST_NAME = "volunteer first name";
   var createLabelsButton = document.getElementById("createLabels");
   var exportFileInput = document.getElementById("exportFileInput");
   var exportPasteInput = document.getElementById("exportPasteInput");
@@ -50444,10 +50446,14 @@
     createLabelsButton.onclick = () => __async(this, null, function* () {
       performingExport = true;
       setFormEnabled(false);
-      const doc = yield createShippingPDF(parseFloat(labelHeightInput.value), parseFloat(labelWidthInput.value));
-      doc.save(EXPORT_FILE_NAME);
-      performingExport = false;
-      setFormEnabled(true);
+      try {
+        const doc = yield createShippingPDF(parseFloat(labelHeightInput.value), parseFloat(labelWidthInput.value));
+        doc.save(EXPORT_FILE_NAME);
+        performingExport = false;
+        setFormEnabled(true);
+      } catch (e2) {
+        alert("Something went wrong, please reload the page and try again.");
+      }
     });
     updateUI().then();
   }
@@ -50516,6 +50522,7 @@
         text.style.display = "none";
       }
       boxInfos.forEach((boxInfo) => {
+        var _a2, _b2;
         const row = document.createElement("tr");
         const addCell = (data) => {
           const cell = document.createElement("td");
@@ -50524,6 +50531,7 @@
         };
         addCell(boxInfo[COL_CHEERBOX_ID]);
         addCell(boxInfo[COL_PHASE]);
+        addCell(((_a2 = boxInfo[COL_VOLUNTEER_FIRST_NAME]) != null ? _a2 : "") + " " + ((_b2 = boxInfo[COL_VOLUNTEER_LAST_NAME]) != null ? _b2 : ""));
         addCell(boxInfo[COL_FIRST_NAME]);
         addCell(boxInfo[COL_LAST_NAME]);
         addCell(boxInfo[COL_ADDRESS]);
@@ -50557,9 +50565,17 @@
         doc.text(cheerboxId, width / 2, width * 0.15, { align: "center" });
         doc.setFontSize(18 * textScale);
         doc.text(`${boxInfo[COL_LAST_NAME]}, ${boxInfo[COL_FIRST_NAME]} - ${boxInfo[COL_PHASE]}`, width / 2, width, { align: "center" });
+        const hasVolunteerName = boxInfo[COL_VOLUNTEER_FIRST_NAME] != null && boxInfo[COL_VOLUNTEER_FIRST_NAME].length > 0 || boxInfo[COL_VOLUNTEER_LAST_NAME] != null && boxInfo[COL_VOLUNTEER_LAST_NAME].length > 0;
+        if (hasVolunteerName) {
+          doc.setFontSize(18 * textScale);
+          doc.text(`${boxInfo[COL_VOLUNTEER_LAST_NAME]}, ${boxInfo[COL_VOLUNTEER_FIRST_NAME]}`, width / 2, width * 1.1, { align: "center" });
+        }
         doc.setFontSize(16 * textScale);
-        doc.text(boxInfo[COL_ADDRESS], width / 2, width * 1.1, { align: "center" });
-        doc.text(`${boxInfo[COL_CITY]}, ${boxInfo[COL_STATE]} ${boxInfo[COL_ZIPCODE]}`, width / 2, width * 1.15, { align: "center" });
+        doc.text(boxInfo[COL_ADDRESS], width / 2, width * 1.2, { align: "center" });
+        doc.text(`${boxInfo[COL_CITY]}, ${boxInfo[COL_STATE]} ${boxInfo[COL_ZIPCODE]}`, width / 2, width * 1.25, { align: "center" });
+        doc.setFontSize(12 * textScale);
+        doc.text(`If you do not believe this box belongs to you,`, width / 2, width * 1.32, { align: "center" });
+        doc.text(`contact Amanda the Panda at (515) 223-4847.`, width / 2, width * 1.37, { align: "center" });
       }
       return doc;
     });
