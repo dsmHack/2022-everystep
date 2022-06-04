@@ -16,7 +16,7 @@ const COL_PHASE = 'wrapping phase';
 
 const createLabelsButton = document.getElementById('createLabels') as HTMLInputElement;
 const labelExportFileInput = document.getElementById('labelExportFile') as HTMLInputElement;
-const googleFormURLInput = document.getElementById('googleFormURL') as HTMLInputElement;
+const formUrlPrefixInput = document.getElementById('formUrlPrefix') as HTMLInputElement;
 const labelWidthInput = document.getElementById('labelWidth') as HTMLInputElement;
 const labelHeightInput = document.getElementById('labelHeight') as HTMLInputElement;
 
@@ -29,7 +29,7 @@ function main() {
     const setFormEnabled = (enabled: boolean) => {
         labelExportFileInput.disabled = !enabled;
         createLabelsButton.disabled = !enabled;
-        googleFormURLInput.disabled = !enabled;
+        formUrlPrefixInput.disabled = !enabled;
         labelWidthInput.disabled = !enabled;
         labelHeightInput.disabled = !enabled;
     };
@@ -37,9 +37,9 @@ function main() {
     // Helper for binding a text field to `localStorage` to persist values between sessions
     const setupInputLocalStorage = (input: HTMLInputElement, key: string) => {
         input.value = localStorage.getItem(key);
-        input.oninput = () => {
+        input.oninput = async () => {
             localStorage.setItem(key, input.value);
-            updateUI();
+            await updateUI();
         };
     };
 
@@ -51,11 +51,11 @@ function main() {
             boxInfos = null;
         }
 
-        updateUI();
+        await updateUI();
     };
 
     // Processes paste actions and attempts to load spreadsheet data
-    document.onpaste = (event) => {
+    document.onpaste = async (event) => {
         // Do not process the paste action if we're actively exporting
         if (performingExport) {
             return false;
@@ -72,14 +72,14 @@ function main() {
             boxInfos = null;
         }
 
-        updateUI();
+        await updateUI();
 
         // Stop event propagation
         return false;
     };
 
     // Configure text inputs with `localStorage` persistence between sessions
-    setupInputLocalStorage(googleFormURLInput, 'google-form-url');
+    setupInputLocalStorage(formUrlPrefixInput, 'form-url-prefix');
     setupInputLocalStorage(labelWidthInput, 'label-width');
     setupInputLocalStorage(labelHeightInput, 'label-height');
 
@@ -88,18 +88,21 @@ function main() {
         performingExport = true;
         setFormEnabled(false);
 
-        // Create and download shipping label
-        await createShippingPDF(
+        // Create the shipping labels
+        const doc = await createShippingPDF(
             parseFloat(labelHeightInput.value),
             parseFloat(labelWidthInput.value),
-            googleFormURLInput.value,
+            formUrlPrefixInput.value,
         );
+
+        // Download the shipping labels
+        doc.save(EXPORT_FILE_NAME);
 
         performingExport = false;
         setFormEnabled(true);
     }
 
-    updateUI();
+    updateUI().then();
 }
 
 /// Given a user-specified XLSX export file, parse it into our box schema for display and PDF export.
@@ -182,16 +185,17 @@ function loadExportPaste(tabDelimited: string) {
 }
 
 /// Updates UI controls based on current form state and whether box data is loaded.
-function updateUI() {
+async function updateUI() {
     const table = document.getElementById('previewTable');
     const tableBody = document.getElementById('previewTableBody');
     const text = document.getElementById('previewTableText');
+    const previewEmbed = document.getElementById('pdfPreviewEmbed') as HTMLEmbedElement;
 
     // Disable the submission button if the form is in an invalid state
     createLabelsButton.disabled = boxInfos === null
         || labelWidthInput.value === null || labelWidthInput.value.length === 0
         || labelHeightInput.value === null || labelHeightInput.value.length === 0
-        || googleFormURLInput.value === null || googleFormURLInput.value.length === 0;
+        || formUrlPrefixInput.value === null || formUrlPrefixInput.value.length === 0;
 
     // Clear the previous table preview contents
     [...tableBody.children].forEach(child => tableBody.removeChild(child));
@@ -200,10 +204,12 @@ function updateUI() {
     if (boxInfos === null) {
         table.style.display = 'none';
         text.style.display = 'block';
+        previewEmbed.style.display = 'none';
         return;
     } else {
         table.style.display = 'table';
         text.style.display = 'none';
+        previewEmbed.style.display = 'block';
     }
 
     // Populate the preview table with the loaded boxes
@@ -227,12 +233,27 @@ function updateUI() {
 
         tableBody.appendChild(row);
     });
+
+    // Populate the preview
+
+    const doc = await createShippingPDF(
+        parseFloat(labelHeightInput.value),
+        parseFloat(labelWidthInput.value),
+        formUrlPrefixInput.value,
+    );
+
+    const buffer = await doc.output('arraybuffer');
+    const file = new Blob([buffer], { type: 'application/pdf' });
+    const fileUrl = URL.createObjectURL(file);
+    previewEmbed.src = fileUrl;
 }
 
-/// Given a label's dimensions, renders QR codes and associated metadata into a PDF and initiates a download.
-async function createShippingPDF(height: number, width: number, googleFormURL: string) {
+/// Given a label's dimensions, renders QR codes and associated metadata into a PDF.
+async function createShippingPDF(height: number, width: number, formUrlPrefix: string): Promise<jsPDF> {
     const format = [width, height];
     const doc = new jsPDF({ unit: 'in', format });
+
+    const textScale = width / 4;
 
     // Step through the boxes, rendering QR codes for each
     for (let i = 0; i < boxInfos.length; i++) {
@@ -244,7 +265,7 @@ async function createShippingPDF(height: number, width: number, googleFormURL: s
         }
 
         // Generate a QR code by concatenating the form URL and cheerbox ID
-        const qrCode = await createQRCode(googleFormURL + cheerboxId);
+        const qrCode = await createQRCode(formUrlPrefix + cheerboxId);
 
         // Locate the image in the PDF
         doc.addImage({
@@ -256,7 +277,7 @@ async function createShippingPDF(height: number, width: number, googleFormURL: s
         });
 
         // Write the code text above the QR code
-        doc.setFontSize(26);
+        doc.setFontSize(26 * textScale);
         doc.text(
             cheerboxId,
             width / 2,
@@ -265,7 +286,7 @@ async function createShippingPDF(height: number, width: number, googleFormURL: s
         );
 
         // Render the name and phase below the QR code
-        doc.setFontSize(18);
+        doc.setFontSize(18 * textScale);
         doc.text(
             `${boxInfo[COL_LAST_NAME]}, ${boxInfo[COL_FIRST_NAME]} - ${boxInfo[COL_PHASE]}`,
             width / 2,
@@ -274,7 +295,7 @@ async function createShippingPDF(height: number, width: number, googleFormURL: s
         );
 
         // Then render the address information last and smallest
-        doc.setFontSize(16);
+        doc.setFontSize(16 * textScale);
         doc.text(
             boxInfo[COL_ADDRESS],
             width / 2,
@@ -289,7 +310,7 @@ async function createShippingPDF(height: number, width: number, googleFormURL: s
         );
     }
 
-    doc.save(EXPORT_FILE_NAME);
+    return doc;
 }
 
 /// Computes a QR code for the specified data by rendering to a hidden canvas and pulling its contents.

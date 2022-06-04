@@ -13,11 +13,77 @@
                 Create Cheer Box Labels
             </div>
             <div class="card-body">
-                <div class="row mb-2">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="row mb-3">
+                            <label for="labelExportFile" class="col-sm-4 col-form-label">Label Export File:</label>
+                            <div class="col-sm-8">
+                                <input class="form-control" type="file" accept=".xlsx" id="labelExportFile">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label class="col-sm-4 col-form-label">Label Dimensions:</label>
+                            <div class="col-sm-4">
+                                <div class="input-group">
+                                    <input id="labelWidth" type="text" class="form-control" placeholder="Width (inches)">
+                                    <span class="input-group-text">inches</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="input-group">
+                                    <input id="labelHeight" type="text" class="form-control" placeholder="Height (inches)">
+                                    <span class="input-group-text">inches</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label for="formUrlPrefix" class="col-sm-4 col-form-label">Form URL Prefix:</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="formUrlPrefix">
+                            </div>
+                        </div>
+
+                        <button type="submit" id="createLabels" class="btn btn-primary">Create Cheer Box Labels</button>
+                    </div>
+
+                    <div class="col-md-6">
+                        <embed id="pdfPreviewEmbed" src="" width="100%" height="375" type="application/pdf" />
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="container" style="max-height: 200px; overflow-y: auto;">
+                            <table class="table table-sm" id="previewTable">
+                                <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Phase</th>
+                                    <th>Last Name</th>
+                                    <th>First Name</th>
+                                    <th>Address</th>
+                                    <th>City</th>
+                                    <th>State</th>
+                                    <th>Zip Code</th>
+                                </tr>
+                                </thead>
+                                <tbody id="previewTableBody"></tbody>
+                            </table>
+                            <div id="previewTableText" class="text-muted " style="text-align: center;">
+                                <em>A preview of your export data will appear here.</em>
+                            </div>
+                        </div>
+
+                <hr />
+
+                <div class="row">
                     <p class="col">
                         This webpage generates printable QR code labels for Cheer Boxes. Box details can be provided by
-                        exporting the "cheerbox_master" spreadsheet or by copying and pasting specific rows. For the
-                        scannable QR code, the Google Form URL may be specified to prefix each box's unique code.
+                        exporting the "cheerbox_master" spreadsheet or by copying and pasting specific rows (note: the
+                        header <em>must</em> be included in your selection when you copy, so consider using filters to
+                        limit the rows included in your selection).
                     </p>
                     <div class="row">
                         <div class="col-md-6">
@@ -36,60 +102,6 @@
                                 <li>Click anywhere on this webpage and paste with CTRL+V</li>
                             </ol>
                         </div>
-                    </div>
-                </div>
-
-                <hr />
-
-                <div class="row mb-3">
-                    <label for="labelExportFile" class="col-sm-2 col-form-label">Label Export File:</label>
-                    <div class="col-sm-4">
-                        <input class="form-control" type="file" accept=".xlsx" id="labelExportFile">
-                    </div>
-                    <label class="col-sm-2 col-form-label">Label Dimensions:</label>
-                    <div class="col-sm-2">
-                        <div class="input-group">
-                            <input id="labelWidth" type="text" class="form-control" placeholder="Width (inches)">
-                            <span class="input-group-text">inches</span>
-                        </div>
-                    </div>
-                    <div class="col-sm-2">
-                        <div class="input-group">
-                            <input id="labelHeight" type="text" class="form-control" placeholder="Height (inches)">
-                            <span class="input-group-text">inches</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <label for="googleFormURL" class="col-sm-2 col-form-label">Google Form URL:</label>
-                    <div class="col-sm-10">
-                        <input type="text" class="form-control" id="googleFormURL">
-                    </div>
-                </div>
-
-                <button type="submit" id="createLabels" class="btn btn-primary">Create Cheer Box Labels</button>
-
-                <hr />
-
-                <div class="container" style="max-height: 200px; overflow-y: auto;">
-                    <table class="table table-sm" id="previewTable">
-                        <thead>
-                        <tr>
-                            <th>Code</th>
-                            <th>Phase</th>
-                            <th>Last Name</th>
-                            <th>First Name</th>
-                            <th>Address</th>
-                            <th>City</th>
-                            <th>State</th>
-                            <th>Zip Code</th>
-                        </tr>
-                        </thead>
-                        <tbody id="previewTableBody"></tbody>
-                    </table>
-                    <div id="previewTableText" class="text-muted " style="text-align: center;">
-                        <em>A preview of your export data will appear here.</em>
                     </div>
                 </div>
             </div>
