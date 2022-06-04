@@ -102,17 +102,21 @@ function main() {
         performingExport = true;
         setFormEnabled(false);
 
-        // Create the shipping labels
-        const doc = await createShippingPDF(
-            parseFloat(labelHeightInput.value),
-            parseFloat(labelWidthInput.value),
-        );
+        try {
+            // Create the shipping labels
+            const doc = await createShippingPDF(
+                parseFloat(labelHeightInput.value),
+                parseFloat(labelWidthInput.value),
+            );
 
-        // Download the shipping labels
-        doc.save(EXPORT_FILE_NAME);
+            // Download the shipping labels
+            doc.save(EXPORT_FILE_NAME);
 
-        performingExport = false;
-        setFormEnabled(true);
+            performingExport = false;
+            setFormEnabled(true);
+        } catch (e) {
+            alert('Something went wrong, please reload the page and try again.');
+        }
     }
 
     updateUI().then();
