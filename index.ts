@@ -185,6 +185,7 @@ function loadExportPaste(tabDelimited: string) {
     // Loop through the data rows
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
+
         const fields = line.split('\t');
 
         // Populate the box's structure, referencing the header row for property keys
@@ -196,6 +197,11 @@ function loadExportPaste(tabDelimited: string) {
             const cleanedHeaderKey = headerRow[j].toLowerCase().trim();
 
             box[cleanedHeaderKey] = cellValue;
+        }
+
+        // Skip empty rows
+        if (box[COL_CHEERBOX_ID] === null || box[COL_CHEERBOX_ID].trim().length === 0) {
+            continue;
         }
 
         boxes.set(i, box);
@@ -222,10 +228,15 @@ async function updateUI() {
     if (boxInfos === null) {
         table.style.display = 'none';
         text.style.display = 'block';
+
+        createLabelsButton.innerText = `Create Cheer Box Labels`;
+
         return;
     } else {
         table.style.display = 'table';
         text.style.display = 'none';
+
+        createLabelsButton.innerText = `Create ${boxInfos.length} Cheer Box Labels`;
     }
 
     // Populate the preview table with the loaded boxes
