@@ -2,181 +2,304 @@ import { jsPDF } from 'jspdf';
 import * as qrcode from 'qr.js';
 import { read } from 'xlsx';
 
+const EXPORT_SHEET_NAME = 'qr_export';
+const EXPORT_FILE_NAME = 'qrcodes.pdf';
+
+const COL_CHEERBOX_ID = 'cheerboxid';
+const COL_LAST_NAME = 'recipient last name';
+const COL_FIRST_NAME = 'recipient first name';
+const COL_ADDRESS = 'recipient street address';
+const COL_CITY = 'recipient city';
+const COL_STATE = 'recipient state';
+const COL_ZIPCODE = 'recipient zip code';
+const COL_PHASE = 'wrapping phase';
+
+const createLabelsButton = document.getElementById('createLabels') as HTMLInputElement;
+const labelExportFileInput = document.getElementById('labelExportFile') as HTMLInputElement;
+const googleFormURLInput = document.getElementById('googleFormURL') as HTMLInputElement;
+const labelWidthInput = document.getElementById('labelWidth') as HTMLInputElement;
+const labelHeightInput = document.getElementById('labelHeight') as HTMLInputElement;
+
+let boxInfos: Map<string, string>[] = null;
+let performingExport = false;
+
 window.onload = main;
 function main() {
-    const labelExportFileInput = document.getElementById('labelExportFile') as HTMLInputElement;
-    const googleFormURLInput = document.getElementById('googleFormURL') as HTMLInputElement;
-    const createContainersButton = document.getElementById('createContainers') as HTMLInputElement;
-    const labelWidthInput = document.getElementById('labelWidth') as HTMLInputElement;
-    const labelHeightInput = document.getElementById('labelHeight') as HTMLInputElement;
-
+    // Helper for [en/dis]abling all inputs during PDF-export
     const setFormEnabled = (enabled: boolean) => {
         labelExportFileInput.disabled = !enabled;
-        createContainersButton.disabled = !enabled;
+        createLabelsButton.disabled = !enabled;
         googleFormURLInput.disabled = !enabled;
         labelWidthInput.disabled = !enabled;
         labelHeightInput.disabled = !enabled;
     };
 
+    // Helper for binding a text field to `localStorage` to persist values between sessions
     const setupInputLocalStorage = (input: HTMLInputElement, key: string) => {
         input.value = localStorage.getItem(key);
-        input.oninput = () => localStorage.setItem(key, input.value);
+        input.oninput = () => {
+            localStorage.setItem(key, input.value);
+            updateUI();
+        };
     };
 
+    // Processes XLSX files when selected in the file-picker
+    labelExportFileInput.onchange = async (_) => {
+        if (labelExportFileInput.files.length > 0) {
+            await loadExportFile(labelExportFileInput.files[0]);
+        } else {
+            boxInfos = null;
+        }
+
+        updateUI();
+    };
+
+    // Processes paste actions and attempts to load spreadsheet data
+    document.onpaste = (event) => {
+        // Do not process the paste action if we're actively exporting
+        if (performingExport) {
+            return false;
+        }
+
+        const pastedText = event.clipboardData.getData('text/plain');
+
+        // Clear any previous file selection
+        labelExportFileInput.value = '';
+
+        if (pastedText != null && pastedText.length > 0) {
+            loadExportPaste(pastedText);
+        } else {
+            boxInfos = null;
+        }
+
+        updateUI();
+
+        // Stop event propagation
+        return false;
+    };
+
+    // Configure text inputs with `localStorage` persistence between sessions
     setupInputLocalStorage(googleFormURLInput, 'google-form-url');
     setupInputLocalStorage(labelWidthInput, 'label-width');
     setupInputLocalStorage(labelHeightInput, 'label-height');
 
-    createContainersButton.onclick = async () => {
+    // Handle export requests
+    createLabelsButton.onclick = async () => {
+        performingExport = true;
         setFormEnabled(false);
 
-        await createContainers(
-            parseFloat(labelWidthInput.value),
+        // Create and download shipping label
+        await createShippingPDF(
             parseFloat(labelHeightInput.value),
+            parseFloat(labelWidthInput.value),
             googleFormURLInput.value,
-            labelExportFileInput.files[0],
         );
 
+        performingExport = false;
         setFormEnabled(true);
     }
+
+    updateUI();
 }
 
-interface BoxInfo {
-    code: string,
-    lastName: string,
-    firstName: string,
-    address: string,
-    city: string,
-    state: string,
-    zipcode: string,
-    phase: string,
-}
-
-async function createContainers(width: number, height: number, googleFormURL: string, exportFile: File): Promise<void> {
+/// Given a user-specified XLSX export file, parse it into our box schema for display and PDF export.
+async function loadExportFile(exportFile: File) {
+    // Parse the spreadsheet and identify the export worksheet
     const contents = await exportFile.arrayBuffer();
     const workbook = read(contents);
-    const worksheet = workbook.Sheets['qr_export'];
+    const worksheet = workbook.Sheets[EXPORT_SHEET_NAME];
 
-    let updateMap = new Map<string, (BoxInfo, string) => void>;
+    const headers = new Map<string, string>;
+    const boxes = new Map<string, Map<string, string>>();
 
-    const boxInfos = new Map<string, BoxInfo>();
+    // Step through cells in the worksheet collecting them into box structures
     for (const cell in worksheet) {
+        // Parse the cells from "A1" into column "A" and row "1"
         const col = cell.substring(0, 1);
         const row = cell.substring(1);
 
-        if (row === 'ref' || row == 'margins') {
+        // Skip the metadata
+        if (row === 'ref' || row == 'margins' || row == 'autofilter') {
             continue;
         }
 
         const cellValue = worksheet[cell].v.toString();
 
+        // For the header row, map column IDs to their header text (which form the row value keys)
         if (row === '1') {
-            switch (cellValue.toLowerCase().trim()) {
-                case 'cheerboxid':
-                    updateMap[col] = (info, val) => info.code = val;
-                    break;
-                case 'recipient first name':
-                    updateMap[col] = (info, val) => info.firstName = val;
-                    break;
-                case 'recipient last name':
-                    updateMap[col] = (info, val) => info.lastName = val;
-                    break;
-                case 'recipient street address':
-                    updateMap[col] = (info, val) => info.address = val;
-                    break;
-                case 'recipient city':
-                    updateMap[col] = (info, val) => info.city = val;
-                    break;
-                case 'recipient state':
-                    updateMap[col] = (info, val) => info.state = val;
-                    break;
-                case 'recipient zip code':
-                    updateMap[col] = (info, val) => info.zipcode = val;
-                    break;
-                // TODO: phase?
-            }
+            // Try to reduce opportunity for mismatches between of capitalization and spacing
+            const cleanedHeaderKey = cellValue.toLowerCase().trim();
+
+            headers.set(col, cleanedHeaderKey);
             continue;
         }
 
-        if (!boxInfos.has(row)) {
-            boxInfos.set(row, {
-                code: 'N/A',
-                firstName: 'N/A',
-                lastName: 'N/A',
-                address: 'N/A',
-                city: 'N/A',
-                state: 'N/A',
-                zipcode: 'N/A',
-                phase: 'N/A',
-            });
+        // Initialize this box's structure if we haven't encountered it yet
+        if (!boxes.has(row)) {
+            boxes.set(row, new Map<string, string>());
         }
 
-        const boxInfo = boxInfos.get(row);
-        updateMap[col](boxInfo, cellValue);
+        const headerKey = headers.get(col);
+        boxes.get(row)[headerKey] = cellValue;
     }
 
-    const boxInfosFlattened = Array.from(boxInfos.values());
-
-    await createShippingPDF(height, width, googleFormURL, boxInfosFlattened);
-    downloadCSV(boxInfosFlattened);
+    boxInfos = Array.from(boxes.values());
 }
 
-function downloadCSV(boxInfos: BoxInfo[]): void {
-    const csvData = ['id', ...boxInfos.map(b => b.code)].join('\n');
-    const blob = new Blob([csvData], {type: 'text/csv'});
-    const url = URL.createObjectURL(blob);
+/// Given plain/text paste content from a spreadsheet, parse it into our box schema for display and PDF export.
+function loadExportPaste(tabDelimited: string) {
+    const lines = tabDelimited.split('\n');
 
-    const downloadLink = document.createElement('a');
-    downloadLink.href = url;
-    downloadLink.download = 'containers.csv';
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    URL.revokeObjectURL(url);
+    // We should have at least a header and data row
+    if (lines.length < 2) {
+        boxInfos = null;
+        return;
+    }
+
+    const headerRow = lines[0].split('\t');
+    const boxes = new Map<number, Map<string, string>>();
+
+    // Loop through the data rows
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const fields = line.split('\t');
+
+        // Populate the box's structure, referencing the header row for property keys
+        const box = new Map<string, string>();
+        for (let j = 0; j < fields.length; j++) {
+            const cellValue = fields[j];
+
+            // Try to reduce opportunity for mismatches between of capitalization and spacing
+            const cleanedHeaderKey = headerRow[j].toLowerCase().trim();
+
+            box[cleanedHeaderKey] = cellValue;
+        }
+
+        boxes.set(i, box);
+    }
+
+    boxInfos = Array.from(boxes.values());
 }
 
-// The length should be >= the width * 1.5;
-async function createShippingPDF(heightInches: number, widthInches: number, googleFormURL: string, boxInfos: BoxInfo[]) {
-    const format = [widthInches, heightInches];
+/// Updates UI controls based on current form state and whether box data is loaded.
+function updateUI() {
+    const table = document.getElementById('previewTable');
+    const tableBody = document.getElementById('previewTableBody');
+    const text = document.getElementById('previewTableText');
+
+    // Disable the submission button if the form is in an invalid state
+    createLabelsButton.disabled = boxInfos === null
+        || labelWidthInput.value === null || labelWidthInput.value.length === 0
+        || labelHeightInput.value === null || labelHeightInput.value.length === 0
+        || googleFormURLInput.value === null || googleFormURLInput.value.length === 0;
+
+    // Clear the previous table preview contents
+    [...tableBody.children].forEach(child => tableBody.removeChild(child));
+
+    // Show/hide the preview table and help text depending on whether we have box information
+    if (boxInfos === null) {
+        table.style.display = 'none';
+        text.style.display = 'block';
+        return;
+    } else {
+        table.style.display = 'table';
+        text.style.display = 'none';
+    }
+
+    // Populate the preview table with the loaded boxes
+    boxInfos.forEach(boxInfo => {
+        const row = document.createElement('tr');
+
+        const addCell = (data) => {
+            const cell = document.createElement('td');
+            cell.textContent = data;
+            row.appendChild(cell);
+        }
+
+        addCell(boxInfo[COL_CHEERBOX_ID]);
+        addCell(boxInfo[COL_PHASE]);
+        addCell(boxInfo[COL_FIRST_NAME]);
+        addCell(boxInfo[COL_LAST_NAME]);
+        addCell(boxInfo[COL_ADDRESS]);
+        addCell(boxInfo[COL_CITY]);
+        addCell(boxInfo[COL_STATE]);
+        addCell(boxInfo[COL_ZIPCODE]);
+
+        tableBody.appendChild(row);
+    });
+}
+
+/// Given a label's dimensions, renders QR codes and associated metadata into a PDF and initiates a download.
+async function createShippingPDF(height: number, width: number, googleFormURL: string) {
+    const format = [width, height];
     const doc = new jsPDF({ unit: 'in', format });
 
+    // Step through the boxes, rendering QR codes for each
     for (let i = 0; i < boxInfos.length; i++) {
         const boxInfo = boxInfos[i];
+        const cheerboxId = boxInfo[COL_CHEERBOX_ID];
 
         if (i > 0) {
             doc.addPage(format);
         }
 
-        const uuid = boxInfo.code;
-        const qrCode = await createQRCode(googleFormURL + uuid);
+        // Generate a QR code by concatenating the form URL and cheerbox ID
+        const qrCode = await createQRCode(googleFormURL + cheerboxId);
 
+        // Locate the image in the PDF
         doc.addImage({
             imageData: qrCode,
-            x: widthInches * 0.15,
-            y: widthInches * 0.2,
-            width: widthInches * 0.7,
-            height: widthInches * 0.7,
+            x: width * 0.15,
+            y: width * 0.2,
+            width: width * 0.7,
+            height: width * 0.7,
         });
 
+        // Write the code text above the QR code
         doc.setFontSize(26);
-        doc.text(boxInfo.code, widthInches / 2, widthInches * 0.15, { align: 'center' });
+        doc.text(
+            cheerboxId,
+            width / 2,
+            width * 0.15,
+            { align: 'center' },
+        );
 
+        // Render the name and phase below the QR code
         doc.setFontSize(18);
-        doc.text(`${boxInfo.lastName}, ${boxInfo.firstName} - ${boxInfo.phase}`, widthInches / 2, widthInches, { align: 'center' });
+        doc.text(
+            `${boxInfo[COL_LAST_NAME]}, ${boxInfo[COL_FIRST_NAME]} - ${boxInfo[COL_PHASE]}`,
+            width / 2,
+            width,
+            { align: 'center' },
+        );
 
+        // Then render the address information last and smallest
         doc.setFontSize(16);
-        doc.text(boxInfo.address, widthInches / 2, widthInches * 1.1, { align: 'center' });
-        doc.text(`${boxInfo.city}, ${boxInfo.state} ${boxInfo.zipcode}`, widthInches / 2, widthInches * 1.15, { align: 'center' });
+        doc.text(
+            boxInfo[COL_ADDRESS],
+            width / 2,
+            width * 1.1,
+            { align: 'center' },
+        );
+        doc.text(
+            `${boxInfo[COL_CITY]}, ${boxInfo[COL_STATE]} ${boxInfo[COL_ZIPCODE]}`,
+            width / 2,
+            width * 1.15,
+            { align: 'center' },
+        );
     }
 
-    doc.save("qrcodes.pdf");
+    doc.save(EXPORT_FILE_NAME);
 }
 
+/// Computes a QR code for the specified data by rendering to a hidden canvas and pulling its contents.
 async function createQRCode(data: string): Promise<Uint8Array> {
+    // Identify the hidden container and mount a new canvas
     const canvasContainer = document.getElementById('renderOutputContainer');
     const canvas = document.createElement('canvas') as HTMLCanvasElement;
     canvasContainer.appendChild(canvas);
 
+    // Generate a QR code for the specified data
     const qrCode = qrcode.default(data);
     const cells: boolean[][] = qrCode.modules;
 
@@ -187,6 +310,7 @@ async function createQRCode(data: string): Promise<Uint8Array> {
     canvas.width = squareSize * cols;
     canvas.height = squareSize * rows;
 
+    // Draw the resultant QR code to the hidden canvas
     const g = canvas.getContext('2d');
     g.fillStyle = 'black';
     for (let row = 0; row < rows; row++) {
@@ -197,6 +321,7 @@ async function createQRCode(data: string): Promise<Uint8Array> {
         }
     }
 
+    // Pull and return the canvas's image contents
     return new Promise((resolve) => {
         canvas.toBlob((blob) => {
             canvasContainer.removeChild(canvas);
