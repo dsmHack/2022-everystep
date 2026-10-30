@@ -20,7 +20,7 @@
     "watch-cli": "^0.2.3"
   },
   "dependencies": {
-    "jspdf": "^2.5.1",
+    "jspdf": "^4.2.1",
     "qr.js": "^0.0.0",
     "xlsx": "^0.18.5"
   }
